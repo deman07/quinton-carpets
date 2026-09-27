@@ -1,4 +1,5 @@
 import { test, expect, type Page } from "@playwright/test";
+import { SLOT_CAPACITY, addDaysISO, dayOfWeek, todayISO, HORIZON_DAYS } from "../../src/lib/dates.ts";
 
 /**
  * The whole point of the site: price a floor, book the free measure,
@@ -7,17 +8,22 @@ import { test, expect, type Page } from "@playwright/test";
 
 /** Pick the first bookable day in the calendar that falls on a given weekday. */
 async function pickDay(page: Page, weekday?: number): Promise<string> {
-  const buttons = page.locator("#cal .days button:not([disabled])");
-  const count = await buttons.count();
-  for (let i = 0; i < count; i++) {
-    const b = buttons.nth(i);
-    const iso = (await b.getAttribute("data-d")) ?? "";
-    if (weekday === undefined || new Date(`${iso}T00:00:00Z`).getUTCDay() === weekday) {
-      await b.click();
-      return iso;
+  // Near the end of a month the day wanted may only be in the next
+  // one, so look a month ahead before giving up.
+  for (let month = 0; month < 2; month++) {
+    const buttons = page.locator("#cal .days button:not([disabled])");
+    const count = await buttons.count();
+    for (let i = 0; i < count; i++) {
+      const b = buttons.nth(i);
+      const iso = (await b.getAttribute("data-d")) ?? "";
+      if (weekday === undefined || new Date(`${iso}T00:00:00Z`).getUTCDay() === weekday) {
+        await b.click();
+        return iso;
+      }
     }
+    await page.getByRole("button", { name: "Next month" }).click();
   }
-  throw new Error("no bookable day of that kind in view");
+  throw new Error("no bookable day of that kind this month or next");
 }
 
 test("estimate, then book, and come away with a reference", async ({ page }) => {
@@ -35,14 +41,12 @@ test("estimate, then book, and come away with a reference", async ({ page }) => 
   await page.getByRole("button", { name: "+ Add a room" }).click();
   await expect(total).not.toHaveText(opening ?? "");
 
-  // The estimate code is minted and offered to the booking form.
-  const code = (await page.locator("#estFoot .mono").first().textContent())?.trim() ?? "";
-  expect(code).toMatch(/^QC-EST-[A-Z0-9]{5}$/);
-
+  // Going on to book saves the estimate, and the server mints its code.
   await page.getByRole("link", { name: "Book a free measure" }).click();
-  await expect(page).toHaveURL(/\/book\//);
+  await expect(page).toHaveURL(/\/book\/\?estimate=QC-EST-[A-Z0-9]{5}$/);
 
   // It carried the code across rather than making them retype it.
+  const code = new URL(page.url()).searchParams.get("estimate")!;
   await expect(page.locator("#bEst")).toHaveValue(code);
 
   await page.locator("#bName").fill("Pat Seddon");
@@ -77,21 +81,84 @@ test("estimate, then book, and come away with a reference", async ({ page }) => 
   await page.goto(`/booking/${reference}/`);
   await expect(page.locator(".refbig")).toHaveText(reference);
   await expect(page.getByText("Pat Seddon")).toBeVisible();
+
+  // With the estimate they priced, worked out again by the server.
+  await page.getByText(`Estimate ${code}`).click();
+  await expect(page.getByText("Living room")).toBeVisible();
+  await expect(page.getByText("roll width, trim included")).toBeVisible();
+});
+
+test("a full window is refused, even when everyone books at once", async ({ request, page }) => {
+  // The last day of the diary, so this never gets in the way of the
+  // journey above, which books the first free window.
+  const date = addDaysISO(todayISO(), HORIZON_DAYS);
+  const slot = dayOfWeek(date) === 0 ? "pm" : "am";
+
+  // More people than the window holds, all pressing the button at the
+  // same moment. Each from its own address, so the per-IP limit
+  // doesn't turn them away before the capacity check can.
+  const attempts = SLOT_CAPACITY + 3;
+  const responses = await Promise.all(
+    Array.from({ length: attempts }, (_, i) =>
+      request.post("/api/bookings", {
+        headers: { accept: "application/json", "x-real-ip": `198.51.100.${i + 1}` },
+        data: {
+          name: `Capacity test ${i + 1}`,
+          phone: "07855 555 599",
+          email: "capacity@example.com",
+          postcode: "B32 1BY",
+          address: "589 Hagley Road West",
+          date,
+          slot,
+          consent: "yes",
+        },
+      }),
+    ),
+  );
+  const statuses = responses.map((r) => r.status());
+
+  // Earlier runs may already have filled it, so never more than the
+  // capacity got in, and at least one was told the window is full.
+  expect(statuses.filter((s) => s === 200).length).toBeLessThanOrEqual(SLOT_CAPACITY);
+  expect(statuses.filter((s) => s === 409).length).toBeGreaterThanOrEqual(attempts - SLOT_CAPACITY);
+  expect(statuses.every((s) => s === 200 || s === 409)).toBe(true);
+
+  const refused = responses[statuses.indexOf(409)]!;
+  expect(await refused.json()).toMatchObject({ slotFull: true });
+
+  // And the calendar stops offering it.
+  await page.goto(`/book/?m=${date.slice(0, 7)}&d=${date}`);
+  const button = page.locator(`#slots button[data-s="${slot}"]`);
+  await expect(button).toBeDisabled();
+  await expect(button).toContainText("Fully booked");
+  await expect(page.locator("#slotHint")).toContainText("already booked");
 });
 
 test("Sunday never offers the Late window", async ({ page }) => {
   await page.goto("/book/");
   await pickDay(page, 0); // 0 = Sunday
 
-  await expect(page.locator('#slots button[data-s="am"]')).toBeEnabled();
-  await expect(page.locator('#slots button[data-s="pm"]')).toBeEnabled();
-  // The shop shuts at 4pm on a Sunday.
-  await expect(page.locator('#slots button[data-s="eve"]')).toBeDisabled();
-  await expect(page.locator("#slotHint")).toContainText("Sunday, so we finish at 4pm");
+  // Offered, unless other bookings have already filled it — the
+  // journey test books the first free window on every run.
+  const offered = async (slot: string) => {
+    const button = page.locator(`#slots button[data-s="${slot}"]`);
+    if (await button.isDisabled()) await expect(button).toContainText("Fully booked");
+  };
+
+  await offered("am");
+  await offered("pm");
+  // The shop shuts at 4pm on a Sunday: closed, not full.
+  const late = page.locator('#slots button[data-s="eve"]');
+  await expect(late).toBeDisabled();
+  await expect(late).toContainText("4pm – 6pm");
+  await expect(page.locator("#slotHint")).toContainText(
+    /Sunday, so we finish at 4pm|already booked/,
+  );
 
   // And a Saturday has all three.
   await pickDay(page, 6);
-  await expect(page.locator('#slots button[data-s="eve"]')).toBeEnabled();
+  await offered("eve");
+  await expect(page.locator('#slots button[data-s="eve"]')).toContainText(/4pm – 6pm|Fully booked/);
 });
 
 test("the calendar cannot go back before today", async ({ page }) => {

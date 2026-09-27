@@ -73,12 +73,47 @@ export function isBookableDate(iso: string, now: Date = new Date()): boolean {
 }
 
 /**
- * Sunday drops the Late window, because the shop closes at 4pm.
+ * How many measures one time window can take before it is full.
+ * PLACEHOLDER pending the shop: it is however many visits the
+ * fitters can make in three hours.
+ */
+export const SLOT_CAPACITY = 2;
+
+/** "2026-09-08|am" — how a full window is named, on both sides of the wire. */
+export const slotKey = (iso: string, slot: string) => `${iso}|${slot}`;
+
+/** The windows that are already full, as slotKey()s. */
+export type FullSlots = ReadonlySet<string>;
+
+const NONE: FullSlots = new Set();
+
+/**
+ * Sunday drops the Late window, because the shop closes at 4pm, and
+ * a window that has reached SLOT_CAPACITY is not offered either.
  * Never offer a slot that cannot happen.
  */
-export function slotsFor(iso: string): ReadonlyArray<{ key: SlotKey; title: string; when: string; available: boolean }> {
+export function slotsFor(
+  iso: string,
+  full: FullSlots = NONE,
+): ReadonlyArray<{ key: SlotKey; title: string; when: string; available: boolean; full: boolean }> {
   const sunday = dayOfWeek(iso) === 0;
-  return SLOTS.map((s) => ({ ...s, available: !(sunday && s.key === "eve") }));
+  return SLOTS.map((s) => {
+    const closed = sunday && s.key === "eve";
+    const booked = !closed && full.has(slotKey(iso, s.key));
+    return { ...s, available: !closed && !booked, full: booked };
+  });
+}
+
+/** Every window that day is either closed or full. */
+export const isDayFull = (iso: string, full: FullSlots = NONE): boolean =>
+  full.size > 0 && slotsFor(iso, full).every((s) => !s.available);
+
+/** The line under the time windows, once a day is chosen. */
+export function slotHint(iso: string, full: FullSlots = NONE): string {
+  const slots = slotsFor(iso, full);
+  if (slots.some((s) => s.full)) return `${shortDate(iso)} — some windows are already booked.`;
+  if (dayOfWeek(iso) === 0) return `${shortDate(iso)} — Sunday, so we finish at 4pm.`;
+  return `${shortDate(iso)} — pick a window that suits you.`;
 }
 
 export function isBookableSlot(iso: string, slot: string, now: Date = new Date()): boolean {
@@ -95,7 +130,12 @@ const MONTHS = [
 export const monthName = (m: number) => MONTHS[m - 1]!;
 
 /** The grid for one month: leading blanks, then every day with its state. */
-export function monthGrid(year: number, month: number, now: Date = new Date()) {
+export function monthGrid(
+  year: number,
+  month: number,
+  now: Date = new Date(),
+  full: FullSlots = NONE,
+) {
   const first = new Date(Date.UTC(year, month - 1, 1));
   // Monday-first, the way a British calendar reads.
   const lead = (first.getUTCDay() + 6) % 7;
@@ -104,7 +144,9 @@ export function monthGrid(year: number, month: number, now: Date = new Date()) {
   const days = [];
   for (let d = 1; d <= daysInMonth; d++) {
     const iso = toISO(year, month, d);
-    days.push({ day: d, iso, bookable: isBookableDate(iso, now) });
+    const open = isBookableDate(iso, now);
+    const dayFull = open && isDayFull(iso, full);
+    days.push({ day: d, iso, bookable: open && !dayFull, full: dayFull });
   }
   return { lead, days };
 }

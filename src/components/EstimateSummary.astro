@@ -1,0 +1,72 @@
+---
+import { money, moneyRound, type Estimate, type RoomInput } from "../lib/pricing.ts";
+
+/**
+ * A saved estimate, as the customer saw it: the rooms they entered
+ * and the lines the estimator worked out. Folded away by default so
+ * it doesn't push the rest of a diary entry off the screen.
+ */
+interface Props {
+  code: string;
+  /** What was stored in estimates.input. */
+  input: { floor?: { name: string }; rooms?: RoomInput[]; fit?: string } | null;
+  result: Estimate | null;
+}
+const { code, input, result } = Astro.props;
+const rooms = input?.rooms ?? [];
+---
+
+{
+  result ? (
+    <details class="estsaved">
+      <summary>
+        Estimate <span class="mono">{code}</span> · {money(result.total)} incl. VAT
+      </summary>
+      <p class="hint" style="margin:10px 0 6px">
+        {input?.floor?.name}
+        {input?.fit === "supply" ? " · supply only" : " · supply & fit"}
+      </p>
+      <ul class="hint" style="padding-left:18px; display:grid; gap:2px">
+        {rooms.map((r) => (
+          <li>
+            {r.name} ·{" "}
+            <span class="mono">
+              {r.kind === "stairs" ? `${r.steps} steps` : `${r.width} × ${r.length} m`}
+            </span>
+          </li>
+        ))}
+      </ul>
+      <div class="lines" style="padding:12px 0 0">
+        {result.lines.map((l) =>
+          l.sub ? (
+            <div class="l sub"><span>{l.label}</span><span /></div>
+          ) : (
+            <div class="l"><span>{l.label}</span><span>{money(l.amount)}</span></div>
+          ),
+        )}
+        {result.discount > 0 && (
+          <div class="l disc"><span>{result.discountLabel}</span><span>−{money(result.discount)}</span></div>
+        )}
+        <div class="l" style="font-weight:800"><span>Estimate incl. VAT</span><span>{money(result.total)}</span></div>
+        {result.total > 0 && (
+          <div class="l sub">
+            <span>Typical range once measured</span>
+            <span>{moneyRound(result.rangeLow)} – {moneyRound(result.rangeHigh)}</span>
+          </div>
+        )}
+      </div>
+    </details>
+  ) : (
+    <span class="hint">
+      Estimate <span class="mono">{code}</span> — not found. It may have been typed in by hand.
+    </span>
+  )
+}
+
+<style>
+  .estsaved summary {
+    cursor: pointer;
+    font-size: 0.9rem;
+    font-weight: 700;
+  }
+</style>

@@ -4,6 +4,10 @@ import { BUSINESS } from "../../data/business.ts";
 import { longDate, slotLabel } from "../../lib/dates.ts";
 import { isBookingRef } from "../../lib/codes.ts";
 import { db, hasDatabase } from "../../lib/server/db.ts";
+import EstimateSummary from "../../components/EstimateSummary.astro";
+import type { Estimate, RoomInput } from "../../lib/pricing.ts";
+
+type EstimateInputRow = { floor?: { name: string }; rooms?: RoomInput[]; fit?: string };
 import { clientIp, ipBlock, overLimit, countAttempt } from "../../lib/server/env.ts";
 
 // Looked up live, so a customer can check their booking without an
@@ -30,6 +34,8 @@ type Row = {
   status: string;
   code: string | null;
   redemptions: number | null;
+  est_input: EstimateInputRow | null;
+  est_result: Estimate | null;
 };
 
 let booking: Row | null = null;
@@ -57,9 +63,10 @@ if (isBookingRef(raw) && hasDatabase()) {
   try {
     booking = await db
       .prepare(
-        `SELECT b.*, r.code, r.redemptions
+        `SELECT b.*, r.code, r.redemptions, e.input AS est_input, e.result AS est_result
            FROM bookings b
            LEFT JOIN referral_codes r ON r.owner_ref = b.ref
+           LEFT JOIN estimates e ON e.code = b.estimate_code
           WHERE b.ref = ?1`,
       )
       .bind(raw)
@@ -132,6 +139,16 @@ const STATUS: Record<string, string> = {
                 )}
                 {booking.notes && (<><dt>Your notes</dt><dd style="font-weight:400">{booking.notes}</dd></>)}
               </dl>
+
+              {booking.estimate_code && booking.est_result && (
+                <div style="margin:-6px 0 22px">
+                  <EstimateSummary
+                    code={booking.estimate_code}
+                    input={booking.est_input}
+                    result={booking.est_result}
+                  />
+                </div>
+              )}
 
               {
                 booking.code && (

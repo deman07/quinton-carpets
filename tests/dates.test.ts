@@ -4,9 +4,12 @@ import {
   dayOfWeek,
   isBookableDate,
   isBookableSlot,
+  isDayFull,
   longDate,
   monthGrid,
   parseISO,
+  slotHint,
+  slotKey,
   slotsFor,
   todayISO,
 } from "../src/lib/dates.ts";
@@ -106,6 +109,51 @@ describe("the calendar grid", () => {
     const { days } = monthGrid(2026, 9, NOW);
     expect(days.find((d) => d.iso === "2026-09-07")?.bookable).toBe(false);
     expect(days.find((d) => d.iso === "2026-09-08")?.bookable).toBe(true);
+  });
+});
+
+describe("a full window is not offered", () => {
+  const SUNDAY = "2026-09-13";
+  const SATURDAY = "2026-09-12";
+
+  it("greys out a window that has reached capacity, and only that one", () => {
+    const full = new Set([slotKey(SATURDAY, "am")]);
+    const slots = slotsFor(SATURDAY, full);
+    expect(slots.find((s) => s.key === "am")).toMatchObject({ available: false, full: true });
+    expect(slots.find((s) => s.key === "pm")).toMatchObject({ available: true, full: false });
+    // Another day's full window has nothing to do with this one.
+    expect(slotsFor("2026-09-11", full).every((s) => s.available)).toBe(true);
+  });
+
+  it("calls Sunday Late closed, not full", () => {
+    const full = new Set([slotKey(SUNDAY, "eve")]);
+    expect(slotsFor(SUNDAY, full).find((s) => s.key === "eve")?.full).toBe(false);
+  });
+
+  it("closes a day once every window is full", () => {
+    const some = new Set([slotKey(SATURDAY, "am"), slotKey(SATURDAY, "pm")]);
+    expect(isDayFull(SATURDAY, some)).toBe(false);
+    expect(isDayFull(SATURDAY, new Set([...some, slotKey(SATURDAY, "eve")]))).toBe(true);
+  });
+
+  it("closes a Sunday with two full windows, because Late never opens", () => {
+    const full = new Set([slotKey(SUNDAY, "am"), slotKey(SUNDAY, "pm")]);
+    expect(isDayFull(SUNDAY, full)).toBe(true);
+  });
+
+  it("greys out a full day in the grid and says why", () => {
+    const full = new Set(["am", "pm", "eve"].map((k) => slotKey(SATURDAY, k)));
+    const day = monthGrid(2026, 9, NOW, full).days.find((d) => d.iso === SATURDAY);
+    expect(day).toMatchObject({ bookable: false, full: true });
+    // A day in the past is closed, not full.
+    const past = monthGrid(2026, 9, NOW, full).days.find((d) => d.iso === "2026-09-07");
+    expect(past?.full).toBe(false);
+  });
+
+  it("explains a full window before explaining Sunday", () => {
+    expect(slotHint(SATURDAY)).toContain("pick a window");
+    expect(slotHint(SUNDAY)).toContain("Sunday, so we finish at 4pm");
+    expect(slotHint(SUNDAY, new Set([slotKey(SUNDAY, "am")]))).toContain("already booked");
   });
 });
 

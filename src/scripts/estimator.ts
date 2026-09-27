@@ -15,7 +15,6 @@ import {
   type RateCard,
   type RoomInput,
 } from "../lib/pricing.ts";
-import { mintEstimateCode } from "../lib/codes.ts";
 
 type Floor = {
   id: string;
@@ -61,7 +60,6 @@ if (root) {
       { kind: "stairs", name: "Stairs & landing", steps: 13 },
     ] as RoomInput[],
     discount: null as DiscountVerdict | null,
-    code: mintEstimateCode(),
   };
 
   const currentFloor = () => byId.get(state.floor)!;
@@ -322,24 +320,56 @@ if (root) {
     if (total) total.innerHTML = `${out.total > 0 ? money(out.total) : "£0"}<small> incl. VAT</small>`;
 
     const foot = $("#estFoot");
-    if (foot) {
+    if (foot && !foot.querySelector("#estBook")) {
       foot.innerHTML = `
-        <div class="notice info" style="margin-bottom:12px"><span>Your estimate code
-        <b class="mono">${state.code}</b> — quote it when you book and we'll have it on the screen.</span></div>
-        <a class="btn yellow" href="/book/?estimate=${encodeURIComponent(state.code)}" style="width:100%">Book a free measure</a>
+        <div class="notice info" style="margin-bottom:12px"><span>Book a measure from here and this
+        estimate goes with it — we'll have your rooms on the screen when we ring.</span></div>
+        <a class="btn yellow" id="estBook" href="/book/" style="width:100%">Book a free measure</a>
         <p class="hint" style="margin-top:10px">Booking is free and there is no payment on this site.
         Guide prices only — the fitter confirms on the day.</p>`;
+      foot.querySelector("#estBook")?.addEventListener("click", book);
     }
+  }
 
-    // Carried to the booking form so the customer doesn't retype it.
+  /* ---------------- on to the booking form ----------------
+     The estimate is saved now, not on every keystroke, and the
+     server mints its code. It sends what the customer chose; the
+     server works out the figures again for itself. */
+  async function book(e: Event) {
+    e.preventDefault();
+    const link = e.currentTarget as HTMLAnchorElement;
+    if (link.getAttribute("aria-busy") === "true") return;
+    link.setAttribute("aria-busy", "true");
+    link.textContent = "Saving your estimate…";
+
+    let target = "/book/";
     try {
-      sessionStorage.setItem(
-        "qc.estimate",
-        JSON.stringify({ code: state.code, total: out.total, floor: floor.name }),
-      );
+      const res = await fetch("/api/estimates", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          floor: state.floor,
+          underlay: state.underlay,
+          rooms: state.rooms,
+          fit: state.fit,
+          extras: state.extras,
+          discountCode: state.discount?.code ?? "",
+        }),
+      });
+      const data = (await res.json()) as { code?: string };
+      if (res.ok && data.code) {
+        target = `/book/?estimate=${encodeURIComponent(data.code)}`;
+        // Carried to the booking form so the customer doesn't retype it.
+        try {
+          sessionStorage.setItem("qc.estimate", JSON.stringify({ code: data.code }));
+        } catch {
+          /* private window, or storage blocked — the code is in the URL anyway */
+        }
+      }
     } catch {
-      /* private window, or storage blocked — the code is on screen anyway */
+      /* The booking matters more than the estimate. Carry on without it. */
     }
+    location.href = target;
   }
 
   $("#addRoom")?.addEventListener("click", () => {
@@ -358,6 +388,15 @@ if (root) {
       e.preventDefault();
       void applyCode();
     }
+  });
+
+  // Coming back with the Back button restores the page as it was
+  // left, mid-save. Put the button back.
+  window.addEventListener("pageshow", () => {
+    const link = $<HTMLAnchorElement>("#estBook");
+    if (!link) return;
+    link.removeAttribute("aria-busy");
+    link.textContent = "Book a free measure";
   });
 
   void RM; // reduced motion is handled in CSS here; nothing to animate

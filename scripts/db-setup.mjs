@@ -56,10 +56,10 @@ try {
   const [{ count: tables }] = await sql`
     SELECT count(*)::int AS count FROM information_schema.tables
      WHERE table_schema = 'public'
-       AND table_name IN ('bookings','referral_codes','promo_codes','rate_limit')`;
+       AND table_name IN ('bookings','referral_codes','promo_codes','estimates','rate_limit')`;
   const [{ count: promos }] = await sql`SELECT count(*)::int AS count FROM promo_codes`;
 
-  console.log(`Schema applied. ${tables}/4 tables present, ${promos} promotion codes.`);
+  console.log(`Schema applied. ${tables}/5 tables present, ${promos} promotion codes.`);
 } catch (err) {
   console.error("Could not apply the schema:\n", err instanceof Error ? err.message : err);
   process.exitCode = 1;

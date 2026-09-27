@@ -91,12 +91,17 @@ export const db = {
    * All of them or none of them. The booking insert and its referral
    * code are written together — a booking without its code would be a
    * customer promised a discount the shop cannot find.
+   *
+   * Returns each statement's rows, in order, for the ones that use
+   * RETURNING or SELECT.
    */
-  async batch(statements: Statement[]): Promise<void> {
-    await sql().begin(async (tx) => {
+  async batch(statements: Statement[]): Promise<Record<string, unknown>[][]> {
+    return sql().begin(async (tx) => {
+      const out: Record<string, unknown>[][] = [];
       for (const s of statements) {
-        await tx.unsafe(s.text, s.params as never[]);
+        out.push((await tx.unsafe(s.text, s.params as never[])) as unknown as Record<string, unknown>[]);
       }
+      return out;
     });
   },
 };

@@ -2,7 +2,17 @@
 import Base from "../layouts/Base.astro";
 import Calendar from "../components/Calendar.astro";
 import { BUSINESS } from "../data/business.ts";
-import { todayISO, parseISO, isBookableDate, isBookableSlot } from "../lib/dates.ts";
+import {
+  todayISO,
+  parseISO,
+  isBookableDate,
+  isBookableSlot,
+  isDayFull,
+  addDaysISO,
+  slotKey,
+  HORIZON_DAYS,
+} from "../lib/dates.ts";
+import { fullSlots } from "../lib/server/availability.ts";
 
 // Rendered on demand: "today" has to be today, and the date picker
 // has to work with JavaScript switched off.
@@ -10,15 +20,20 @@ export const prerender = false;
 
 const params = Astro.url.searchParams;
 const today = todayISO();
+const full = await fullSlots(today, addDaysISO(today, HORIZON_DAYS));
 
 // The clicked day button submits after the hidden input, so the last
 // `d` on the query string is the one the customer meant.
 const dValues = params.getAll("d");
 const rawDate = dValues[dValues.length - 1] ?? "";
-const selected = rawDate && isBookableDate(rawDate) ? rawDate : null;
+const selected =
+  rawDate && isBookableDate(rawDate) && !isDayFull(rawDate, full) ? rawDate : null;
 
 const rawSlot = params.get("slot") ?? "";
-const selectedSlot = selected && isBookableSlot(selected, rawSlot) ? rawSlot : null;
+const selectedSlot =
+  selected && isBookableSlot(selected, rawSlot) && !full.has(slotKey(selected, rawSlot))
+    ? rawSlot
+    : null;
 
 // Month on screen. Follows the chosen date, else the ?m= parameter,
 // else this month — and never earlier than this month.
@@ -131,7 +146,7 @@ void parseISO; // exported for the calendar; referenced here for clarity
 
           <fieldset style="margin:26px 0 0">
             <legend class="eyebrow" style="margin-bottom:14px">Pick a day</legend>
-            <Calendar selected={selected} selectedSlot={selectedSlot} view={view} />
+            <Calendar selected={selected} selectedSlot={selectedSlot} view={view} full={full} />
             <input type="hidden" name="date" id="bDate" value={selected ?? ""} />
             <input type="hidden" name="slot" id="bSlot" value={selectedSlot ?? ""} />
             <span

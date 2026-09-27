@@ -65,6 +65,21 @@ INSERT INTO promo_codes (code, percent_off, amount_off, message, active) VALUES
   ('NEWFLOOR25', NULL, 25, 'NEWFLOOR25 applied — £25 off your order.',   1)
 ON CONFLICT (code) DO NOTHING;
 
+-- An estimate, saved when the customer goes on to book. The code is
+-- minted here, on the server, and the figures are worked out again
+-- here from the ranges and rates rather than taken from the browser.
+-- No personal details: the booking points at the estimate, not the
+-- other way round. Prices are copied into `input` as they were, so a
+-- later change to a range's guide price does not rewrite what the
+-- customer was shown.
+CREATE TABLE IF NOT EXISTS estimates (
+  code        TEXT PRIMARY KEY,            -- QC-EST-XXXXX
+  input       JSONB NOT NULL,              -- floor, underlay, rooms, fit, extras, discount
+  result      JSONB NOT NULL,              -- lib/pricing.ts estimate(), lines and totals
+  total       DOUBLE PRECISION NOT NULL,   -- £, incl. VAT, after discount
+  created_at  TEXT NOT NULL                -- ISO 8601 UTC
+);
+
 -- Rate limiting, per IP, per hour. Cheaper than a CAPTCHA and it
 -- does not make a customer prove they are human to book a measure.
 CREATE TABLE IF NOT EXISTS rate_limit (
@@ -82,6 +97,7 @@ CREATE TABLE IF NOT EXISTS rate_limit (
 ALTER TABLE bookings       ENABLE ROW LEVEL SECURITY;
 ALTER TABLE referral_codes ENABLE ROW LEVEL SECURITY;
 ALTER TABLE promo_codes    ENABLE ROW LEVEL SECURITY;
+ALTER TABLE estimates      ENABLE ROW LEVEL SECURITY;
 ALTER TABLE rate_limit     ENABLE ROW LEVEL SECURITY;
 
 -- Supabase grants anon and authenticated full rights on every table in

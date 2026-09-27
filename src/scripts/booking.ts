@@ -19,6 +19,8 @@ import {
   monthGrid,
   monthName,
   shortDate,
+  slotHint,
+  slotKey,
   slotLabel,
   slotsFor,
   toISO,
@@ -47,6 +49,15 @@ if (form && cal) {
   let selectedSlot: string | null = slotInput.value || null;
   let view = calRoot.dataset.view ?? today.slice(0, 7);
 
+  // Windows already at capacity, as the server saw them when the page
+  // was drawn. Grows if a booking is turned away for being too late.
+  const full = new Set<string>();
+  try {
+    for (const k of JSON.parse(calRoot.dataset.full ?? "[]") as string[]) full.add(k);
+  } catch {
+    /* nothing greyed out — the server still refuses a full window */
+  }
+
   /* ---------------- honeypot timing ----------------
      A person takes more than three seconds to fill this in. A bot
      posting instantly gets turned away without a CAPTCHA. */
@@ -56,7 +67,7 @@ if (form && cal) {
   /* ---------------- the calendar ---------------- */
   function drawCal() {
     const [vy, vm] = view.split("-").map(Number) as [number, number];
-    const { lead, days } = monthGrid(vy, vm);
+    const { lead, days } = monthGrid(vy, vm, undefined, full);
 
     const prev = vm === 1 ? toISO(vy - 1, 12, 1).slice(0, 7) : toISO(vy, vm - 1, 1).slice(0, 7);
     const next = vm === 12 ? toISO(vy + 1, 1, 1).slice(0, 7) : toISO(vy, vm + 1, 1).slice(0, 7);
@@ -77,7 +88,7 @@ if (form && cal) {
           (d) =>
             `<button type="button" data-d="${d.iso}"${d.bookable ? "" : " disabled"}` +
             `${selected === d.iso ? ' class="on"' : ""} aria-pressed="${selected === d.iso}"` +
-            ` aria-label="${esc(shortDate(d.iso))}">${d.day}</button>`,
+            ` aria-label="${esc(shortDate(d.iso) + (d.full ? ", fully booked" : ""))}">${d.day}</button>`,
         )
         .join("");
 
@@ -112,22 +123,19 @@ if (form && cal) {
       return;
     }
 
-    const slots = slotsFor(selected);
+    const slots = slotsFor(selected, full);
     box.innerHTML = slots
       .map(
         (s) =>
           `<button type="button" data-s="${s.key}"${s.available ? "" : " disabled"}` +
           `${selectedSlot === s.key ? ' class="on"' : ""} aria-pressed="${selectedSlot === s.key}">` +
-          `${s.title}<br><span class="hint">${s.when}</span></button>`,
+          `${s.title}<br><span class="hint">${s.full ? "Fully booked" : s.when}</span></button>`,
       )
       .join("");
 
-    // Sunday says why, rather than just greying a box out.
-    hint.textContent =
-      shortDate(selected) +
-      (slots.some((s) => !s.available)
-        ? " — Sunday, so we finish at 4pm."
-        : " — pick a window that suits you.");
+    // Sunday and a full window both say why, rather than just
+    // greying a box out.
+    hint.textContent = slotHint(selected, full);
 
     box.querySelectorAll<HTMLButtonElement>("button:not([disabled])").forEach((b) =>
       b.addEventListener("click", () => {
@@ -212,7 +220,23 @@ if (form && cal) {
         referralCode?: string;
         error?: string;
         field?: string;
+        slotFull?: boolean;
       };
+
+      // Somebody took the last place while this form was open. Grey
+      // that window out and send them back to the calendar.
+      if (data.slotFull && selected && selectedSlot) {
+        full.add(slotKey(selected, selectedSlot));
+        selectedSlot = null;
+        slotInput.value = "";
+        if (!slotsFor(selected, full).some((s) => s.available)) {
+          selected = null;
+          dateInput.value = "";
+        }
+        drawCal();
+        drawSlots();
+        calRoot.scrollIntoView({ block: "center", behavior: RM ? "auto" : "smooth" });
+      }
 
       if (!res.ok || !data.ref) {
         if (data.field) mark(data.field, true);

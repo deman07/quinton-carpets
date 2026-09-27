@@ -3,12 +3,14 @@ import {
   monthGrid,
   monthName,
   slotsFor,
+  slotHint,
   shortDate,
   todayISO,
   parseISO,
   toISO,
   HORIZON_DAYS,
   addDaysISO,
+  type FullSlots,
 } from "../lib/dates.ts";
 
 interface Props {
@@ -17,12 +19,14 @@ interface Props {
   selectedSlot: string | null;
   /** Month on screen, "YYYY-MM". */
   view: string;
+  /** Windows already at capacity. */
+  full: FullSlots;
 }
-const { selected, selectedSlot, view } = Astro.props;
+const { selected, selectedSlot, view, full } = Astro.props;
 
 const today = todayISO();
 const [vy, vm] = view.split("-").map(Number) as [number, number];
-const { lead, days } = monthGrid(vy, vm);
+const { lead, days } = monthGrid(vy, vm, undefined, full);
 
 // Month navigation can never go back before today, and never past
 // the end of the diary.
@@ -33,14 +37,21 @@ const canGoBack = firstOfView > today;
 const horizon = addDaysISO(today, HORIZON_DAYS);
 const canGoForward = toISO(...(nextMonth.split("-").map(Number) as [number, number]), 1) <= horizon;
 
-const slots = selected && parseISO(selected) ? slotsFor(selected) : null;
+const slots = selected && parseISO(selected) ? slotsFor(selected, full) : null;
 ---
 
 {/* The buttons below belong to the #datepick form, which lives
     outside the booking form — a form cannot be nested inside
     another, and the parser would close the booking form here. */}
 <div class="grid g2" style="gap:22px; align-items:start">
-  <div class="cal" id="cal" data-today={today} data-horizon={horizon} data-view={view}>
+  <div
+    class="cal"
+    id="cal"
+    data-today={today}
+    data-horizon={horizon}
+    data-view={view}
+    data-full={JSON.stringify([...full])}
+  >
     <div class="calhead">
       <button
         class="iconbtn"
@@ -80,7 +91,7 @@ const slots = selected && parseISO(selected) ? slotsFor(selected) : null;
             disabled={!d.bookable}
             class={selected === d.iso ? "on" : undefined}
             aria-pressed={selected === d.iso ? "true" : "false"}
-            aria-label={shortDate(d.iso)}
+            aria-label={d.full ? `${shortDate(d.iso)}, fully booked` : shortDate(d.iso)}
           >
             {d.day}
           </button>
@@ -94,9 +105,9 @@ const slots = selected && parseISO(selected) ? slotsFor(selected) : null;
     <div class="slots" id="slots" role="group" aria-labelledby="slotlabel">
       {
         (slots ?? [
-          { key: "am", title: "Morning", when: "10am – 1pm", available: false },
-          { key: "pm", title: "Afternoon", when: "1pm – 4pm", available: false },
-          { key: "eve", title: "Late", when: "4pm – 6pm", available: false },
+          { key: "am", title: "Morning", when: "10am – 1pm", available: false, full: false },
+          { key: "pm", title: "Afternoon", when: "1pm – 4pm", available: false, full: false },
+          { key: "eve", title: "Late", when: "4pm – 6pm", available: false, full: false },
         ]).map((s) => (
           <button
             type="submit"
@@ -110,7 +121,7 @@ const slots = selected && parseISO(selected) ? slotsFor(selected) : null;
           >
             {s.title}
             <br />
-            <span class="hint">{s.when}</span>
+            <span class="hint">{s.full ? "Fully booked" : s.when}</span>
           </button>
         ))
       }
@@ -119,11 +130,7 @@ const slots = selected && parseISO(selected) ? slotsFor(selected) : null;
     <p class="hint" style="margin-top:10px" id="slotHint">
       {
         selected
-          ? `${shortDate(selected)}${
-              slots?.some((s) => !s.available)
-                ? " — Sunday, so we finish at 4pm."
-                : " — pick a window that suits you."
-            }`
+          ? slotHint(selected, full)
           : "Choose a date first. We measure Monday to Saturday, and Sunday mornings."
       }
     </p>

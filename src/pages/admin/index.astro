@@ -3,6 +3,10 @@ import Base from "../../layouts/Base.astro";
 import { longDate, slotLabel, todayISO } from "../../lib/dates.ts";
 import { getEnv, clientIp, ipBlock, countAttempt } from "../../lib/server/env.ts";
 import { db, hasDatabase } from "../../lib/server/db.ts";
+import EstimateSummary from "../../components/EstimateSummary.astro";
+import type { Estimate, RoomInput } from "../../lib/pricing.ts";
+
+type EstimateInputRow = { floor?: { name: string }; rooms?: RoomInput[]; fit?: string };
 
 // Staff only, behind basic auth. Rendered on demand and never
 // cached — this is the diary, not a page.
@@ -83,6 +87,8 @@ type Row = {
   status: string;
   code: string | null;
   redemptions: number | null;
+  est_input: EstimateInputRow | null;
+  est_result: Estimate | null;
 };
 
 let rows: Row[] = [];
@@ -92,15 +98,19 @@ if (hasDatabase()) {
     const q = showAll
       ? db
           .prepare(
-            `SELECT b.*, r.code, r.redemptions FROM bookings b
+            `SELECT b.*, r.code, r.redemptions, e.input AS est_input, e.result AS est_result
+               FROM bookings b
                LEFT JOIN referral_codes r ON r.owner_ref = b.ref
+               LEFT JOIN estimates e ON e.code = b.estimate_code
               WHERE b.date >= ?1 ORDER BY b.date ASC, b.slot ASC LIMIT 200`,
           )
           .bind(today)
       : db
           .prepare(
-            `SELECT b.*, r.code, r.redemptions FROM bookings b
+            `SELECT b.*, r.code, r.redemptions, e.input AS est_input, e.result AS est_result
+               FROM bookings b
                LEFT JOIN referral_codes r ON r.owner_ref = b.ref
+               LEFT JOIN estimates e ON e.code = b.estimate_code
               WHERE b.date = ?1 ORDER BY b.slot ASC`,
           )
           .bind(day);
@@ -161,12 +171,14 @@ const STATUSES = ["new", "called", "measured", "fitted"] as const;
                 {b.notes && <p style="font-size:.9rem">“{b.notes}”</p>}
                 <p style="font-size:.82rem;color:var(--muted)">
                   <a href={`mailto:${b.email}`}>{b.email}</a>
-                  {b.estimate_code && <> · est <span class="mono">{b.estimate_code}</span></>}
                   {b.referred_by && <> · referred by <span class="mono">{b.referred_by}</span></>}
                   {b.code && (
                     <> · their code <span class="mono">{b.code}</span> (used {b.redemptions ?? 0})</>
                   )}
                 </p>
+                {b.estimate_code && (
+                  <EstimateSummary code={b.estimate_code} input={b.est_input} result={b.est_result} />
+                )}
                 <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center">
                   <label for={`s-${b.ref}`} class="hint" style="font-weight:700">Status</label>
                   <select id={`s-${b.ref}`} data-status-for={b.ref}>

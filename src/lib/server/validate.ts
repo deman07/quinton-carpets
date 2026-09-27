@@ -6,6 +6,7 @@
  */
 
 import { isBookableDate, isBookableSlot } from "../dates.ts";
+import type { RoomInput } from "../pricing.ts";
 
 export interface BookingPayload {
   name: string;
@@ -112,6 +113,84 @@ export function validateBooking(
       date,
       slot,
       notes: notes.slice(0, 1000) || undefined,
+    },
+  };
+}
+
+/* ---------------- estimates ---------------- */
+
+export interface EstimateRequest {
+  /** Range ids. The prices are looked up on the server, never taken from here. */
+  floor: string;
+  underlay: string | null;
+  rooms: RoomInput[];
+  fit: "fitted" | "supply";
+  extras: { uplift: boolean; gripper: boolean; doorbars: boolean; furniture: boolean };
+  discountCode: string;
+}
+
+/** Bigger than any house, small enough that nobody prices a warehouse by accident. */
+const MAX_ROOMS = 20;
+const MAX_METRES = 30;
+const MAX_STEPS = 60;
+
+const num = (v: unknown) => (typeof v === "number" && Number.isFinite(v) ? v : NaN);
+
+/**
+ * The estimator's state, checked. A room the customer left blank is
+ * dropped rather than refused, the same as the estimator ignores it
+ * while they type.
+ */
+export function validateEstimate(raw: unknown): { ok: true; value: EstimateRequest } | { ok: false; error: string } {
+  if (!raw || typeof raw !== "object") return { ok: false, error: "Couldn't read that estimate." };
+  const r = raw as Record<string, unknown>;
+
+  const floor = str(r.floor);
+  if (!floor) return { ok: false, error: "Pick a floor first." };
+  const underlay = str(r.underlay);
+
+  if (!Array.isArray(r.rooms)) return { ok: false, error: "Add a room first." };
+  if (r.rooms.length > MAX_ROOMS) {
+    return { ok: false, error: `That's more than ${MAX_ROOMS} rooms — ring the shop and we'll price it with you.` };
+  }
+
+  const rooms: RoomInput[] = [];
+  for (const item of r.rooms as unknown[]) {
+    if (!item || typeof item !== "object") continue;
+    const room = item as Record<string, unknown>;
+    const name = str(room.name).slice(0, 60);
+    if (room.kind === "stairs") {
+      const steps = Math.round(num(room.steps));
+      if (!(steps > 0)) continue;
+      if (steps > MAX_STEPS) return { ok: false, error: `${name || "Those stairs"}: that's a lot of steps.` };
+      rooms.push({ kind: "stairs", name: name || "Stairs", steps });
+    } else {
+      const width = num(room.width);
+      const length = num(room.length);
+      if (!(width > 0 && length > 0)) continue;
+      if (width > MAX_METRES || length > MAX_METRES) {
+        return { ok: false, error: `${name || "That room"} is over ${MAX_METRES}m — is that in metres?` };
+      }
+      rooms.push({ kind: "room", name: name || "Room", width, length });
+    }
+  }
+  if (!rooms.length) return { ok: false, error: "Add a room first." };
+
+  const e = (r.extras ?? {}) as Record<string, unknown>;
+  return {
+    ok: true,
+    value: {
+      floor,
+      underlay: underlay && underlay !== "none" ? underlay : null,
+      rooms,
+      fit: r.fit === "supply" ? "supply" : "fitted",
+      extras: {
+        uplift: e.uplift === true,
+        gripper: e.gripper === true,
+        doorbars: e.doorbars === true,
+        furniture: e.furniture === true,
+      },
+      discountCode: str(r.discountCode).toUpperCase().slice(0, 40),
     },
   };
 }

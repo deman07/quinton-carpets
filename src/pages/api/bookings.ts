@@ -12,6 +12,7 @@ import { db } from "../../lib/server/db.ts";
 import { validateBooking } from "../../lib/server/validate.ts";
 import { shopEmail, customerEmail } from "../../lib/server/email.ts";
 import { mintBookingRef, mintReferralCode } from "../../lib/codes.ts";
+import { SLOT_CAPACITY, slotKey } from "../../lib/dates.ts";
 
 export const prerender = false;
 
@@ -48,19 +49,30 @@ export const POST: APIRoute = async ({ request }) => {
 
   // A reference collision is vanishingly unlikely, but the column is
   // a primary key, so try again rather than fail the customer.
+  //
+  // The window's capacity is checked in the same transaction as the
+  // insert, under a lock on that date and window. Without the lock,
+  // two people booking the last place at the same moment would each
+  // count one booking, and both would get in.
   let ref = "";
   let referralCode = "";
   let saved = false;
   for (let attempt = 0; attempt < 5 && !saved; attempt++) {
     ref = mintBookingRef(now);
     referralCode = mintReferralCode();
+    let rows: Record<string, unknown>[][];
     try {
-      await db.batch([
+      rows = await db.batch([
+        db.prepare(`SELECT pg_advisory_xact_lock(hashtext(?1))`).bind(
+          `booking:${slotKey(b.date, b.slot)}`,
+        ),
         db.prepare(
           `INSERT INTO bookings
              (ref, name, phone, email, address, postcode, estimate_code,
               referred_by, date, slot, notes, created_at, status)
-           VALUES (?1,?2,?3,?4,?5,?6,?7,?8,?9,?10,?11,?12,'new')`,
+           SELECT ?1,?2,?3,?4,?5,?6,?7,?8,?9,?10,?11,?12,'new'
+            WHERE (SELECT count(*) FROM bookings WHERE date = ?9 AND slot = ?10) < ?13
+           RETURNING ref`,
         ).bind(
           ref,
           b.name,
@@ -74,13 +86,15 @@ export const POST: APIRoute = async ({ request }) => {
           b.slot,
           b.notes ?? null,
           now.toISOString(),
+          SLOT_CAPACITY,
         ),
+        // Written only if the booking above was, so a full window
+        // leaves nothing behind.
         db.prepare(
           `INSERT INTO referral_codes (code, owner_ref, redemptions, created_at)
-           VALUES (?1, ?2, 0, ?3)`,
+           SELECT ?1, ref, 0, ?3 FROM bookings WHERE ref = ?2`,
         ).bind(referralCode, ref, now.toISOString()),
       ]);
-      saved = true;
     } catch (err) {
       if (attempt === 4) {
         console.error("booking insert failed", err);
@@ -89,7 +103,19 @@ export const POST: APIRoute = async ({ request }) => {
           500,
         );
       }
+      continue;
     }
+
+    if (!rows[1]?.length) {
+      return json(
+        {
+          error: "Someone has just taken the last place in that window. Please pick another.",
+          slotFull: true,
+        },
+        409,
+      );
+    }
+    saved = true;
   }
 
   // A friend's code being used is recorded here. Whether the reward
