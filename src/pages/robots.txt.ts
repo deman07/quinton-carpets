@@ -1,4 +1,5 @@
 import type { APIRoute } from "astro";
+import { getSettings } from "../lib/server/catalogue.ts";
 
 /**
  * robots.txt, which differs by deployment.
@@ -11,7 +12,8 @@ import type { APIRoute } from "astro";
  */
 const demo = process.env.DEMO_MODE === "1";
 
-export const GET: APIRoute = ({ site }) => {
+export const GET: APIRoute = async () => {
+  const { siteUrl } = await getSettings();
   const body = demo
     ? ["# Demo deployment — not for indexing.", "User-agent: *", "Disallow: /", ""].join("\n")
     : [
@@ -21,7 +23,7 @@ export const GET: APIRoute = ({ site }) => {
         "Disallow: /booking/",
         "Disallow: /api/",
         "",
-        `Sitemap: ${site ?? "https://www.quintoncarpets.co.uk/"}sitemap.xml`,
+        `Sitemap: ${siteUrl}/sitemap.xml`,
         "",
       ].join("\n");
 

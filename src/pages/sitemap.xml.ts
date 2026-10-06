@@ -1,4 +1,5 @@
 import type { APIRoute } from "astro";
+import { getSettings } from "../lib/server/catalogue.ts";
 
 /**
  * Only the pages a customer should land on from a search. The
@@ -15,8 +16,8 @@ const PAGES = [
   { path: "/privacy/", priority: "0.2", changefreq: "yearly" },
 ];
 
-export const GET: APIRoute = ({ site }) => {
-  const base = (site ?? new URL("https://www.quintoncarpets.co.uk")).origin;
+export const GET: APIRoute = async () => {
+  const base = (await getSettings()).siteUrl;
   const today = new Date().toISOString().slice(0, 10);
 
   const body = `<?xml version="1.0" encoding="UTF-8"?>

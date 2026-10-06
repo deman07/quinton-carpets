@@ -1,12 +1,17 @@
 ---
 import Base from "../layouts/Base.astro";
-import { allRanges, floorRanges, underlayRanges } from "../lib/ranges.ts";
+import { floorRanges, underlayRanges } from "../lib/ranges.ts";
+import { getRanges, getRates } from "../lib/server/catalogue.ts";
 import { swatchStyle } from "../lib/textures.ts";
 import { getImage } from "astro:assets";
-import { PRICES, money } from "../lib/pricing.ts";
+import { money } from "../lib/pricing.ts";
 import { BUSINESS } from "../data/business.ts";
 
-const ranges = await allRanges();
+// Rendered on demand, so a price changed in the database is the
+// price the customer is quoted.
+export const prerender = false;
+
+const [ranges, rates] = await Promise.all([getRanges(), getRates()]);
 
 // Only what the client actually needs, with the swatch already
 // painted server-side so the picker is correct before any JS runs.
@@ -40,7 +45,7 @@ const underlays = underlayRanges(ranges).map((r) => ({
   forHard: r.grade === "For hard floors",
 }));
 
-const config = { floors, underlays, rates: PRICES };
+const config = { floors, underlays, rates };
 ---
 
 <Base
@@ -135,10 +140,10 @@ const config = { floors, underlays, rates: PRICES };
       </div>
 
       <p class="notice info" style="margin-top:26px">
-        Fitting is charged at {money(PRICES.fitCarpet)}/m² for carpet and
-        {money(PRICES.fitHard)}/m² for laminate and LVT, and stairs are
-        {money(PRICES.fitStair)} a step. These are placeholder rates pending the shop's
-        confirmation — the figure on the free measure is the one that counts.
+        Fitting is charged at {money(rates.fitCarpet)}/m² for carpet and
+        {money(rates.fitHard)}/m² for laminate and LVT, and stairs are
+        {money(rates.fitStair)} a step. These are guide rates — the figure on the free
+        measure is the one that counts.
       </p>
     </div>
   </div>

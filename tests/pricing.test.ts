@@ -203,12 +203,22 @@ describe("discounts — labour only, always", () => {
     withinAPenny(out.discount, labourOf(fitted) * 0.1);
   });
 
-  it("takes NEWFLOOR25 off the order as a flat £25", () => {
+  it("takes NEWFLOOR25 off the fitting as a flat £25", () => {
     const out = estimate({
       ...fitted,
-      discount: { valid: true, kind: "promo", amountOff: 25, message: "NEWFLOOR25 applied — £25 off your order." },
+      discount: { valid: true, kind: "promo", amountOff: 25, message: "NEWFLOOR25 applied — £25 off your fitting." },
     });
     near(out.discount, 25);
+  });
+
+  it("never takes a flat amount off the materials", () => {
+    const supplyOnly = { ...fitted, fit: "supply" as const };
+    const out = estimate({
+      ...supplyOnly,
+      discount: { valid: true, kind: "promo", amountOff: 25, message: "£25 off your fitting." },
+    });
+    near(out.discount, 0);
+    near(out.total, estimate(supplyOnly).subtotal);
   });
 
   it("never discounts a supply-only order, because there is no labour", () => {
@@ -221,7 +231,7 @@ describe("discounts — labour only, always", () => {
     near(out.total, estimate(supplyOnly).subtotal);
   });
 
-  it("never takes more off than the order is worth", () => {
+  it("never takes more off than the fitting is worth", () => {
     const tiny = base({
       rooms: [{ kind: "room", name: "Cupboard", width: 0.5, length: 0.5 }],
       floor: { name: "Offcut", pricePerSqm: 1, widths: [4], hard: false },
@@ -229,7 +239,8 @@ describe("discounts — labour only, always", () => {
     });
     const out = estimate(tiny);
     expect(out.total).toBeGreaterThanOrEqual(0);
-    near(out.discount, out.subtotal);
+    expect(out.labour).toBeLessThan(25);
+    near(out.discount, out.labour);
   });
 
   it("ignores a verdict the server rejected", () => {

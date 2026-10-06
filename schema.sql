@@ -60,10 +60,19 @@ CREATE TABLE IF NOT EXISTS promo_codes (
   expires_at  TEXT
 );
 
-INSERT INTO promo_codes (code, percent_off, amount_off, message, active) VALUES
-  ('WINTER10',   10, NULL, 'WINTER10 applied — 10% off fitting.',        1),
-  ('NEWFLOOR25', NULL, 25, 'NEWFLOOR25 applied — £25 off your order.',   1)
+-- Like every discount, both come off the fitting only. WINTER10 runs
+-- to the end of February.
+INSERT INTO promo_codes (code, percent_off, amount_off, message, active, expires_at) VALUES
+  ('WINTER10',   10, NULL, 'WINTER10 applied — 10% off fitting.',        1, '2027-02-28'),
+  ('NEWFLOOR25', NULL, 25, 'NEWFLOOR25 applied — £25 off your fitting.', 1, NULL)
 ON CONFLICT (code) DO NOTHING;
+
+-- NEWFLOOR25 used to promise £25 off the whole order, materials and
+-- all, against the rule that materials never discount. Correct the
+-- wording on databases seeded before then. It matches the old text
+-- exactly, so it never touches a message the shop has written.
+UPDATE promo_codes SET message = 'NEWFLOOR25 applied — £25 off your fitting.'
+ WHERE code = 'NEWFLOOR25' AND message = 'NEWFLOOR25 applied — £25 off your order.';
 
 -- An estimate, saved when the customer goes on to book. The code is
 -- minted here, on the server, and the figures are worked out again
@@ -78,6 +87,76 @@ CREATE TABLE IF NOT EXISTS estimates (
   result      JSONB NOT NULL,              -- lib/pricing.ts estimate(), lines and totals
   total       DOUBLE PRECISION NOT NULL,   -- £, incl. VAT, after discount
   created_at  TEXT NOT NULL                -- ISO 8601 UTC
+);
+
+-- ---------------------------------------------------------------
+-- What the shop edits: the ranges, the fitting rates and the site
+-- settings. Change them in the Supabase Table Editor and the site
+-- shows the change within about a minute — no deploy.
+-- seed.sql fills them with the placeholders the first time only;
+-- running db:setup again never writes over the shop's edits.
+-- ---------------------------------------------------------------
+
+-- One row per range. Money is DOUBLE PRECISION, as promo_codes
+-- already is, so it reaches the site as a number and not a string.
+CREATE TABLE IF NOT EXISTS ranges (
+  id          TEXT PRIMARY KEY CHECK (id ~ '^[a-z0-9-]+$'),   -- the URL slug
+  name        TEXT NOT NULL,
+  material    TEXT NOT NULL CHECK (material IN ('Carpet','Laminate','Vinyl','Underlay')),
+  spec        TEXT NOT NULL,                                  -- the spec line, in the fitter's words
+  price       DOUBLE PRECISION NOT NULL CHECK (price > 0),    -- guide £/m², supply only
+  grade       TEXT NOT NULL,                                  -- 'Heavy domestic · Class 23'; underlay: 'For carpet' or 'For hard floors'
+  rooms       TEXT[] NOT NULL DEFAULT '{}'
+              CHECK (rooms <@ ARRAY['Living','Bedroom','Stairs','Hall','Kitchen','Bathroom']),
+  widths      DOUBLE PRECISION[]                              -- roll widths in metres; NULL when sold by area
+              CHECK (widths IS NULL OR (cardinality(widths) > 0 AND 0 < ALL (widths))),
+  pile        TEXT NOT NULL                                   -- the CSS texture shown when there is no photo
+              CHECK (pile IN ('twist','saxony','loop','stripe','plank','herring','sheet','foam')),
+  colours     TEXT[] NOT NULL CHECK (cardinality(colours) > 0),
+  photo_url   TEXT,                                           -- 1:1 crop; '/ranges/x.jpg' or a full https:// URL. NULL shows the texture
+  sort_order  INTEGER NOT NULL DEFAULT 50,
+  showcase    INTEGER CHECK (showcase IS NULL OR showcase > 0), -- position in the home banner; NULL leaves it out
+  description TEXT NOT NULL DEFAULT '',
+  active      BOOLEAN NOT NULL DEFAULT true                   -- false hides it everywhere without deleting it
+);
+
+-- The fitting rates. Exactly one row: id is always 1.
+CREATE TABLE IF NOT EXISTS rates (
+  id                 INTEGER PRIMARY KEY DEFAULT 1 CHECK (id = 1),
+  fit_carpet         DOUBLE PRECISION NOT NULL CHECK (fit_carpet >= 0),         -- £/m² to fit a soft floor
+  fit_hard           DOUBLE PRECISION NOT NULL CHECK (fit_hard >= 0),           -- £/m² to fit laminate and LVT
+  fit_stair          DOUBLE PRECISION NOT NULL CHECK (fit_stair >= 0),          -- £ per step
+  uplift             DOUBLE PRECISION NOT NULL CHECK (uplift >= 0),             -- £/m² to lift and dispose of the old floor
+  gripper            DOUBLE PRECISION NOT NULL CHECK (gripper >= 0),            -- £ per metre of perimeter
+  doorbar            DOUBLE PRECISION NOT NULL CHECK (doorbar >= 0),            -- £ each, one per room
+  furniture          DOUBLE PRECISION NOT NULL CHECK (furniture >= 0),          -- £ flat
+  trim               DOUBLE PRECISION NOT NULL CHECK (trim >= 0),               -- metres added to each run for trimming
+  wastage_hard       DOUBLE PRECISION NOT NULL CHECK (wastage_hard >= 1),       -- × area for laminate and LVT
+  underlay_allowance DOUBLE PRECISION NOT NULL CHECK (underlay_allowance >= 1), -- × floor area for underlay
+  stair_area         DOUBLE PRECISION NOT NULL CHECK (stair_area > 0)           -- m² of carpet per step
+);
+
+-- Everything else the shop might change. Exactly one row: id is 1.
+CREATE TABLE IF NOT EXISTS settings (
+  id            INTEGER PRIMARY KEY DEFAULT 1 CHECK (id = 1),
+  -- The live domain, for canonical links, the sitemap and sharing.
+  site_url      TEXT NOT NULL DEFAULT 'https://www.quintoncarpets.co.uk'
+                CHECK (site_url ~ '^https://[a-z0-9.-]+$'),
+  -- Where the shop's copy of each booking goes, and who it is from.
+  -- Empty means the SHOP_EMAIL / MAIL_FROM environment variables.
+  shop_email    TEXT,
+  mail_from     TEXT,
+  -- How many measures each time window takes. 0 closes the window.
+  capacity_am   INTEGER NOT NULL DEFAULT 3 CHECK (capacity_am >= 0),
+  capacity_pm   INTEGER NOT NULL DEFAULT 3 CHECK (capacity_pm >= 0),
+  capacity_eve  INTEGER NOT NULL DEFAULT 2 CHECK (capacity_eve >= 0),
+  -- The four category cards on the home page, and the image shown
+  -- when the site is shared. A path under public/ or a full URL.
+  photo_carpets  TEXT NOT NULL DEFAULT '/site/cat-carpets.jpg',
+  photo_underlay TEXT NOT NULL DEFAULT '/site/cat-underlay.jpg',
+  photo_laminate TEXT NOT NULL DEFAULT '/site/cat-laminate.jpg',
+  photo_vinyl    TEXT NOT NULL DEFAULT '/site/cat-vinyl.jpg',
+  og_image       TEXT NOT NULL DEFAULT '/og.jpg'
 );
 
 -- Rate limiting, per IP, per hour. Cheaper than a CAPTCHA and it
@@ -98,6 +177,9 @@ ALTER TABLE bookings       ENABLE ROW LEVEL SECURITY;
 ALTER TABLE referral_codes ENABLE ROW LEVEL SECURITY;
 ALTER TABLE promo_codes    ENABLE ROW LEVEL SECURITY;
 ALTER TABLE estimates      ENABLE ROW LEVEL SECURITY;
+ALTER TABLE ranges         ENABLE ROW LEVEL SECURITY;
+ALTER TABLE rates          ENABLE ROW LEVEL SECURITY;
+ALTER TABLE settings       ENABLE ROW LEVEL SECURITY;
 ALTER TABLE rate_limit     ENABLE ROW LEVEL SECURITY;
 
 -- Supabase grants anon and authenticated full rights on every table in

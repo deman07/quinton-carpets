@@ -12,7 +12,9 @@ import { db } from "../../lib/server/db.ts";
 import { validateBooking } from "../../lib/server/validate.ts";
 import { shopEmail, customerEmail } from "../../lib/server/email.ts";
 import { mintBookingRef, mintReferralCode } from "../../lib/codes.ts";
-import { SLOT_CAPACITY, slotKey } from "../../lib/dates.ts";
+import { slotKey } from "../../lib/dates.ts";
+import { capacityFor } from "../../lib/server/availability.ts";
+import { getSettings } from "../../lib/server/catalogue.ts";
 
 export const prerender = false;
 
@@ -46,6 +48,15 @@ export const POST: APIRoute = async ({ request }) => {
     return json({ error: check.error, field: check.field }, 400);
   }
   const b = check.value;
+
+  // The shop can close a window altogether by setting its capacity to 0.
+  const capacity = await capacityFor(b.slot);
+  if (capacity <= 0) {
+    return json(
+      { error: "We're not booking measures in that window at the moment. Please pick another.", slotFull: true },
+      409,
+    );
+  }
 
   // A reference collision is vanishingly unlikely, but the column is
   // a primary key, so try again rather than fail the customer.
@@ -86,7 +97,7 @@ export const POST: APIRoute = async ({ request }) => {
           b.slot,
           b.notes ?? null,
           now.toISOString(),
-          SLOT_CAPACITY,
+          capacity,
         ),
         // Written only if the booking above was, so a full window
         // leaves nothing behind.
@@ -134,12 +145,21 @@ export const POST: APIRoute = async ({ request }) => {
   // provider having a bad morning must never lose someone's slot.
   const payload = { ...b, ref, referralCode };
   after(
-    Promise.allSettled([shopEmail(env, payload), customerEmail(env, payload)]).then((rs) =>
-      rs.forEach((r) => {
-        if (r.status === "rejected") console.error("email failed", r.reason);
-        else if (!r.value.sent) console.warn("email not sent:", r.value.reason);
-      }),
-    ),
+    // The addresses in the settings table win; left empty, the
+    // SHOP_EMAIL and MAIL_FROM environment variables stand.
+    getSettings()
+      .then((s) => ({
+        ...env,
+        SHOP_EMAIL: s.shopEmail ?? env.SHOP_EMAIL,
+        MAIL_FROM: s.mailFrom ?? env.MAIL_FROM,
+      }))
+      .then((mail) => Promise.allSettled([shopEmail(mail, payload), customerEmail(mail, payload)]))
+      .then((rs) =>
+        rs.forEach((r) => {
+          if (r.status === "rejected") console.error("email failed", r.reason);
+          else if (!r.value.sent) console.warn("email not sent:", r.value.reason);
+        }),
+      ),
   );
 
   // A no-JavaScript post gets sent to its own booking page.

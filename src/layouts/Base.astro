@@ -3,6 +3,7 @@ import "../styles/global.css";
 import Header from "../components/Header.astro";
 import Footer from "../components/Footer.astro";
 import { BUSINESS, HOURS } from "../data/business.ts";
+import { getSettings } from "../lib/server/catalogue.ts";
 
 interface Props {
   title: string;
@@ -34,9 +35,11 @@ const {
 // indexed under that name. Removing the variable lifts this.
 const demo = process.env.DEMO_MODE === "1";
 
-const SITE = Astro.site ?? new URL("https://www.quintoncarpets.co.uk");
+// The live domain and the share picture are in the settings table.
+const settings = await getSettings();
+const SITE = new URL(`${settings.siteUrl}/`);
 const canonical = new URL(canonicalPath ?? Astro.url.pathname, SITE);
-const ogImage = new URL("/og.jpg", SITE);
+const ogImage = new URL(settings.ogImage, SITE);
 
 const localBusiness = {
   "@context": "https://schema.org",

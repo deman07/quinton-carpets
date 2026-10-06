@@ -1,6 +1,7 @@
 ---
 import Base from "../../layouts/Base.astro";
-import { allRanges, filterRanges, MATERIALS, ROOMS } from "../../lib/ranges.ts";
+import { filterRanges, MATERIALS, ROOMS } from "../../lib/ranges.ts";
+import { getRanges, getSettings } from "../../lib/server/catalogue.ts";
 import Swatch from "../../components/Swatch.astro";
 import { money } from "../../lib/pricing.ts";
 import { BUSINESS } from "../../data/business.ts";
@@ -22,7 +23,7 @@ const material = norm(rawMaterial, MATERIALS);
 const room = norm(rawRoom, ROOMS);
 const filtered = material !== "All" || room !== "All";
 
-const ranges = await allRanges();
+const [ranges, settings] = await Promise.all([getRanges(), getSettings()]);
 const list = filterRanges(ranges, material, room);
 
 const hrefFor = (key: "material" | "room", value: string) => {
@@ -68,7 +69,7 @@ const schema = {
         // Per m², supply only — fitting is priced separately.
         unitText: "square metre",
         availability: "https://schema.org/InStoreOnly",
-        seller: { "@id": `${Astro.site ?? "https://www.quintoncarpets.co.uk"}#shop` },
+        seller: { "@id": `${settings.siteUrl}/#shop` },
       },
     },
   })),

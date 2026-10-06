@@ -22,12 +22,16 @@ Astro 5 · Tailwind 4 · TypeScript · Vercel + Supabase (Postgres).
 ```bash
 npm install
 cp .env.example .env   # then paste your Supabase connection string in
-npm run db:setup       # creates the tables, once. Safe to re-run
+npm run db:setup       # creates the tables and the placeholder content. Safe to re-run
 npm run dev            # http://localhost:4321 — the whole site, database included
 ```
 
-`npm run dev` serves the API routes as well as the pages, so the booking form and the code
-checker work locally against the real database.
+Every page reads the database — the ranges, the rates and the settings live there — so the
+site needs `DATABASE_URL` to run at all, locally as much as on Vercel.
+
+A free Supabase project **pauses after a week without traffic**, and a paused one answers every
+connection with `tenant/user … not found`. Restore it from the Supabase dashboard and it comes
+back as it was.
 
 **Use the pooler connection string**, not the direct one — Supabase dashboard → Connect →
 Connection string → Transaction pooler, on port 6543. Serverless functions open and drop
@@ -53,34 +57,44 @@ bookings an hour, and every test run comes from the same address.
 
 ```
 src/
-  content/ranges/*.md    the 14 ranges — the shop edits these, no deploy needed
   data/                  business facts and the 12 real reviews
   lib/
     pricing.ts           the estimator maths. Pure, unit-tested, no DOM
     dates.ts             the diary rules, in Europe/London
     codes.ts             minting and shape-checking references
     textures.ts          the CSS floor textures (placeholders for photography)
-    ranges.ts            reading the content collection
+    ranges.ts            the shape of a range, and the filters over a list of them
     server/              the database, validation, email and secrets — server only
+      catalogue.ts       reads the ranges, rates and settings, cached for 30 seconds
+  middleware.ts          lets Vercel's CDN hold the public pages for a minute
   pages/
     api/                 the booking and code endpoints
     booking/[ref].astro  a customer looking up their own booking
     admin/               the staff diary, behind basic auth
   scripts/               the browser: motion, the estimator, the booking island
   styles/                the design system, split by concern
+public/ranges/, site/    the placeholder photographs the database points at
+schema.sql, seed.sql     the tables, and the placeholder content they start with
 reference/prototype.html the approved prototype, kept as a test fixture only
 ```
 
-### Which pages are static
+### Every page is rendered on demand
 
-Everything is prerendered except four routes that genuinely need a server:
+The shop's content lives in the database, so no page is built ahead of time — a prebuilt page
+would show yesterday's prices until the next deploy. Instead `src/middleware.ts` gives every
+public page `s-maxage=60, stale-while-revalidate`: Vercel's CDN answers almost every request,
+goes back to the function at most once a minute per URL, and keeps serving the last copy while
+it does. Four routes are never cached:
 
 | Route | Why |
 |---|---|
-| `/ranges/` | the filter is real server-side filtering, so `?material=carpet` works with JavaScript off |
-| `/book/` | "today" has to be today, and the date picker works without JavaScript |
-| `/booking/[ref]/` | reads the diary |
-| `/admin/` | reads the diary, behind basic auth |
+| `/book/` | "today" has to be today, and it shows which windows are already full |
+| `/booking/[ref]/` | a customer's own booking |
+| `/admin/` | the diary, behind basic auth |
+| `/api/*` | answers per request |
+
+`/ranges/` is cached per URL, so `?material=carpet` is cached separately from the full list and
+the filter still works with JavaScript off.
 
 **On the database layer.** The site was first built for Cloudflare Pages and D1, as the brief
 asked, and later moved to Vercel and Supabase. The thirteen SQL statements were not rewritten:
@@ -89,6 +103,38 @@ asked, and later moved to Vercel and Supabase. The thirteen SQL statements were 
 way through. The queries read exactly as they did when they were reviewed, and the schema
 keeps dates and timestamps as TEXT so a database timezone setting can never move someone's
 booking to the day before.
+
+---
+
+## Editing the shop's content
+
+Everything the shop changes is in three tables, edited in the Supabase dashboard → **Table
+Editor**. A change is on the site within about a minute, with no deploy.
+
+| Table | What is in it |
+|---|---|
+| `ranges` | one row per range: name, material, spec line, guide price per m², grade, rooms, roll widths, colours, photo, order on the page, place in the home banner, description. Untick `active` to hide one without deleting it |
+| `rates` | one row: the fitting rates per m² and per step, uplift, gripper, door bars, moving furniture, and the allowances the estimator works with |
+| `settings` | one row: the live domain, where booking emails go and who they come from, how many measures each time window takes, the four category photos on the home page, and the picture used when the site is shared |
+| `promo_codes` | the seasonal codes. Every discount comes off the fitting only |
+
+**Photos** are a path or a URL in a `photo_url` (or `photo_…`) column, cropped 1:1. To add one,
+upload it to a **public** bucket in Supabase → Storage, copy its public URL, and paste it in.
+Vercel resizes it on the way out. Leave a range's `photo_url` empty and its CSS weave from
+`lib/textures.ts` shows instead.
+
+**Time windows**: `capacity_am`, `capacity_pm` and `capacity_eve` in `settings` are how many
+measures each window takes. Set one to 0 to stop taking bookings in it.
+
+**Email**: `shop_email` and `mail_from` in `settings` win over the `SHOP_EMAIL` and `MAIL_FROM`
+environment variables. Left empty, the variables stand. The sender must be on a domain verified
+with Resend.
+
+**The domain**: `site_url` in `settings` is what canonical links, the sitemap and shared links
+use. Point the domain at Vercel first (Project → Settings → Domains), then change `site_url`.
+
+`npm run db:setup` never writes over any of this: the placeholders in `seed.sql` only go in
+where a row is missing.
 
 ---
 
@@ -106,8 +152,8 @@ Preview and Development:
 | `ADMIN_USER` | yes | basic-auth username for `/admin/` |
 | `ADMIN_PASSWORD` | yes | basic-auth password for `/admin/` |
 | `RESEND_API_KEY` | no | sends the two confirmation emails |
-| `SHOP_EMAIL` | no | where the shop's copy goes |
-| `MAIL_FROM` | no | verified sender on the shop's domain |
+| `SHOP_EMAIL` | no | where the shop's copy goes, unless `shop_email` in `settings` is filled in |
+| `MAIL_FROM` | no | verified sender on the shop's domain, unless `mail_from` in `settings` is filled in |
 | `DEMO_MODE` | while demoing | `1` makes every page `noindex` and `robots.txt` refuse everything |
 
 `DEMO_MODE` is set to `1` today. The site carries the shop's name over placeholder prices and
@@ -140,7 +186,9 @@ shop's best price and never discount. The client never decides what a code is wo
 the code to `/api/codes`, gets back `{ valid, kind, percentOff | amountOff, message }`, and
 recomputes from the server's answer.
 
-All the placeholder rates are in one object, `PRICES`, at the top of `pricing.ts`.
+The rates the site charges come from the `rates` table. `PRICES` at the top of `pricing.ts`
+holds the same placeholder figures `seed.sql` starts the table with, and the unit tests price
+against it.
 
 ---
 
@@ -188,30 +236,46 @@ kept moving for people who had asked it not to.
 
 These need the shop, not the developer.
 
+All of it is now data, not code — see **Editing the shop's content** above.
+
 1. **Photograph** the shop, the fitters and every range, and replace the images. Each range
-   points at a **stock photograph of the right material** in `src/assets/ranges/<id>.jpg` —
+   points at a **stock photograph of the right material** in `public/ranges/<id>.jpg` —
    a wool twist for a wool twist, berber loops for the berber, oak planks for the oak. They are
    from [Pexels](https://www.pexels.com/license/), free for commercial use without attribution.
    They are still placeholders: they are not the shop's stock, and **alt text is generated from
-   the range name and spec**, so it describes a product the photograph is not. Drop the real
-   photograph in over the top — same filename, 1:1 crop — and nothing else needs touching.
+   the range name and spec**, so it describes a product the photograph is not. Upload the real
+   photograph to Supabase Storage and paste its URL into the range's `photo_url`, 1:1 crop.
 
    Two caveats. **Halesowen Stripe is not striped** in its photograph; no neutral striped
    flatweave existed in the library and a wrong colour would have been worse, so it carries a
    dark charcoal loop that matches its swatch. **The three underlays have no photograph at
    all** — nothing in stock libraries honestly depicts carpet underlay, and acoustic foam or
    loft insulation would be a worse lie than none, so they fall back to the CSS weave in
-   `lib/textures.ts`. That fallback works for any range: delete its `photo:` line and the weave
+   `lib/textures.ts`. That fallback works for any range: empty its `photo_url` and the weave
    comes back.
 
-   The category cards on the home page and `public/og.jpg` are placeholders too.
+   The category cards on the home page (`photo_…` in `settings`) and the share picture
+   (`og_image`) are placeholders too.
 2. **Replace every placeholder range name and guide price** with the real ranges and today's
-   rates, in `src/content/ranges/`.
-3. **Confirm the fitting, uplift, gripper, door bar and stair rates** in `PRICES` so the
-   estimator matches the counter. Everything on the site is currently a placeholder.
-4. **Sign off the referral percentages** (10% / 20%) and the promotion codes in `promo_codes`.
-5. **Point the domain**, set up the shop's email, verify the Google Business Profile.
-6. **Decide on a room visualiser** for phase two, once the photography exists.
+   prices, in the `ranges` table.
+3. **Confirm the fitting, uplift, gripper, door bar and stair rates** in the `rates` table so
+   the estimator matches the counter. Every figure there is currently a placeholder.
+4. **Point the domain** at Vercel and put it in `site_url`; verify the sending domain with
+   Resend and fill in `mail_from`; verify the Google Business Profile.
+5. **Decide on a room visualiser** for phase two, once the photography exists.
+
+### Decided for the shop, to revisit if they disagree
+
+- **Referrals stay at 10% for the friend and 20% for the referrer**, both off fitting only. The
+  figures are written into the copy on six pages and both emails, and on labour alone they are
+  modest: on the estimator's own lounge-and-stairs example (£1,344 in all, £337 of it fitting)
+  they come to about £34 and £67.
+- **Every discount comes off the fitting, flat ones included.** `NEWFLOOR25` used to take £25
+  off the whole order, materials and all, which broke the rule above; it is now £25 off the
+  fitting, and does nothing on a supply-only order. `WINTER10` ends on 28 February 2027.
+- **Time windows take 3 measures in the morning, 3 in the afternoon and 2 in the late window.**
+  A measure is twenty minutes plus the drive across Birmingham, so one surveyor manages about
+  three in a three-hour window and two in the two-hour one. Change them in `settings`.
 
 ### Two things worth a decision
 

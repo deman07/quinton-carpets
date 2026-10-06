@@ -3,8 +3,11 @@ import { Picture } from "astro:assets";
 import { swatchStyle, type Swatchable } from "../lib/textures.ts";
 
 interface Props {
-  /** The photograph. When absent, the CSS texture stands in. */
-  photo?: ImageMetadata;
+  /**
+   * The photograph: a path under public/ or a full URL, 1:1 crop.
+   * When absent, the CSS texture stands in.
+   */
+  photo?: string | null;
   /** What the photograph shows. Ignored when there isn't one. */
   alt?: string;
   /** The placeholder weave — always supplied, so there is never a gap. */
@@ -24,6 +27,8 @@ const { photo, alt = "", texture, tag, eager = false } = Astro.props;
       <Picture
         src={photo}
         alt={alt}
+        width={640}
+        height={640}
         widths={[320, 640]}
         sizes="(max-width: 760px) 100vw, (max-width: 980px) 50vw, 25vw"
         formats={["avif", "webp"]}

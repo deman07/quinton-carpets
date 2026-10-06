@@ -1,9 +1,11 @@
 /**
- * Applies schema.sql to the Supabase database in DATABASE_URL.
+ * Applies schema.sql, then seed.sql, to the Supabase database in
+ * DATABASE_URL.
  *
  * Safe to run more than once: every statement is CREATE ... IF NOT
  * EXISTS or an ON CONFLICT DO NOTHING insert, so running it against a
- * live database adds what is missing and touches nothing else.
+ * live database adds what is missing and never writes over the shop's
+ * ranges, rates or settings.
  *
  *   npm run db:setup
  */
@@ -48,18 +50,22 @@ if (!url) {
 const sql = postgres(url, { prepare: false, max: 1, connect_timeout: 20, onnotice: () => {} });
 
 try {
-  const schema = readFileSync(join(root, "schema.sql"), "utf8");
-  // One call: postgres.js sends it as a simple query, so the whole
-  // file runs as a single implicit transaction.
-  await sql.unsafe(schema);
+  // One call per file: postgres.js sends each as a simple query, so
+  // each file runs as a single implicit transaction.
+  await sql.unsafe(readFileSync(join(root, "schema.sql"), "utf8"));
+  await sql.unsafe(readFileSync(join(root, "seed.sql"), "utf8"));
 
   const [{ count: tables }] = await sql`
     SELECT count(*)::int AS count FROM information_schema.tables
      WHERE table_schema = 'public'
-       AND table_name IN ('bookings','referral_codes','promo_codes','estimates','rate_limit')`;
+       AND table_name IN ('bookings','referral_codes','promo_codes','estimates',
+                          'ranges','rates','settings','rate_limit')`;
   const [{ count: promos }] = await sql`SELECT count(*)::int AS count FROM promo_codes`;
+  const [{ count: ranges }] = await sql`SELECT count(*)::int AS count FROM ranges`;
 
-  console.log(`Schema applied. ${tables}/5 tables present, ${promos} promotion codes.`);
+  console.log(
+    `Schema applied. ${tables}/8 tables present, ${ranges} ranges, ${promos} promotion codes.`,
+  );
 } catch (err) {
   console.error("Could not apply the schema:\n", err instanceof Error ? err.message : err);
   process.exitCode = 1;

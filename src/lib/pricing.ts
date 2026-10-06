@@ -284,7 +284,9 @@ export function estimate(input: EstimateInput): Estimate {
   const labour = fitting + extras;
 
   // --- discount: labour only, always. Materials are already at the
-  //     shop's best price and never discount. ---
+  //     shop's best price and never discount — and that goes for a
+  //     flat amount too, which can take the fitting to nothing but no
+  //     further. ---
   let discount = 0;
   let discountLabel = "";
   const d = input.discount;
@@ -292,8 +294,8 @@ export function estimate(input: EstimateInput): Estimate {
     if (d.percentOff && labour > 0) {
       discount = labour * (d.percentOff / 100);
       discountLabel = d.message;
-    } else if (d.amountOff) {
-      discount = Math.min(d.amountOff, subtotal);
+    } else if (d.amountOff && labour > 0) {
+      discount = Math.min(d.amountOff, labour);
       discountLabel = d.message;
     }
   }

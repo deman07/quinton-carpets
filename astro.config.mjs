@@ -3,18 +3,24 @@ import { defineConfig } from "astro/config";
 import vercel from "@astrojs/vercel";
 import tailwindcss from "@tailwindcss/vite";
 
-// Static by default. Only the pages that genuinely need a server
-// (/ranges/, /book/, /booking/[ref]/ and /admin/) opt out with
-// `export const prerender = false`.
+// Rendered on demand. The ranges, the rates and the site settings live
+// in the database for the shop to edit, so every page reads them when
+// it is asked for — and src/middleware.ts lets Vercel's CDN hold the
+// public pages for a minute, so that costs a query a minute, not one
+// per visitor.
 export default defineConfig({
   site: "https://www.quintoncarpets.co.uk",
-  output: "static",
-  // Vercel's own image optimisation, not Astro's.
-  // /ranges/ is server-rendered, so <Picture> emits /_image URLs that
-  // have to be answered at request time — and Astro's endpoint is not
-  // deployed on this adapter, so every photo on that page 404s
-  // without this.
+  output: "server",
+  // Vercel's own image optimisation, not Astro's: Astro's /_image
+  // endpoint is not deployed on this adapter.
   adapter: vercel({ imageService: true }),
+  image: {
+    // Photos are paths under public/ or, once the shop uploads its
+    // own, public files in the project's Supabase Storage.
+    remotePatterns: [
+      { protocol: "https", hostname: "**.supabase.co", pathname: "/storage/v1/object/public/**" },
+    ],
+  },
   // Pages keep their trailing slash via build.format "directory".
   // "always" would 308-redirect a POST to /api/bookings, so this is
   // left permissive and the API routes answer either spelling.

@@ -72,12 +72,9 @@ export function isBookableDate(iso: string, now: Date = new Date()): boolean {
   return iso >= today && iso <= addDaysISO(today, HORIZON_DAYS);
 }
 
-/**
- * How many measures one time window can take before it is full.
- * PLACEHOLDER pending the shop: it is however many visits the
- * fitters can make in three hours.
- */
-export const SLOT_CAPACITY = 2;
+// How many measures each window takes lives in the settings table
+// (capacity_am, capacity_pm, capacity_eve), read on the server. The
+// browser is only ever told which windows are already full.
 
 /** "2026-09-08|am" — how a full window is named, on both sides of the wire. */
 export const slotKey = (iso: string, slot: string) => `${iso}|${slot}`;
@@ -89,7 +86,8 @@ const NONE: FullSlots = new Set();
 
 /**
  * Sunday drops the Late window, because the shop closes at 4pm, and
- * a window that has reached SLOT_CAPACITY is not offered either.
+ * a window that is already full (see lib/server/availability.ts) is
+ * not offered either.
  * Never offer a slot that cannot happen.
  */
 export function slotsFor(

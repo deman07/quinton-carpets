@@ -3,23 +3,24 @@ import Base from "../layouts/Base.astro";
 import Hero from "../components/Hero.astro";
 import Ticker from "../components/Ticker.astro";
 import MapSvg from "../components/MapSvg.astro";
-import { allRanges, showcaseRanges } from "../lib/ranges.ts";
+import { showcaseRanges } from "../lib/ranges.ts";
+import { getRanges, getSettings } from "../lib/server/catalogue.ts";
 import Swatch from "../components/Swatch.astro";
-import catCarpets from "../assets/site/cat-carpets.jpg";
-import catUnderlay from "../assets/site/cat-underlay.jpg";
-import catLaminate from "../assets/site/cat-laminate.jpg";
-import catVinyl from "../assets/site/cat-vinyl.jpg";
 import { QUOTES } from "../data/quotes.ts";
 import { BUSINESS } from "../data/business.ts";
 
-const ranges = await allRanges();
+// Rendered on demand: the banner, the prices and the category photos
+// all come from the database.
+export const prerender = false;
+
+const [ranges, settings] = await Promise.all([getRanges(), getSettings()]);
 const showcase = showcaseRanges(ranges);
 
 // The four things the shop sells, as the customer thinks of them.
 const CATS = [
   {
     cat: "Carpets",
-    photo: catCarpets,
+    photo: settings.photos.carpets,
     href: "/ranges/?material=Carpet",
     body: "Hundreds of samples to look at and feel — twist, saxony, loop and berber, in wool-rich and hard-wearing man-made.",
     pile: "twist" as const,
@@ -27,7 +28,7 @@ const CATS = [
   },
   {
     cat: "Underlay",
-    photo: catUnderlay,
+    photo: settings.photos.underlay,
     href: "/ranges/?material=Underlay",
     body: "The bit nobody sees and everybody feels. PU underlay from 8mm to 11mm, plus combi board for hard floors.",
     pile: "foam" as const,
@@ -35,7 +36,7 @@ const CATS = [
   },
   {
     cat: "Laminate",
-    photo: catLaminate,
+    photo: settings.photos.laminate,
     href: "/ranges/?material=Laminate",
     body: "High quality laminate in AC4 and AC5, 8mm and 12mm, with water-resistant cores for kitchens and halls.",
     pile: "plank" as const,
@@ -43,7 +44,7 @@ const CATS = [
   },
   {
     cat: "Vinyl",
-    photo: catVinyl,
+    photo: settings.photos.vinyl,
     href: "/ranges/?material=Vinyl",
     body: "A large variety of vinyl for various needs — cushioned sheet for bathrooms and kitchens, and click-fit LVT.",
     pile: "herring" as const,

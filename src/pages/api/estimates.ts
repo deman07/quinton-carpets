@@ -6,7 +6,7 @@
  * and the figures on screen.
  *
  * The browser sends what the customer chose, never what it costs:
- * the prices come from the ranges and PRICES here, the discount is
+ * the prices come from the ranges and rates tables, the discount is
  * checked again here, and the code is minted here so nobody can
  * write over somebody else's estimate by guessing theirs.
  */
@@ -16,8 +16,9 @@ import { json, clientIp, rateLimit } from "../../lib/server/env.ts";
 import { db } from "../../lib/server/db.ts";
 import { validateEstimate } from "../../lib/server/validate.ts";
 import { verdictFor } from "../../lib/server/discounts.ts";
-import { allRanges, floorRanges, underlayRanges } from "../../lib/ranges.ts";
-import { estimate, PRICES, type EstimateInput } from "../../lib/pricing.ts";
+import { floorRanges, underlayRanges } from "../../lib/ranges.ts";
+import { getRanges, getRates } from "../../lib/server/catalogue.ts";
+import { estimate, type EstimateInput } from "../../lib/pricing.ts";
 import { mintEstimateCode } from "../../lib/codes.ts";
 
 export const prerender = false;
@@ -42,7 +43,7 @@ export const POST: APIRoute = async ({ request }) => {
   if (!check.ok) return json({ error: check.error }, 400);
   const req = check.value;
 
-  const ranges = await allRanges();
+  const [ranges, rates] = await Promise.all([getRanges(), getRates()]);
   const floor = floorRanges(ranges).find((r) => r.id === req.floor);
   if (!floor) return json({ error: "That floor isn't one of ours any more. Please pick another." }, 400);
   const underlay = req.underlay ? underlayRanges(ranges).find((r) => r.id === req.underlay) : null;
@@ -59,7 +60,7 @@ export const POST: APIRoute = async ({ request }) => {
     fit: req.fit,
     extras: req.extras,
     discount: discount?.valid ? discount : null,
-    rates: PRICES,
+    rates,
   };
   const result = estimate(input);
 

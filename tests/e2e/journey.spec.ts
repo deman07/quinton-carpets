@@ -1,5 +1,6 @@
 import { test, expect, type Page } from "@playwright/test";
-import { SLOT_CAPACITY, addDaysISO, dayOfWeek, todayISO, HORIZON_DAYS } from "../../src/lib/dates.ts";
+import { addDaysISO, dayOfWeek, todayISO, HORIZON_DAYS } from "../../src/lib/dates.ts";
+import { capacityOf } from "./db.ts";
 
 /**
  * The whole point of the site: price a floor, book the free measure,
@@ -93,11 +94,13 @@ test("a full window is refused, even when everyone books at once", async ({ requ
   // journey above, which books the first free window.
   const date = addDaysISO(todayISO(), HORIZON_DAYS);
   const slot = dayOfWeek(date) === 0 ? "pm" : "am";
+  const capacity = await capacityOf(slot);
+  test.skip(capacity === 0, `the ${slot} window is closed in settings`);
 
   // More people than the window holds, all pressing the button at the
   // same moment. Each from its own address, so the per-IP limit
   // doesn't turn them away before the capacity check can.
-  const attempts = SLOT_CAPACITY + 3;
+  const attempts = capacity + 3;
   const responses = await Promise.all(
     Array.from({ length: attempts }, (_, i) =>
       request.post("/api/bookings", {
@@ -119,8 +122,8 @@ test("a full window is refused, even when everyone books at once", async ({ requ
 
   // Earlier runs may already have filled it, so never more than the
   // capacity got in, and at least one was told the window is full.
-  expect(statuses.filter((s) => s === 200).length).toBeLessThanOrEqual(SLOT_CAPACITY);
-  expect(statuses.filter((s) => s === 409).length).toBeGreaterThanOrEqual(attempts - SLOT_CAPACITY);
+  expect(statuses.filter((s) => s === 200).length).toBeLessThanOrEqual(capacity);
+  expect(statuses.filter((s) => s === 409).length).toBeGreaterThanOrEqual(attempts - capacity);
   expect(statuses.every((s) => s === 200 || s === 409)).toBe(true);
 
   const refused = responses[statuses.indexOf(409)]!;
