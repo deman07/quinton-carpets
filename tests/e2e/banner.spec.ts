@@ -122,9 +122,9 @@ test("nothing is parked at opacity 0 waiting on a scroll", async ({ page }) => {
           return Number(getComputedStyle(el).opacity) === 0;
         })
         .map((el) => String(el.className))
-        // The spotlight appears on hover and the B floor layer only
-        // during a cross-fade; both are meant to be invisible at rest.
-        .filter((c) => !/aurora|spot|floor fade/.test(c));
+        // The B floor layer is only visible during a cross-fade; it is
+        // meant to be invisible at rest.
+        .filter((c) => !/aurora|floor fade/.test(c));
     });
 
   await expect

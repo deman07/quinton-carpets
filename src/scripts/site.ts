@@ -156,51 +156,15 @@ const $$ = <T extends Element = Element>(s: string, r: ParentNode = document) =>
   });
 })();
 
-/* ---------------- hero spotlight ---------------- */
-(() => {
-  const hero = $<HTMLElement>(".hero");
-  const spot = $<HTMLElement>("#spot");
-  if (!hero || !spot || RM || COARSE) return;
-
-  // pointermove fires far more often than the screen refreshes, and
-  // getBoundingClientRect() forces a layout every time it is called.
-  // Reading it per event was making the pointer itself expensive on a
-  // desktop — a phone never fires this at all, which is why only the
-  // desktop felt heavy. The work is coalesced into one read and one
-  // write per frame.
-  let px = 0;
-  let py = 0;
-  let queued = false;
-
-  const apply = () => {
-    queued = false;
-    const r = hero.getBoundingClientRect();
-    if (!r.width || !r.height) return;
-    spot.style.setProperty("--mx", (((px - r.left) / r.width) * 100).toFixed(2) + "%");
-    spot.style.setProperty("--my", (((py - r.top) / r.height) * 100).toFixed(2) + "%");
-  };
-
-  hero.addEventListener(
-    "pointermove",
-    (e) => {
-      px = e.clientX;
-      py = e.clientY;
-      if (!queued) {
-        queued = true;
-        requestAnimationFrame(apply);
-      }
-    },
-    { passive: true },
-  );
-})();
-
 /* ---------------- magnetic buttons ----------------
    Max pull is about 6px. Enough to feel, not enough to miss. */
 (() => {
   if (RM || COARSE) return;
   $$<HTMLElement>(".magnet").forEach((b) => {
-    // Same reasoning as the spotlight: the rect is read once a frame
-    // rather than once an event, and the pull is identical.
+    // pointermove fires far more often than the screen refreshes, and
+    // getBoundingClientRect() forces a layout on every call, so the
+    // rect is read once a frame rather than once an event. The pull
+    // is identical.
     let mx = 0;
     let my = 0;
     let queued = false;

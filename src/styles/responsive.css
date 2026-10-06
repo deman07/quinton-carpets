@@ -87,10 +87,9 @@
   .brand .wordmark span{display:none}
 }
 
-/* No hover affordances on touch: the magnetic pull and the
-   cursor spotlight are pointer-device features. */
+/* No hover affordances on touch: the magnetic pull is a
+   pointer-device feature. */
 @media (hover: none){
-  .hero:hover .spot{opacity:0}
   .rangecard:hover{transform:none; box-shadow:none}
   .btn:hover{transform:none}
 }

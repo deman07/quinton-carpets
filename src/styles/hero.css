@@ -1,7 +1,7 @@
 /* ============================================================
    The home banner. Three patterns adapted from the open 21st.dev
-   community library — container scroll, spotlight and staggered
-   text reveal — rebuilt by hand in plain CSS. No animation
+   community library — container scroll and staggered text
+   reveal — rebuilt by hand in plain CSS. No animation
    library, and nothing here is parked at opacity:0 waiting on a
    scroll: everything meant to be read is in the first frame.
    ============================================================ */
@@ -25,13 +25,6 @@
 @keyframes drift1{0%,100%{translate:0 0}50%{translate:6vw 4vw}}
 @keyframes drift2{0%,100%{translate:0 0}50%{translate:-7vw 5vw}}
 @keyframes drift3{0%,100%{translate:0 0}50%{translate:4vw -6vw}}
-
-/* --- layer 3: cursor spotlight (pointer devices only) --- */
-.spot{
-  position:absolute; inset:0; z-index:1; pointer-events:none; opacity:0; transition:opacity .4s;
-  background:radial-gradient(320px circle at var(--mx,50%) var(--my,40%), rgba(255,198,26,.22), transparent 70%);
-}
-.hero:hover .spot{opacity:1}
 
 /* --- layer 4: content --- */
 .pill{

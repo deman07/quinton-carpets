@@ -107,7 +107,7 @@ test("errors sit next to the field they belong to", async ({ page }) => {
 
 test("decorative layers are hidden from screen readers", async ({ page }) => {
   await page.goto("/");
-  for (const sel of ["#pile", "#spot", ".aurora", ".ticker", ".scanline", ".floor"]) {
+  for (const sel of ["#pile", ".aurora", ".ticker", ".scanline", ".floor"]) {
     const hidden = await page.locator(sel).first().getAttribute("aria-hidden");
     expect(hidden, `${sel} should be aria-hidden`).toBe("true");
   }
