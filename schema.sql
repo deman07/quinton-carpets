@@ -1,6 +1,6 @@
 -- Quinton Carpets — Postgres schema, for Supabase.
 --
--- Three tables and a rate-limit ledger. No card data, no payment
+-- Bookings, the shop's content, the staff, and a rate-limit ledger. No card data, no payment
 -- records: money is taken in the shop and nothing about it touches
 -- this database.
 --
@@ -27,8 +27,21 @@ CREATE TABLE IF NOT EXISTS bookings (
   notes         TEXT,
   created_at    TEXT NOT NULL,             -- ISO 8601 UTC
   status        TEXT NOT NULL DEFAULT 'new'
-                CHECK (status IN ('new','called','measured','fitted'))
+                CHECK (status IN ('new','called','measured','fitted','cancelled'))
 );
+
+-- Added for the staff diary. ADD COLUMN IF NOT EXISTS, so a database
+-- made before them gains them on the next db:setup.
+ALTER TABLE bookings ADD COLUMN IF NOT EXISTS staff_notes TEXT;   -- the shop's own, never shown to the customer
+ALTER TABLE bookings ADD COLUMN IF NOT EXISTS updated_at  TEXT;   -- ISO 8601 UTC, last change by staff
+ALTER TABLE bookings ADD COLUMN IF NOT EXISTS reminded_at TEXT;   -- when the day-before email went
+
+-- 'cancelled' came later than the other statuses. A cancelled booking
+-- stays in the diary, so the history is not lost, but it no longer
+-- takes up a place in its window.
+ALTER TABLE bookings DROP CONSTRAINT IF EXISTS bookings_status_check;
+ALTER TABLE bookings ADD CONSTRAINT bookings_status_check
+  CHECK (status IN ('new','called','measured','fitted','cancelled'));
 
 CREATE INDEX IF NOT EXISTS bookings_by_date   ON bookings (date, slot);
 CREATE INDEX IF NOT EXISTS bookings_by_status ON bookings (status, date);
@@ -159,6 +172,48 @@ CREATE TABLE IF NOT EXISTS settings (
   og_image       TEXT NOT NULL DEFAULT '/og.jpg'
 );
 
+-- ---------------------------------------------------------------
+-- The staff who can open the diary. Each person has their own login,
+-- so the activity log can say who did what, and somebody leaving is
+-- one switch rather than a new password for everyone.
+--
+-- The first account is made by logging in with ADMIN_USER and
+-- ADMIN_PASSWORD from the environment while this table is empty;
+-- after that, people are added on the diary's Staff page.
+-- ---------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS staff (
+  id             SERIAL PRIMARY KEY,
+  username       TEXT NOT NULL UNIQUE CHECK (username ~ '^[a-z0-9._-]{2,40}$'),
+  name           TEXT NOT NULL,
+  password_hash  TEXT NOT NULL,            -- scrypt$N$r$p$salt$hash, never the password
+  role           TEXT NOT NULL DEFAULT 'staff' CHECK (role IN ('owner','staff')),
+  active         BOOLEAN NOT NULL DEFAULT true,
+  calendar_token TEXT NOT NULL UNIQUE,     -- the secret in their calendar feed's URL
+  created_at     TEXT NOT NULL
+);
+
+-- A logged-in browser. Only a hash of the cookie is kept, so a copy of
+-- this table cannot be used to log in.
+CREATE TABLE IF NOT EXISTS staff_sessions (
+  token_hash TEXT PRIMARY KEY,
+  staff_id   INTEGER NOT NULL REFERENCES staff(id) ON DELETE CASCADE,
+  expires_at TEXT NOT NULL,
+  created_at TEXT NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS sessions_by_staff ON staff_sessions (staff_id);
+
+-- Every change made in the diary, newest last: who, when, and what.
+CREATE TABLE IF NOT EXISTS booking_events (
+  id      BIGSERIAL PRIMARY KEY,
+  ref     TEXT NOT NULL REFERENCES bookings(ref) ON DELETE CASCADE,
+  at      TEXT NOT NULL,                   -- ISO 8601 UTC
+  actor   TEXT NOT NULL,                   -- a staff name, or 'site' for the automatic emails
+  what    TEXT NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS events_by_ref ON booking_events (ref, id);
+
 -- Rate limiting, per IP, per hour. Cheaper than a CAPTCHA and it
 -- does not make a customer prove they are human to book a measure.
 CREATE TABLE IF NOT EXISTS rate_limit (
@@ -181,6 +236,9 @@ ALTER TABLE ranges         ENABLE ROW LEVEL SECURITY;
 ALTER TABLE rates          ENABLE ROW LEVEL SECURITY;
 ALTER TABLE settings       ENABLE ROW LEVEL SECURITY;
 ALTER TABLE rate_limit     ENABLE ROW LEVEL SECURITY;
+ALTER TABLE staff          ENABLE ROW LEVEL SECURITY;
+ALTER TABLE staff_sessions ENABLE ROW LEVEL SECURITY;
+ALTER TABLE booking_events ENABLE ROW LEVEL SECURITY;
 
 -- Supabase grants anon and authenticated full rights on every table in
 -- the public schema by default. This site never uses either role — it

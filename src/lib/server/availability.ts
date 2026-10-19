@@ -27,7 +27,7 @@ export async function fullSlots(from: string, to: string): Promise<FullSlots> {
     const { results } = await db
       .prepare(
         `SELECT date, slot, count(*)::int AS n FROM bookings
-          WHERE date >= ?1 AND date <= ?2
+          WHERE date >= ?1 AND date <= ?2 AND status <> 'cancelled'
           GROUP BY date, slot`,
       )
       .bind(from, to)

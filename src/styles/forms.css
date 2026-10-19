@@ -71,3 +71,76 @@ legend{padding:0}
   border:1px solid var(--line-strong); background:var(--ground); color:var(--ink);
   border-radius:var(--r-s); padding:9px 11px; min-height:44px;
 }
+.status[data-s="cancelled"]{background:transparent; color:var(--muted); text-decoration:line-through}
+
+.visually-hidden{position:absolute!important; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap}
+
+/* The bar across every diary page. */
+.adminnav{display:flex; flex-wrap:wrap; gap:10px 16px; align-items:center; justify-content:space-between; margin-bottom:22px}
+.adminnav .links{display:flex; flex-wrap:wrap; gap:8px}
+.adminnav .chip[aria-current="page"]{background:var(--ink); color:var(--ground); border-color:var(--ink)}
+.adminnav .who{display:flex; gap:10px; align-items:center}
+.adminh1{font-size:clamp(1.6rem,1.2rem + 1.6vw,2.2rem); margin-bottom:18px}
+.admin h2{font-size:1.25rem; margin:0}
+
+/* Search and filter: one row on a desk, stacked on a phone. */
+.diaryfilter{display:flex; flex-wrap:wrap; gap:0 12px; align-items:flex-end; margin-bottom:6px}
+.diaryfilter .field{margin-bottom:12px}
+.diaryfilter .grow{flex:1 1 260px}
+.diaryfilter select{min-height:46px}
+.diaryfilter .btn{min-height:46px}
+.diaryfilter .lbl{font-size:.85rem}
+.viewbar{display:flex; flex-wrap:wrap; gap:12px; align-items:center; justify-content:space-between; margin-bottom:22px}
+.viewbar .tabs{display:flex; flex-wrap:wrap; gap:8px}
+.stepper{display:flex; gap:8px; align-items:center}
+.stepper input{border:1px solid var(--line-strong); background:var(--ground); color:var(--ink); border-radius:var(--r-s); padding:8px 10px; min-height:40px}
+.diarysum{margin-bottom:14px}
+.admin .notice[hidden]{display:none}
+.diarysum .hint{display:flex; flex-wrap:wrap; gap:8px; align-items:center; margin-top:6px}
+.exportlink{margin-left:auto; font-size:.85rem}
+
+.diarygroup{margin-bottom:26px}
+.diarygroup h3{display:flex; flex-wrap:wrap; gap:4px 12px; align-items:baseline; font-size:1rem; margin:0 0 10px; padding-bottom:6px; border-bottom:2px solid var(--ink)}
+.diarygroup .empty{margin:0 0 6px}
+
+.adminrow p{margin:0}
+.adminrow .who{font-weight:700}
+.adminrow .where, .adminrow .custnote{font-size:.9rem}
+.adminrow .whenline{font-size:.9rem; color:var(--muted)}
+.adminrow .meta{font-size:.82rem; color:var(--muted)}
+.adminrow .staffnote{font-size:.9rem; background:var(--yellow-soft); color:var(--ink); border-left:3px solid var(--yellow); padding:6px 10px; border-radius:4px; white-space:pre-wrap}
+.adminrow[data-cancelled]{opacity:.7}
+.adminrow[data-cancelled] .who{text-decoration:line-through}
+.adminrow .quick{display:flex; gap:8px; flex-wrap:wrap; align-items:center}
+.adminrow .quick label{font-weight:700}
+
+.manage{border-top:1px solid var(--line); padding-top:8px}
+.manage > summary{cursor:pointer; font-weight:700; font-size:.9rem; padding:6px 0; min-height:32px}
+.manage .panes{display:grid; gap:14px; margin-top:8px}
+.manage .pane{display:grid; gap:8px; border:1px solid var(--line); border-radius:var(--r-s); padding:12px 14px; background:var(--surface)}
+.manage .pane.danger{border-color:var(--err)}
+.manage .pane .field{margin:0}
+.manage .pane .row{display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:10px}
+.manage .pane > .btn{justify-self:start}
+.manage .pane label{font-size:.85rem; font-weight:700}
+.manage .pane .checkrow{font-weight:400}
+.manage textarea, .manage input:not([type=checkbox]), .manage select{
+  border:1px solid var(--line-strong); background:var(--ground); color:var(--ink);
+  border-radius:var(--r-s); padding:9px 11px; width:100%; font:inherit;
+}
+.manage .panetitle{font-weight:800; font-size:.9rem}
+.history ol{list-style:none; padding:0; margin:6px 0 0; display:grid; gap:4px; font-size:.84rem}
+.history time{font-family:"DM Mono",monospace; font-size:.75rem; color:var(--muted); margin-right:6px}
+
+/* Staff page and email previews. */
+.stafftable{display:grid; gap:10px; margin-bottom:28px}
+.staffcard{border:1px solid var(--line); border-radius:var(--r-m); padding:14px 16px; display:grid; gap:8px; background:var(--ground)}
+.staffcard .top{display:flex; flex-wrap:wrap; gap:8px; justify-content:space-between; align-items:baseline}
+.staffcard .actions{display:flex; flex-wrap:wrap; gap:8px}
+.adminpanel{border:1px solid var(--line); border-radius:var(--r-m); padding:18px; margin-bottom:22px; background:var(--surface)}
+.adminpanel h2{margin-bottom:12px}
+.feed{display:flex; gap:8px; flex-wrap:wrap}
+.feed input{flex:1 1 260px; font-family:"DM Mono",monospace; font-size:.8rem; border:1px solid var(--line-strong); border-radius:var(--r-s); padding:9px 11px; background:var(--ground); color:var(--ink)}
+.mailpreview{border:1px solid var(--line); border-radius:var(--r-m); overflow:hidden; margin-bottom:26px; background:var(--ground)}
+.mailpreview header{display:flex; flex-wrap:wrap; gap:8px; justify-content:space-between; align-items:center; padding:12px 16px; border-bottom:1px solid var(--line)}
+.mailpreview iframe{display:block; width:100%; height:900px; border:0; background:#F5F3EE}

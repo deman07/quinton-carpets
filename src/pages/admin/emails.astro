@@ -1,0 +1,75 @@
+---
+import Base from "../../layouts/Base.astro";
+import AdminNav from "../../components/AdminNav.astro";
+import { TEMPLATES, SAMPLE_BOOKING, type TemplateName } from "../../lib/email-templates.ts";
+import { sendTest, siteContext } from "../../lib/server/email.ts";
+import { getEnv } from "../../lib/server/env.ts";
+
+// Every email the site sends, drawn with made-up booking details, so
+// the shop can see exactly what customers get — and send one to
+// themselves to check it on a phone.
+export const prerender = false;
+Astro.response.headers.set("cache-control", "no-store");
+
+const ctx = await siteContext();
+const names = Object.keys(TEMPLATES) as TemplateName[];
+const canSend = Boolean(getEnv().RESEND_API_KEY);
+
+let result = "";
+if (Astro.request.method === "POST") {
+  const form = await Astro.request.formData();
+  const name = String(form.get("template")) as TemplateName;
+  const to = String(form.get("to") ?? "").trim().slice(0, 200);
+  if (!TEMPLATES[name]) result = "Pick an email.";
+  else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(to)) result = "That doesn't look like an email address.";
+  else {
+    const sent = await sendTest(to, (c) => TEMPLATES[name].render(c, SAMPLE_BOOKING));
+    result = sent.sent ? `Sent “${TEMPLATES[name].label}” to ${to}.` : `Not sent: ${sent.reason}`;
+  }
+}
+---
+
+<Base title="Emails — Quinton Carpets diary" description="Email previews." noindex>
+  <div class="section plain admin">
+    <div class="wrap" style="max-width:880px">
+      <AdminNav current="emails" />
+      <h1 class="adminh1">The emails customers get</h1>
+      <p class="hint" style="margin-bottom:18px">
+        Drawn with made-up details. The confirmation goes the moment somebody books; the reminder the
+        afternoon before their visit; the others when you move, cancel or finish a job in the diary.
+      </p>
+
+      {result && <p class="notice info" role="status" style="margin-bottom:18px">{result}</p>}
+      {!canSend && (
+        <p class="notice warn" style="margin-bottom:18px">
+          No RESEND_API_KEY is set, so no email is actually sent yet — bookings still save. Add the key in
+          Vercel to switch them on.
+        </p>
+      )}
+
+      {names.map((name) => {
+        const mail = TEMPLATES[name].render(ctx, SAMPLE_BOOKING);
+        return (
+          <section class="mailpreview" id={name}>
+            <header>
+              <div>
+                <strong>{TEMPLATES[name].label}</strong>
+                <p class="hint" style="margin:2px 0 0">Subject: {mail.subject}</p>
+              </div>
+              <form method="post" class="feed" style="flex:0 1 360px">
+                <input type="hidden" name="template" value={name} />
+                <input name="to" type="email" required placeholder="you@example.com" aria-label={`Send a test of ${TEMPLATES[name].label} to`} />
+                <button class="btn ghost sm" type="submit" disabled={!canSend}>Send me a test</button>
+              </form>
+            </header>
+            <iframe title={`Preview: ${TEMPLATES[name].label}`} srcdoc={mail.html} loading="lazy" sandbox=""></iframe>
+            <details style="padding:10px 16px">
+              <summary class="hint">Plain-text version</summary>
+              <pre style="white-space:pre-wrap; font-size:.8rem">{mail.text}</pre>
+            </details>
+          </section>
+        );
+      })}
+    </div>
+  </div>
+</Base>

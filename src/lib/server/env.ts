@@ -18,9 +18,14 @@ export interface Env {
   SHOP_EMAIL?: string;
   /** Verified sender on the shop's own domain. */
   MAIL_FROM?: string;
-  /** Basic-auth credentials for /admin/. */
+  /**
+   * The first owner's login for /admin/. Used once, while the staff
+   * table is empty, to make that account; ignored after that.
+   */
   ADMIN_USER?: string;
   ADMIN_PASSWORD?: string;
+  /** Vercel Cron sends this as a bearer token to /api/cron/daily. */
+  CRON_SECRET?: string;
 }
 
 export const getEnv = (): Env => ({
@@ -29,6 +34,7 @@ export const getEnv = (): Env => ({
   MAIL_FROM: envVar("MAIL_FROM"),
   ADMIN_USER: envVar("ADMIN_USER"),
   ADMIN_PASSWORD: envVar("ADMIN_PASSWORD"),
+  CRON_SECRET: envVar("CRON_SECRET"),
 });
 
 export const json = (body: unknown, status = 200, headers: HeadersInit = {}) =>

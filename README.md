@@ -66,11 +66,17 @@ src/
     ranges.ts            the shape of a range, and the filters over a list of them
     server/              the database, validation, email and secrets — server only
       catalogue.ts       reads the ranges, rates and settings, cached for 30 seconds
+      auth.ts            staff logins: scrypt passwords, sessions in the database
+      diary.ts           reading the diary, and every change staff make to a booking
+      email.ts           sends the emails through Resend
+    email-templates.ts   what every email says, as HTML and plain text
   middleware.ts          lets Vercel's CDN hold the public pages for a minute
   pages/
     api/                 the booking and code endpoints
     booking/[ref].astro  a customer looking up their own booking
-    admin/               the staff diary, behind basic auth
+    admin/               the staff diary: login, diary, staff, email previews
+    api/admin/           every change the diary makes to a booking
+    api/cron/daily.ts    the day-before reminders, run by Vercel Cron
   scripts/               the browser: motion, the estimator, the booking island
   styles/                the design system, split by concern
 public/ranges/, site/    the placeholder photographs the database points at
@@ -90,7 +96,7 @@ it does. Four routes are never cached:
 |---|---|
 | `/book/` | "today" has to be today, and it shows which windows are already full |
 | `/booking/[ref]/` | a customer's own booking |
-| `/admin/` | the diary, behind basic auth |
+| `/admin/` | the diary, behind the staff login |
 | `/api/*` | answers per request |
 
 `/ranges/` is cached per URL, so `?material=carpet` is cached separately from the full list and
@@ -149,9 +155,10 @@ Preview and Development:
 | Variable | Required | What it is |
 |---|---|---|
 | `DATABASE_URL` | yes | the Supabase **pooler** connection string |
-| `ADMIN_USER` | yes | basic-auth username for `/admin/` |
-| `ADMIN_PASSWORD` | yes | basic-auth password for `/admin/` |
-| `RESEND_API_KEY` | no | sends the two confirmation emails |
+| `ADMIN_USER` | first time | the owner's username, lower case — makes the first account, then does nothing |
+| `ADMIN_PASSWORD` | first time | the owner's first password; change it on the Staff page afterwards |
+| `CRON_SECRET` | yes | any long random string; lets Vercel Cron run the daily job |
+| `RESEND_API_KEY` | no | sends every email |
 | `SHOP_EMAIL` | no | where the shop's copy goes, unless `shop_email` in `settings` is filled in |
 | `MAIL_FROM` | no | verified sender on the shop's domain, unless `mail_from` in `settings` is filled in |
 | `DEMO_MODE` | while demoing | `1` makes every page `noindex` and `robots.txt` refuse everything |
@@ -161,12 +168,43 @@ invented range names, and canonicalises to a domain that is not live, so it must
 search result under that name. **Delete the variable and redeploy** when the real content and
 the real domain land — that is the whole of what "going live" means here.
 
-Without `ADMIN_USER` and `ADMIN_PASSWORD` the diary refuses everyone, which is the safe
-default rather than a fault.
+### The diary
+
+`/admin/` needs a login. Each member of staff has their own, kept in the `staff` table with the
+password as an scrypt hash. The very first login, while that table is empty, uses `ADMIN_USER`
+and `ADMIN_PASSWORD` and makes the owner's account; after that the owner adds, resets and
+switches off people on **Staff**, and those two variables do nothing.
+
+From the diary staff can search every booking (name, phone, postcode, email or reference), look
+at a day, a week, everything ahead or the past, change the status, keep shop notes the customer
+never sees, move a booking (refused if the window is full, unless "Overbook" is ticked), cancel
+and reinstate it, mark a referral reward as earned, resend the confirmation, and download any
+view as a CSV. Every change is written to `booking_events`, shown as each booking's history. A
+cancelled booking stays in the diary but frees its place.
+
+Each person also has a private **calendar link** (on Staff) to subscribe to in Google Calendar
+or on an iPhone. It shows every measure from a fortnight ago onwards.
+
+### Emails
+
+All in `src/lib/email-templates.ts`, previewed on **/admin/emails/** with a "send me a test"
+button:
+
+| Email | When |
+|---|---|
+| Booking confirmed | the customer books, with a calendar file attached |
+| New booking | to the shop, at the same moment |
+| Day-before reminder | 4pm UK time the day before (3pm in winter), by Vercel Cron |
+| Booking moved | staff move it with "Email the customer" ticked |
+| Booking cancelled | staff cancel it with "Email the customer" ticked |
+| Thank you | staff mark it fitted and say yes, or press the button afterwards |
+
+The daily job (`/api/cron/daily`, scheduled in `vercel.json`) sends the reminders and clears out
+old rate-limit rows and expired logins. Using the database every day also helps keep a free
+Supabase project from pausing.
 
 Without `RESEND_API_KEY` the site still works — bookings save and the customer still gets their
-reference on screen. Only the two confirmation emails are skipped, and the server logs that it
-skipped them. A mail provider having a bad morning must never lose a booking.
+reference on screen. Only the emails are skipped, and each booking's history says so. A mail provider having a bad morning must never lose a booking.
 
 ---
 

@@ -1,0 +1,259 @@
+---
+import Base from "../../layouts/Base.astro";
+import AdminNav from "../../components/AdminNav.astro";
+import { db } from "../../lib/server/db.ts";
+import {
+  hashPassword,
+  verifyPassword,
+  passwordProblem,
+  endAllSessions,
+  newToken,
+  USERNAME_RE,
+  type Role,
+} from "../../lib/server/auth.ts";
+
+// Everybody can change their own password and get their calendar
+// link here. The owner can also add people, reset a forgotten
+// password, and switch off somebody who has left.
+//
+// Plain forms posting back to this page: no JavaScript, and each one
+// redirects afterwards so a refresh never sends it twice.
+export const prerender = false;
+Astro.response.headers.set("cache-control", "no-store");
+
+const me = Astro.locals.staff!;
+const isOwner = me.role === "owner";
+
+type Member = { id: number; username: string; name: string; role: Role; active: boolean; created_at: string };
+
+let error = "";
+
+const done = (msg: string) => Astro.redirect(`/admin/staff/?done=${encodeURIComponent(msg)}`, 303);
+
+if (Astro.request.method === "POST") {
+  const form = await Astro.request.formData();
+  const action = String(form.get("action") ?? "");
+  const str = (k: string, max = 200) => String(form.get(k) ?? "").trim().slice(0, max);
+  const now = new Date().toISOString();
+
+  /** Never leave the shop without somebody who can manage staff. */
+  const lastOwner = async (id: number) => {
+    const row = await db
+      .prepare(`SELECT count(*)::int AS n FROM staff WHERE role = 'owner' AND active AND id <> ?1`)
+      .bind(id)
+      .first<{ n: number }>();
+    return Number(row?.n ?? 0) === 0;
+  };
+
+  if (action === "password") {
+    const current = String(form.get("current") ?? "");
+    const next = String(form.get("next") ?? "");
+    const row = await db.prepare(`SELECT password_hash FROM staff WHERE id = ?1`).bind(me.id).first<{ password_hash: string }>();
+    if (!row || !(await verifyPassword(current, row.password_hash))) error = "Your current password isn't right.";
+    else if (passwordProblem(next)) error = passwordProblem(next)!;
+    else if (next !== String(form.get("again") ?? "")) error = "The two new passwords don't match.";
+    else {
+      await db.prepare(`UPDATE staff SET password_hash = ?2 WHERE id = ?1`).bind(me.id, await hashPassword(next)).run();
+      // Everywhere else is logged out; this browser logs in again.
+      await endAllSessions(me.id);
+      return Astro.redirect(`/admin/login/?next=${encodeURIComponent("/admin/staff/?done=Password changed")}`, 303);
+    }
+  } else if (action === "feed") {
+    await db.prepare(`UPDATE staff SET calendar_token = ?2 WHERE id = ?1`).bind(me.id, newToken(24)).run();
+    return done("New calendar link made. The old one has stopped working — update your calendar app.");
+  } else if (action === "name") {
+    const name = str("name", 60);
+    if (!name) error = "Please give a name.";
+    else {
+      await db.prepare(`UPDATE staff SET name = ?2 WHERE id = ?1`).bind(me.id, name).run();
+      return done("Name saved.");
+    }
+  } else if (!isOwner) {
+    Astro.response.status = 403;
+    error = "Only the owner can do that.";
+  } else if (action === "add") {
+    const name = str("name", 60);
+    const username = str("username", 40).toLowerCase();
+    const password = String(form.get("password") ?? "");
+    const role: Role = form.get("role") === "owner" ? "owner" : "staff";
+    if (!name) error = "Please give their name.";
+    else if (!USERNAME_RE.test(username)) error = "Usernames are 2–40 lower-case letters, numbers, dots, dashes or underscores.";
+    else if (passwordProblem(password)) error = passwordProblem(password)!;
+    else {
+      const made = await db
+        .prepare(
+          `INSERT INTO staff (username, name, password_hash, role, calendar_token, created_at)
+           VALUES (?1, ?2, ?3, ?4, ?5, ?6) ON CONFLICT (username) DO NOTHING RETURNING id`,
+        )
+        .bind(username, name, await hashPassword(password), role, newToken(24), now)
+        .first();
+      if (!made) error = `Somebody already has the username “${username}”.`;
+      else return done(`${name} added. Give them the username “${username}” and the password you chose.`);
+    }
+  } else {
+    const id = Number(form.get("id"));
+    const target = await db.prepare(`SELECT id, name, role, active FROM staff WHERE id = ?1`).bind(id).first<Member>();
+    if (!target) error = "There's nobody with that id.";
+    else if (action === "reset") {
+      const password = String(form.get("password") ?? "");
+      if (passwordProblem(password)) error = passwordProblem(password)!;
+      else {
+        await db.prepare(`UPDATE staff SET password_hash = ?2 WHERE id = ?1`).bind(id, await hashPassword(password)).run();
+        await endAllSessions(id);
+        return done(`${target.name}'s password is reset, and they've been logged out everywhere.`);
+      }
+    } else if (action === "disable") {
+      if (target.id === me.id) error = "You can't switch off your own account.";
+      else if (target.role === "owner" && (await lastOwner(id))) error = "That's the only owner left.";
+      else {
+        await db.prepare(`UPDATE staff SET active = false WHERE id = ?1`).bind(id).run();
+        await endAllSessions(id);
+        return done(`${target.name} can no longer log in, and their calendar link has stopped.`);
+      }
+    } else if (action === "enable") {
+      await db.prepare(`UPDATE staff SET active = true WHERE id = ?1`).bind(id).run();
+      return done(`${target.name} can log in again.`);
+    } else if (action === "role") {
+      const role: Role = target.role === "owner" ? "staff" : "owner";
+      if (role === "staff" && (await lastOwner(id))) error = "That's the only owner left.";
+      else {
+        await db.prepare(`UPDATE staff SET role = ?2 WHERE id = ?1`).bind(id, role).run();
+        return done(`${target.name} is now ${role === "owner" ? "an owner" : "staff"}.`);
+      }
+    } else error = "Unknown action.";
+  }
+  if (error && Astro.response.status === 200) Astro.response.status = 400;
+}
+
+const doneMsg = Astro.url.searchParams.get("done")?.slice(0, 200) ?? "";
+const mine = await db.prepare(`SELECT calendar_token FROM staff WHERE id = ?1`).bind(me.id).first<{ calendar_token: string }>();
+const feed = new URL(`/api/calendar/${mine?.calendar_token}.ics`, Astro.url).toString();
+const team = isOwner
+  ? (await db.prepare(`SELECT id, username, name, role, active, created_at FROM staff ORDER BY active DESC, name`).all<Member>()).results
+  : [];
+---
+
+<Base title="Staff — Quinton Carpets diary" description="Staff accounts." noindex>
+  <div class="section plain admin">
+    <div class="wrap" style="max-width:760px">
+      <AdminNav current="staff" />
+      <h1 class="adminh1">{isOwner ? "Staff" : "My account"}</h1>
+
+      {doneMsg && <p class="notice ok" role="status" style="margin-bottom:18px">{doneMsg}</p>}
+      {error && <p class="notice warn" role="alert" style="margin-bottom:18px">{error}</p>}
+
+      <section class="adminpanel">
+        <h2>Your calendar link</h2>
+        <p class="hint" style="margin-bottom:10px">
+          Add this to Google Calendar ("Other calendars → From URL") or an iPhone ("Settings → Calendar →
+          Accounts → Add subscribed calendar") to see every measure. It's private to you — anyone with the
+          link can see the diary, so don't share it.
+        </p>
+        <div class="feed">
+          <input id="feedurl" readonly value={feed} aria-label="Calendar link" onclick="this.select()" />
+          <button class="btn ghost sm" type="button" onclick="navigator.clipboard.writeText(document.getElementById('feedurl').value).then(()=>this.textContent='Copied')">Copy</button>
+        </div>
+        <form method="post" style="margin-top:10px" onsubmit="return confirm('Make a new link? The old one will stop working.')">
+          <input type="hidden" name="action" value="feed" />
+          <button class="btn ghost sm" type="submit">Make a new link</button>
+        </form>
+      </section>
+
+      <section class="adminpanel">
+        <h2>Your details</h2>
+        <form method="post" class="grid g2" style="gap:0 14px; align-items:end">
+          <input type="hidden" name="action" value="name" />
+          <div class="field">
+            <label for="myname">Name, as it shows in the history</label>
+            <input id="myname" name="name" value={me.name} maxlength="60" required />
+          </div>
+          <div class="field"><button class="btn ghost sm" type="submit">Save name</button></div>
+        </form>
+        <p class="hint" style="margin:-4px 0 14px">Username: <span class="mono">{me.username}</span></p>
+
+        <form method="post" class="grid g2" style="gap:0 14px">
+          <input type="hidden" name="action" value="password" />
+          <div class="field" style="grid-column:1/-1">
+            <label for="current">Current password</label>
+            <input id="current" name="current" type="password" autocomplete="current-password" required />
+          </div>
+          <div class="field">
+            <label for="next">New password <span class="hint">— at least 10 characters</span></label>
+            <input id="next" name="next" type="password" autocomplete="new-password" minlength="10" required />
+          </div>
+          <div class="field">
+            <label for="again">New password again</label>
+            <input id="again" name="again" type="password" autocomplete="new-password" minlength="10" required />
+          </div>
+          <div><button class="btn ghost sm" type="submit">Change password</button></div>
+        </form>
+      </section>
+
+      {isOwner && (
+        <>
+          <h2 style="margin-bottom:12px">Everyone</h2>
+          <div class="stafftable">
+            {team.map((m) => (
+              <article class="staffcard" style={m.active ? undefined : "opacity:.6"}>
+                <div class="top">
+                  <strong>{m.name}{m.id === me.id && " (you)"}</strong>
+                  <span class="hint">
+                    <span class="mono">{m.username}</span> · {m.role} · {m.active ? "active" : "switched off"}
+                  </span>
+                </div>
+                {m.id !== me.id && (
+                  <div class="actions">
+                    <form method="post" class="actions">
+                      <input type="hidden" name="action" value="reset" />
+                      <input type="hidden" name="id" value={m.id} />
+                      <label class="visually-hidden" for={`pw-${m.id}`}>New password for {m.name}</label>
+                      <input id={`pw-${m.id}`} name="password" type="text" autocomplete="off" minlength="10" placeholder="New password" required style="border:1px solid var(--line-strong);border-radius:var(--r-s);padding:7px 10px;background:var(--ground);color:var(--ink)" />
+                      <button class="btn ghost sm" type="submit">Reset password</button>
+                    </form>
+                    <form method="post">
+                      <input type="hidden" name="action" value="role" />
+                      <input type="hidden" name="id" value={m.id} />
+                      <button class="btn ghost sm" type="submit">{m.role === "owner" ? "Make staff" : "Make owner"}</button>
+                    </form>
+                    <form method="post">
+                      <input type="hidden" name="action" value={m.active ? "disable" : "enable"} />
+                      <input type="hidden" name="id" value={m.id} />
+                      <button class="btn ghost sm" type="submit">{m.active ? "Switch off" : "Switch back on"}</button>
+                    </form>
+                  </div>
+                )}
+              </article>
+            ))}
+          </div>
+
+          <section class="adminpanel">
+            <h2>Add someone</h2>
+            <form method="post" class="grid g2" style="gap:0 14px">
+              <input type="hidden" name="action" value="add" />
+              <div class="field">
+                <label for="aname">Name</label>
+                <input id="aname" name="name" maxlength="60" required />
+              </div>
+              <div class="field">
+                <label for="auser">Username <span class="hint">— lower case, no spaces</span></label>
+                <input id="auser" name="username" maxlength="40" pattern="[a-z0-9._\-]{2,40}" autocapitalize="none" required />
+              </div>
+              <div class="field">
+                <label for="apass">Starting password <span class="hint">— they can change it</span></label>
+                <input id="apass" name="password" type="text" autocomplete="off" minlength="10" required />
+              </div>
+              <div class="field">
+                <label for="arole">Can they manage staff?</label>
+                <select id="arole" name="role">
+                  <option value="staff">No — staff</option>
+                  <option value="owner">Yes — owner</option>
+                </select>
+              </div>
+              <div><button class="btn yellow sm" type="submit">Add them</button></div>
+            </form>
+          </section>
+        </>
+      )}
+    </div>
+  </div>
+</Base>

@@ -7,20 +7,18 @@
  */
 
 import type { APIRoute } from "astro";
-import { json, clientIp, rateLimit, getEnv, after } from "../../lib/server/env.ts";
+import { json, clientIp, rateLimit, after } from "../../lib/server/env.ts";
 import { db } from "../../lib/server/db.ts";
 import { validateBooking } from "../../lib/server/validate.ts";
-import { shopEmail, customerEmail } from "../../lib/server/email.ts";
+import { sendBookingEmails } from "../../lib/server/email.ts";
 import { mintBookingRef, mintReferralCode } from "../../lib/codes.ts";
 import { slotKey } from "../../lib/dates.ts";
 import { capacityFor } from "../../lib/server/availability.ts";
-import { getSettings } from "../../lib/server/catalogue.ts";
 
 export const prerender = false;
 
 export const POST: APIRoute = async ({ request }) => {
   const now = new Date();
-  const env = getEnv();
   const wantsJson = (request.headers.get("accept") ?? "").includes("application/json");
 
   // Accept both a JSON fetch and a plain form post, so the page
@@ -82,7 +80,8 @@ export const POST: APIRoute = async ({ request }) => {
              (ref, name, phone, email, address, postcode, estimate_code,
               referred_by, date, slot, notes, created_at, status)
            SELECT ?1,?2,?3,?4,?5,?6,?7,?8,?9,?10,?11,?12,'new'
-            WHERE (SELECT count(*) FROM bookings WHERE date = ?9 AND slot = ?10) < ?13
+            WHERE (SELECT count(*) FROM bookings
+                    WHERE date = ?9 AND slot = ?10 AND status <> 'cancelled') < ?13
            RETURNING ref`,
         ).bind(
           ref,
@@ -143,23 +142,12 @@ export const POST: APIRoute = async ({ request }) => {
 
   // The booking is saved. Email is best-effort from here — a mail
   // provider having a bad morning must never lose someone's slot.
-  const payload = { ...b, ref, referralCode };
   after(
-    // The addresses in the settings table win; left empty, the
-    // SHOP_EMAIL and MAIL_FROM environment variables stand.
-    getSettings()
-      .then((s) => ({
-        ...env,
-        SHOP_EMAIL: s.shopEmail ?? env.SHOP_EMAIL,
-        MAIL_FROM: s.mailFrom ?? env.MAIL_FROM,
-      }))
-      .then((mail) => Promise.allSettled([shopEmail(mail, payload), customerEmail(mail, payload)]))
-      .then((rs) =>
-        rs.forEach((r) => {
-          if (r.status === "rejected") console.error("email failed", r.reason);
-          else if (!r.value.sent) console.warn("email not sent:", r.value.reason);
-        }),
-      ),
+    sendBookingEmails({ ...b, ref, referralCode }).then((rs) =>
+      rs.forEach((r) => {
+        if (!r.sent) console.warn("email not sent:", r.reason);
+      }),
+    ),
   );
 
   // A no-JavaScript post gets sent to its own booking page.

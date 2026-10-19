@@ -59,12 +59,13 @@ try {
     SELECT count(*)::int AS count FROM information_schema.tables
      WHERE table_schema = 'public'
        AND table_name IN ('bookings','referral_codes','promo_codes','estimates',
-                          'ranges','rates','settings','rate_limit')`;
+                          'ranges','rates','settings','rate_limit',
+                          'staff','staff_sessions','booking_events')`;
   const [{ count: promos }] = await sql`SELECT count(*)::int AS count FROM promo_codes`;
   const [{ count: ranges }] = await sql`SELECT count(*)::int AS count FROM ranges`;
 
   console.log(
-    `Schema applied. ${tables}/8 tables present, ${ranges} ranges, ${promos} promotion codes.`,
+    `Schema applied. ${tables}/11 tables present, ${ranges} ranges, ${promos} promotion codes.`,
   );
 } catch (err) {
   console.error("Could not apply the schema:\n", err instanceof Error ? err.message : err);

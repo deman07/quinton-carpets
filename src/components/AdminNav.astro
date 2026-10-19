@@ -1,0 +1,26 @@
+---
+// The bar across the top of every diary page: where you are, who you
+// are, and the way out.
+interface Props {
+  current: "diary" | "staff" | "emails";
+}
+const { current } = Astro.props;
+const staff = Astro.locals.staff!;
+const links = [
+  { key: "diary", href: "/admin/", label: "Diary" },
+  { key: "staff", href: "/admin/staff/", label: staff.role === "owner" ? "Staff" : "My account" },
+  { key: "emails", href: "/admin/emails/", label: "Emails" },
+] as const;
+---
+
+<nav class="adminnav" aria-label="Diary">
+  <div class="links">
+    {links.map((l) => (
+      <a class="chip" href={l.href} aria-current={current === l.key ? "page" : undefined}>{l.label}</a>
+    ))}
+  </div>
+  <form method="post" action="/admin/logout/" class="who">
+    <span class="hint">{staff.name}</span>
+    <button class="btn ghost sm" type="submit">Log out</button>
+  </form>
+</nav>

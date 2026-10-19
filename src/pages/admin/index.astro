@@ -1,228 +1,457 @@
 ---
 import Base from "../../layouts/Base.astro";
-import { longDate, slotLabel, todayISO } from "../../lib/dates.ts";
-import { getEnv, clientIp, ipBlock, countAttempt } from "../../lib/server/env.ts";
-import { db, hasDatabase } from "../../lib/server/db.ts";
+import AdminNav from "../../components/AdminNav.astro";
 import EstimateSummary from "../../components/EstimateSummary.astro";
+import { longDate, shortDate, slotLabel, todayISO, SLOTS, dayOfWeek, type SlotKey } from "../../lib/dates.ts";
+import { hasDatabase } from "../../lib/server/db.ts";
+import { getSettings } from "../../lib/server/catalogue.ts";
+import {
+  listBookings,
+  eventsFor,
+  takenOn,
+  readFilter,
+  addDays,
+  OPEN_STATUSES,
+  LIMIT,
+  type DiaryRow,
+  type EventRow,
+} from "../../lib/server/diary.ts";
 import type { Estimate, RoomInput } from "../../lib/pricing.ts";
 
 type EstimateInputRow = { floor?: { name: string }; rooms?: RoomInput[]; fit?: string };
 
-// Staff only, behind basic auth. Rendered on demand and never
-// cached — this is the diary, not a page.
+// Staff only — src/middleware.ts has checked the login. Rendered on
+// demand and never cached: this is the diary, not a page.
 export const prerender = false;
-
-const env = getEnv();
-
-/** Constant-time-ish compare, so a wrong password leaks nothing by timing. */
-function same(a: string, b: string) {
-  if (a.length !== b.length) return false;
-  let diff = 0;
-  for (let i = 0; i < a.length; i++) diff |= a.charCodeAt(i) ^ b.charCodeAt(i);
-  return diff === 0;
-}
-
-const expectedUser = env.ADMIN_USER ?? "";
-const expectedPass = env.ADMIN_PASSWORD ?? "";
-
-const header = Astro.request.headers.get("authorization") ?? "";
-let authorised = false;
-if (expectedUser && expectedPass && header.startsWith("Basic ")) {
-  try {
-    const [u, p] = atob(header.slice(6)).split(":");
-    authorised = same(u ?? "", expectedUser) && same(p ?? "", expectedPass);
-  } catch {
-    authorised = false;
-  }
-}
-
-// The diary is the whole customer list, so a wrong password is worth
-// counting. Twenty an hour is far more than a person mistyping and far
-// less than anything working through a wordlist.
-// Only a WRONG password is counted, and the check happens after the
-// comparison — so a run of guesses is stopped, but staff with the real
-// password are never locked out by somebody else's guessing.
-const adminIp = clientIp(Astro.request);
-const adminKey = `admin:${adminIp}`;
-const adminBlockKey = `adminnet:${ipBlock(adminIp)}`;
-
-if (!authorised) {
-  const [attempts, blockAttempts] = await Promise.all([
-    countAttempt(adminKey),
-    countAttempt(adminBlockKey),
-  ]);
-  if (attempts > 20 || blockAttempts > 40) {
-    return new Response("Too many attempts. Try again later.", {
-      status: 429,
-      headers: { "retry-after": "3600", "cache-control": "no-store" },
-    });
-  }
-  return new Response("Staff only.", {
-    status: 401,
-    headers: {
-      "www-authenticate": 'Basic realm="Quinton Carpets diary", charset="UTF-8"',
-      "cache-control": "no-store",
-    },
-  });
-}
-
 Astro.response.headers.set("cache-control", "no-store");
 
 const today = todayISO();
-const day = Astro.url.searchParams.get("date") || today;
-const showAll = Astro.url.searchParams.get("all") === "1";
+const f = readFilter(Astro.url, today);
 
-type Row = {
-  ref: string;
-  name: string;
-  phone: string;
-  email: string;
-  address: string;
-  postcode: string;
-  estimate_code: string | null;
-  referred_by: string | null;
-  date: string;
-  slot: string;
-  notes: string | null;
-  status: string;
-  code: string | null;
-  redemptions: number | null;
-  est_input: EstimateInputRow | null;
-  est_result: Estimate | null;
-};
-
-let rows: Row[] = [];
+let rows: DiaryRow[] = [];
+let events = new Map<string, EventRow[]>();
+let taken: Record<SlotKey, number> | null = null;
 let dbError = "";
+const { capacity } = await getSettings();
+
 if (hasDatabase()) {
   try {
-    const q = showAll
-      ? db
-          .prepare(
-            `SELECT b.*, r.code, r.redemptions, e.input AS est_input, e.result AS est_result
-               FROM bookings b
-               LEFT JOIN referral_codes r ON r.owner_ref = b.ref
-               LEFT JOIN estimates e ON e.code = b.estimate_code
-              WHERE b.date >= ?1 ORDER BY b.date ASC, b.slot ASC LIMIT 200`,
-          )
-          .bind(today)
-      : db
-          .prepare(
-            `SELECT b.*, r.code, r.redemptions, e.input AS est_input, e.result AS est_result
-               FROM bookings b
-               LEFT JOIN referral_codes r ON r.owner_ref = b.ref
-               LEFT JOIN estimates e ON e.code = b.estimate_code
-              WHERE b.date = ?1 ORDER BY b.slot ASC`,
-          )
-          .bind(day);
-    rows = (await q.all<Row>()).results ?? [];
+    rows = await listBookings(f, today);
+    events = await eventsFor(rows.map((r) => r.ref));
+    if (f.view === "day" && !f.q) taken = await takenOn(f.date);
   } catch (e) {
-    dbError = String(e);
+    console.error("diary read failed", e);
+    dbError = "The diary couldn't be read just now. Try again in a moment.";
   }
 } else {
   dbError = "No DATABASE_URL is set, so the diary cannot be read.";
 }
 
-const STATUSES = ["new", "called", "measured", "fitted"] as const;
+/** The same view with some parameters changed. */
+const link = (changes: Record<string, string | null>) => {
+  const u = new URL(Astro.url);
+  for (const [k, v] of Object.entries(changes)) {
+    if (v === null || v === "") u.searchParams.delete(k);
+    else u.searchParams.set(k, v);
+  }
+  return u.pathname + u.search;
+};
+
+const heading = f.q
+  ? `Search: “${f.q}”`
+  : f.view === "day"
+    ? longDate(f.date)
+    : f.view === "week"
+      ? `${shortDate(f.date)} – ${shortDate(addDays(f.date, 6))}`
+      : f.view === "upcoming"
+        ? "Everything ahead"
+        : "Past bookings";
+
+const step = f.view === "week" ? 7 : 1;
+const counts = rows.reduce<Record<string, number>>((acc, r) => ((acc[r.status] = (acc[r.status] ?? 0) + 1), acc), {});
+
+// Rows grouped under a date heading, except on a single day where
+// they are grouped by window instead.
+const groups: Array<{ title: string; sub?: string; rows: DiaryRow[] }> = [];
+if (f.view === "day" && !f.q) {
+  for (const s of SLOTS) {
+    const inSlot = rows.filter((r) => r.slot === s.key);
+    const closed = dayOfWeek(f.date) === 0 && s.key === "eve";
+    if (closed && !inSlot.length) continue;
+    groups.push({
+      title: `${s.title} · ${s.when}`,
+      sub: closed ? "Closed on Sundays" : `${taken?.[s.key] ?? 0} of ${capacity[s.key]} booked`,
+      rows: inSlot,
+    });
+  }
+} else {
+  for (const r of rows) {
+    const last = groups[groups.length - 1];
+    if (last && last.title === longDate(r.date)) last.rows.push(r);
+    else groups.push({ title: longDate(r.date), rows: [r] });
+  }
+}
+
+const exportHref = `/admin/export.csv${Astro.url.search}`;
+const when = (iso: string) =>
+  new Intl.DateTimeFormat("en-GB", {
+    timeZone: "Europe/London",
+    day: "numeric",
+    month: "short",
+    hour: "2-digit",
+    minute: "2-digit",
+  }).format(new Date(iso));
+const telHref = (p: string) => `tel:${p.replace(/[^\d+]/g, "")}`;
+const mapHref = (r: DiaryRow) =>
+  `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${r.address}, ${r.postcode}`)}`;
 ---
 
 <Base title="Diary — Quinton Carpets" description="Staff booking diary." noindex>
-  <div class="section plain">
-    <div class="wrap" style="max-width:760px">
-      <p class="eyebrow">Staff</p>
-      <h1 style="font-size:clamp(1.6rem,1.2rem + 1.6vw,2.2rem); margin-bottom:18px">The diary</h1>
+  <div class="section plain admin">
+    <div class="wrap" style="max-width:880px">
+      <AdminNav current="diary" />
 
-      <form method="get" action="/admin/" class="grid g2" style="gap:12px 14px; margin-bottom:22px">
-        <div class="field" style="margin:0">
-          <label for="date">Day</label>
-          <input id="date" name="date" type="date" value={day} />
+      <h1 class="adminh1">The diary</h1>
+
+      <form method="get" action="/admin/" class="diaryfilter" role="search">
+        <div class="field grow">
+          <label for="q">Search every booking</label>
+          <input id="q" name="q" type="search" value={f.q} placeholder="Name, phone, postcode, email or QC- reference" />
         </div>
-        <div class="field" style="margin:0; justify-content:flex-end">
-          <button class="btn sm" type="submit" style="min-height:44px">Show this day</button>
+        <div class="field">
+          <label for="status">Status</label>
+          <select id="status" name="status">
+            <option value="" selected={f.status === ""}>All but cancelled</option>
+            <option value="open" selected={f.status === "open"}>Still to do</option>
+            {OPEN_STATUSES.map((s) => <option value={s} selected={f.status === s}>{s}</option>)}
+            <option value="cancelled" selected={f.status === "cancelled"}>cancelled</option>
+          </select>
         </div>
-        <p style="grid-column:1/-1; margin:0">
-          <a class="chip" href="/admin/" aria-current={!showAll && day === today ? "true" : undefined}>Today</a>
-          <a class="chip" href="/admin/?all=1" aria-current={showAll ? "true" : undefined}>Everything ahead</a>
-        </p>
+        <input type="hidden" name="view" value={f.view} />
+        <input type="hidden" name="date" value={f.date} />
+        <div class="field">
+          <span class="lbl" aria-hidden="true">&nbsp;</span>
+          <button class="btn sm" type="submit">Search</button>
+        </div>
       </form>
 
-      {dbError && <p class="notice warn" style="margin-bottom:18px">{dbError}</p>}
-
-      <p class="hint" style="margin-bottom:14px">
-        {showAll ? "Every booking from today onwards" : longDate(day)} — {rows.length}
-        {rows.length === 1 ? " booking" : " bookings"}
-      </p>
-
-      <div class="adminlist">
-        {
-          rows.length === 0 && !dbError ? (
-            <p class="notice info">Nothing in the diary for that day.</p>
-          ) : (
-            rows.map((b) => (
-              <article class="adminrow" data-ref={b.ref}>
-                <div class="top">
-                  <span class="ref">{b.ref}</span>
-                  <span class="status" data-s={b.status}>{b.status}</span>
-                </div>
-                <p style="font-weight:700">{b.name} · <a href={`tel:${b.phone.replace(/\s/g, "")}`}>{b.phone}</a></p>
-                <p style="font-size:.9rem">{b.address}, {b.postcode}</p>
-                <p style="font-size:.9rem;color:var(--muted)">
-                  {longDate(b.date)} · {slotLabel(b.slot)}
-                </p>
-                {b.notes && <p style="font-size:.9rem">“{b.notes}”</p>}
-                <p style="font-size:.82rem;color:var(--muted)">
-                  <a href={`mailto:${b.email}`}>{b.email}</a>
-                  {b.referred_by && <> · referred by <span class="mono">{b.referred_by}</span></>}
-                  {b.code && (
-                    <> · their code <span class="mono">{b.code}</span> (used {b.redemptions ?? 0})</>
-                  )}
-                </p>
-                {b.estimate_code && (
-                  <EstimateSummary code={b.estimate_code} input={b.est_input} result={b.est_result} />
-                )}
-                <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center">
-                  <label for={`s-${b.ref}`} class="hint" style="font-weight:700">Status</label>
-                  <select id={`s-${b.ref}`} data-status-for={b.ref}>
-                    {STATUSES.map((s) => (
-                      <option value={s} selected={s === b.status}>{s}</option>
-                    ))}
-                  </select>
-                  <span class="hint" data-saved-for={b.ref} role="status" aria-live="polite"></span>
-                </div>
-              </article>
-            ))
-          )
-        }
+      <div class="viewbar">
+        <div class="tabs" role="group" aria-label="Which bookings">
+          <a class="chip" href={link({ view: null, date: null, q: null })} aria-current={!f.q && f.view === "day" && f.date === today ? "true" : undefined}>Today</a>
+          <a class="chip" href={link({ view: null, date: addDays(today, 1), q: null })} aria-current={!f.q && f.view === "day" && f.date === addDays(today, 1) ? "true" : undefined}>Tomorrow</a>
+          <a class="chip" href={link({ view: "week", date: f.view === "week" ? f.date : today, q: null })} aria-current={!f.q && f.view === "week" ? "true" : undefined}>Week</a>
+          <a class="chip" href={link({ view: "upcoming", date: null, q: null })} aria-current={!f.q && f.view === "upcoming" ? "true" : undefined}>Everything ahead</a>
+          <a class="chip" href={link({ view: "past", date: null, q: null })} aria-current={!f.q && f.view === "past" ? "true" : undefined}>Past</a>
+        </div>
+        {!f.q && (f.view === "day" || f.view === "week") && (
+          <div class="stepper">
+            <a class="btn ghost sm" href={link({ date: addDays(f.date, -step) })} aria-label={f.view === "week" ? "Previous week" : "Previous day"}>&larr;</a>
+            <form method="get" action="/admin/">
+              <input type="hidden" name="view" value={f.view} />
+              {f.status && <input type="hidden" name="status" value={f.status} />}
+              <label class="visually-hidden" for="jump">Go to date</label>
+              <input id="jump" name="date" type="date" value={f.date} onchange="this.form.submit()" />
+            </form>
+            <a class="btn ghost sm" href={link({ date: addDays(f.date, step) })} aria-label={f.view === "week" ? "Next week" : "Next day"}>&rarr;</a>
+          </div>
+        )}
       </div>
+
+      {dbError && <p class="notice warn" style="margin-bottom:18px">{dbError}</p>}
+      <p id="flash" class="notice ok" role="status" hidden></p>
+
+      <div class="diarysum">
+        <h2>{heading}</h2>
+        <p class="hint">
+          {rows.length}{rows.length === LIMIT ? "+" : ""} {rows.length === 1 ? "booking" : "bookings"}
+          {Object.entries(counts).map(([s, n]) => <span class="status" data-s={s}>{n} {s}</span>)}
+          {rows.length > 0 && <a href={exportHref} class="exportlink">Download as a spreadsheet (CSV)</a>}
+        </p>
+      </div>
+
+      {
+        !dbError && rows.length === 0 && groups.length === 0 && (
+          <p class="notice info">{f.q ? "Nothing matches that search." : "Nothing in the diary here."}</p>
+        )
+      }
+
+      {
+        groups.map((g) => (
+          <section class="diarygroup">
+            <h3>
+              {g.title}
+              {g.sub && <span class="hint">{g.sub}</span>}
+            </h3>
+            {g.rows.length === 0 && <p class="hint empty">Nothing booked.</p>}
+            <div class="adminlist">
+              {g.rows.map((b) => (
+                <article class="adminrow" data-ref={b.ref} data-cancelled={b.status === "cancelled" ? "" : undefined}>
+                  <div class="top">
+                    <span class="ref">{b.ref}</span>
+                    <span class="status" data-s={b.status} data-chip>{b.status}</span>
+                  </div>
+                  <p class="who">
+                    {b.name} · <a href={telHref(b.phone)}>{b.phone}</a>
+                  </p>
+                  <p class="where">
+                    <a href={mapHref(b)} target="_blank" rel="noopener">{b.address}, {b.postcode}</a>
+                  </p>
+                  <p class="whenline">
+                    {longDate(b.date)} · {slotLabel(b.slot)}
+                  </p>
+                  {b.notes && <p class="custnote"><span class="hint">Their note:</span> “{b.notes}”</p>}
+                  {b.staff_notes && <p class="staffnote" data-staffnote-view>{b.staff_notes}</p>}
+                  <p class="meta">
+                    <a href={`mailto:${b.email}`}>{b.email}</a>
+                    {b.referred_by && <> · referred by <span class="mono">{b.referred_by}</span></>}
+                    {b.code && <> · their code <span class="mono">{b.code}</span> (used {b.redemptions ?? 0})</>}
+                    · booked {when(b.created_at)}
+                    {b.reminded_at && <> · reminder sent</>}
+                  </p>
+                  {b.estimate_code && (
+                    <EstimateSummary
+                      code={b.estimate_code}
+                      input={b.est_input as EstimateInputRow | null}
+                      result={b.est_result as Estimate | null}
+                    />
+                  )}
+
+                  <div class="quick">
+                    <label for={`s-${b.ref}`} class="hint">Status</label>
+                    <select id={`s-${b.ref}`} data-status-for={b.ref} disabled={b.status === "cancelled"}>
+                      {b.status === "cancelled" && <option selected>cancelled</option>}
+                      {OPEN_STATUSES.map((s) => (
+                        <option value={s} selected={s === b.status}>{s}</option>
+                      ))}
+                    </select>
+                    <span class="hint" data-saved-for={b.ref} role="status" aria-live="polite" />
+                  </div>
+
+                  <details class="manage">
+                    <summary>Manage booking</summary>
+                    <div class="panes">
+                      <form class="pane" data-action="notes">
+                        <label for={`n-${b.ref}`}>Shop notes <span class="hint">— never shown to the customer</span></label>
+                        <textarea id={`n-${b.ref}`} name="notes" rows="3" maxlength="2000">{b.staff_notes ?? ""}</textarea>
+                        <button class="btn ghost sm" type="submit">Save notes</button>
+                      </form>
+
+                      {b.status !== "cancelled" && (
+                        <form class="pane" data-action="reschedule">
+                          <p class="panetitle">Move to another time</p>
+                          <div class="row">
+                            <div class="field">
+                              <label for={`d-${b.ref}`}>Date</label>
+                              <input id={`d-${b.ref}`} name="date" type="date" min={today} value={b.date} required />
+                            </div>
+                            <div class="field">
+                              <label for={`w-${b.ref}`}>Window</label>
+                              <select id={`w-${b.ref}`} name="slot">
+                                {SLOTS.map((s) => <option value={s.key} selected={s.key === b.slot}>{s.title} ({s.when})</option>)}
+                              </select>
+                            </div>
+                          </div>
+                          <label class="checkrow"><input type="checkbox" name="notify" checked /> Email the customer the new time</label>
+                          <label class="checkrow"><input type="checkbox" name="overbook" /> Overbook if the window is full</label>
+                          <button class="btn ghost sm" type="submit">Move booking</button>
+                        </form>
+                      )}
+
+                      {b.status === "fitted" && (
+                        <form class="pane" data-action="thanks">
+                          <p class="panetitle">After the fitting</p>
+                          <p class="hint">Care tips and their referral code.</p>
+                          <button class="btn ghost sm" type="submit">Send the thank-you email</button>
+                        </form>
+                      )}
+
+                      {b.referred_by && (
+                        <form class="pane" data-action="reward">
+                          <p class="panetitle">Referral</p>
+                          <label class="checkrow">
+                            <input type="checkbox" name="earned" checked={Number(b.reward_earned) === 1} />
+                            This job is paid, so {b.referred_by}'s owner has earned their 20%
+                          </label>
+                          <button class="btn ghost sm" type="submit">Save</button>
+                        </form>
+                      )}
+
+                      {b.status !== "cancelled" ? (
+                        <form class="pane danger" data-action="cancel">
+                          <p class="panetitle">Cancel</p>
+                          <div class="field">
+                            <label for={`r-${b.ref}`}>Reason <span class="hint">— for the history, optional</span></label>
+                            <input id={`r-${b.ref}`} name="reason" maxlength="300" />
+                          </div>
+                          <label class="checkrow"><input type="checkbox" name="notify" checked /> Email the customer</label>
+                          <button class="btn ghost sm" type="submit">Cancel this booking</button>
+                        </form>
+                      ) : (
+                        <form class="pane" data-action="reinstate">
+                          <p class="panetitle">Cancelled</p>
+                          <label class="checkrow"><input type="checkbox" name="overbook" /> Overbook if the window has filled</label>
+                          <button class="btn ghost sm" type="submit">Reinstate it</button>
+                        </form>
+                      )}
+
+                      {b.status !== "cancelled" && (
+                        <form class="pane" data-action="resend">
+                          <p class="panetitle">Lost the email?</p>
+                          <button class="btn ghost sm" type="submit">Resend their confirmation</button>
+                        </form>
+                      )}
+
+                      <p class="hint" data-pane-msg role="status" aria-live="polite" />
+
+                      <div class="history">
+                        <p class="panetitle">History</p>
+                        <ol>
+                          <li><time>{when(b.created_at)}</time> Booked on the website</li>
+                          {(events.get(b.ref) ?? []).map((e) => (
+                            <li><time>{when(e.at)}</time> {e.what} <span class="hint">— {e.actor}</span></li>
+                          ))}
+                        </ol>
+                      </div>
+                    </div>
+                  </details>
+                </article>
+              ))}
+            </div>
+          </section>
+        ))
+      }
     </div>
   </div>
 
   <script>
-    // Changing the dropdown saves straight away — nobody at a counter
+    type Reply = { ok?: boolean; message?: string; error?: string; booking?: { status: string } };
+
+    async function change(ref: string, body: Record<string, unknown>): Promise<Reply> {
+      const res = await fetch(`/api/admin/bookings/${ref}`, {
+        method: "POST",
+        headers: { "content-type": "application/json", accept: "application/json" },
+        body: JSON.stringify(body),
+      });
+      if (res.status === 401) {
+        location.href = `/admin/login/?next=${encodeURIComponent(location.pathname + location.search)}`;
+        return {};
+      }
+      const out = (await res.json().catch(() => ({}))) as Reply;
+      if (!res.ok) throw new Error(out.error ?? "That didn't save. Try again.");
+      return out;
+    }
+
+    // A message that survives the reload after a bigger change.
+    const flash = document.getElementById("flash")!;
+    try {
+      const msg = sessionStorage.getItem("diary-flash");
+      if (msg) {
+        flash.textContent = msg;
+        flash.hidden = false;
+        sessionStorage.removeItem("diary-flash");
+      }
+    } catch {
+      /* private mode: no flash, no harm */
+    }
+    const reloadWith = (msg: string) => {
+      try {
+        sessionStorage.setItem("diary-flash", msg);
+      } catch {
+        /* still reload */
+      }
+      location.reload();
+    };
+
+    // Changing the status saves straight away — nobody at a counter
     // wants to find a Save button on a phone.
     document.querySelectorAll<HTMLSelectElement>("[data-status-for]").forEach((sel) => {
+      let was = sel.value;
       sel.addEventListener("change", async () => {
         const ref = sel.dataset.statusFor!;
-        const note = document.querySelector<HTMLElement>(`[data-saved-for="${ref}"]`);
-        const chip = document.querySelector<HTMLElement>(`[data-ref="${ref}"] .status`);
-        if (note) note.textContent = "Saving…";
+        const note = document.querySelector<HTMLElement>(`[data-saved-for="${ref}"]`)!;
+        const chip = document.querySelector<HTMLElement>(`[data-ref="${ref}"] [data-chip]`);
+        const notify = sel.value === "fitted" && confirm("Marked as fitted. Send the customer the thank-you email now?");
+        note.textContent = "Saving…";
         try {
-          const res = await fetch(`/api/bookings/${ref}`, {
-            method: "PATCH",
-            headers: { "content-type": "application/json" },
-            body: JSON.stringify({ status: sel.value }),
-          });
-          if (!res.ok) throw new Error(String(res.status));
+          const out = await change(ref, { action: "status", status: sel.value, notify });
+          was = sel.value;
           if (chip) {
             chip.textContent = sel.value;
-            chip.setAttribute("data-s", sel.value);
+            chip.dataset.s = sel.value;
           }
-          if (note) note.textContent = "Saved";
-        } catch {
-          if (note) note.textContent = "Didn't save — try again";
+          note.textContent = out.message ?? "Saved";
+          window.setTimeout(() => (note.textContent = ""), 2500);
+        } catch (e) {
+          sel.value = was;
+          note.textContent = (e as Error).message;
         }
-        window.setTimeout(() => {
-          if (note && note.textContent === "Saved") note.textContent = "";
-        }, 2000);
+      });
+    });
+
+    document.querySelectorAll<HTMLFormElement>("form[data-action]").forEach((form) => {
+      form.addEventListener("submit", async (ev) => {
+        ev.preventDefault();
+        const row = form.closest<HTMLElement>("[data-ref]")!;
+        const ref = row.dataset.ref!;
+        const msg = row.querySelector<HTMLElement>("[data-pane-msg]")!;
+        const kind = form.dataset.action!;
+        const data = new FormData(form);
+        const on = (k: string) => data.get(k) === "on";
+
+        let body: Record<string, unknown>;
+        switch (kind) {
+          case "notes":
+            body = { action: "notes", notes: data.get("notes") };
+            break;
+          case "reschedule":
+            body = { action: "reschedule", date: data.get("date"), slot: data.get("slot"), notify: on("notify"), overbook: on("overbook") };
+            break;
+          case "cancel":
+            if (!confirm(`Cancel ${ref}?`)) return;
+            body = { action: "cancel", reason: data.get("reason"), notify: on("notify") };
+            break;
+          case "reinstate":
+            body = { action: "reinstate", overbook: on("overbook") };
+            break;
+          case "reward":
+            body = { action: "reward", earned: on("earned") };
+            break;
+          case "thanks":
+            body = { action: "thanks" };
+            break;
+          default:
+            body = { action: "resend" };
+        }
+
+        const button = form.querySelector<HTMLButtonElement>("button[type=submit]");
+        if (button) button.disabled = true;
+        msg.textContent = "Saving…";
+        try {
+          const out = await change(ref, body);
+          if (["reschedule", "cancel", "reinstate"].includes(kind)) {
+            reloadWith(`${ref}: ${out.message ?? "Saved."}`);
+            return;
+          }
+          if (kind === "notes") {
+            let view = row.querySelector<HTMLElement>("[data-staffnote-view]");
+            const text = String(data.get("notes") ?? "").trim();
+            if (!view && text) {
+              view = document.createElement("p");
+              view.className = "staffnote";
+              view.dataset.staffnoteView = "";
+              row.querySelector(".meta")!.before(view);
+            }
+            if (view) {
+              view.textContent = text;
+              view.hidden = !text;
+            }
+          }
+          msg.textContent = out.message ?? "Saved.";
+        } catch (e) {
+          msg.textContent = (e as Error).message;
+        } finally {
+          if (button) button.disabled = false;
+        }
       });
     });
   </script>

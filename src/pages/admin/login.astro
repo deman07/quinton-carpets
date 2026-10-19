@@ -1,0 +1,78 @@
+---
+import Base from "../../layouts/Base.astro";
+import { checkLogin, createSession, cookieOptions, SESSION_COOKIE, staffForToken } from "../../lib/server/auth.ts";
+import { clientIp, ipBlock, overLimit, countAttempt } from "../../lib/server/env.ts";
+import { hasDatabase } from "../../lib/server/db.ts";
+
+// The way into the diary. The only /admin/ page the middleware lets
+// through without a session.
+export const prerender = false;
+
+Astro.response.headers.set("cache-control", "no-store");
+
+// Only ever back into the diary, never off to another site.
+const nextRaw = Astro.url.searchParams.get("next") ?? "";
+const next = /^\/admin(\/|\?|$)/.test(nextRaw) && !nextRaw.startsWith("//") ? nextRaw : "/admin/";
+
+// Already logged in? Straight through.
+if (Astro.request.method === "GET" && (await staffForToken(Astro.cookies.get(SESSION_COOKIE)?.value))) {
+  return Astro.redirect(next, 303);
+}
+
+let error = "";
+let username = "";
+
+if (Astro.request.method === "POST") {
+  const ip = clientIp(Astro.request);
+  const key = `login:${ip}`;
+  const blockKey = `loginnet:${ipBlock(ip)}`;
+
+  // Twenty wrong passwords an hour from one address, forty from its
+  // block. Only wrong ones count, so somebody guessing can never lock
+  // out staff who know the password — they are checked first.
+  const form = await Astro.request.formData();
+  username = String(form.get("username") ?? "").trim().toLowerCase().slice(0, 40);
+  const password = String(form.get("password") ?? "").slice(0, 200);
+
+  if (!hasDatabase()) {
+    error = "The diary has no database to check against. Set DATABASE_URL.";
+  } else if ((await overLimit(key, 20)) || (await overLimit(blockKey, 40))) {
+    Astro.response.status = 429;
+    error = "Too many wrong passwords from here. Try again in an hour, or ask the owner to reset yours.";
+  } else {
+    const staff = username && password ? await checkLogin(username, password) : null;
+    if (staff) {
+      const token = await createSession(staff.id);
+      Astro.cookies.set(SESSION_COOKIE, token, cookieOptions(Astro.url.protocol === "https:"));
+      return Astro.redirect(next, 303);
+    }
+    await Promise.all([countAttempt(key), countAttempt(blockKey)]);
+    Astro.response.status = 401;
+    error = "That username and password don't match.";
+  }
+}
+---
+
+<Base title="Log in — Quinton Carpets diary" description="Staff log in." noindex>
+  <div class="section plain">
+    <div class="wrap" style="max-width:420px">
+      <p class="eyebrow">Staff</p>
+      <h1 style="font-size:clamp(1.6rem,1.2rem + 1.6vw,2.2rem); margin-bottom:18px">Log in to the diary</h1>
+
+      {error && <p class="notice warn" role="alert" style="margin-bottom:18px">{error}</p>}
+
+      <form method="post" class="loginbox">
+        <div class="field">
+          <label for="username">Username</label>
+          <input id="username" name="username" autocomplete="username" autocapitalize="none" spellcheck="false" required value={username} />
+        </div>
+        <div class="field">
+          <label for="password">Password</label>
+          <input id="password" name="password" type="password" autocomplete="current-password" required />
+        </div>
+        <button class="btn yellow" type="submit" style="width:100%">Log in</button>
+        <p class="hint" style="margin-top:14px">Forgotten it? The owner can set a new one on the Staff page.</p>
+      </form>
+    </div>
+  </div>
+</Base>
