@@ -295,8 +295,7 @@ if (root) {
         row("Room sizes", false, "Add them") +
         row("Underlay", false, "—") +
         row("Fitting & extras", false, "—") +
-        `<hr><div class="l" style="font-weight:800"><span>Estimate incl. VAT</span><span>£—</span></div>
-         <p class="hint" style="margin-top:12px">${floor ? "Now put your room sizes in" : "Choose a floor and put your room sizes in"} — the price builds here as you go.</p>`;
+        `<hr><div class="l" style="font-weight:800"><span>Estimate incl. VAT</span><span>£—</span></div>`;
     }
     const total = $("#estTotal");
     if (total) total.innerHTML = `£—<small> incl. VAT</small>`;
@@ -349,17 +348,23 @@ if (root) {
     drawFoot();
   }
 
+  /** Taller than the screen? Then stick by the bottom edge, not the top. */
+  function fitSummary() {
+    const box = $<HTMLElement>("aside.summary");
+    if (!box) return;
+    box.style.top = `${Math.min(88, window.innerHeight - box.offsetHeight - 16)}px`;
+  }
+  window.addEventListener("resize", fitSummary);
+
   function drawFoot() {
     const foot = $("#estFoot");
     if (foot && !foot.querySelector("#estBook")) {
       foot.innerHTML = `
-        <div class="notice info" style="margin-bottom:12px"><span>Book a measure from here and this
-        estimate goes with it — we'll have your rooms on the screen when we ring.</span></div>
         <a class="btn yellow" id="estBook" href="/book/" style="width:100%">Book a free measure</a>
-        <p class="hint" style="margin-top:10px">Booking is free and there is no payment on this site.
-        Guide prices only — the fitter confirms on the day.</p>`;
+        <p class="hint" style="margin-top:10px;text-align:center">Free, no payment online — your estimate comes with the booking.</p>`;
       foot.querySelector("#estBook")?.addEventListener("click", book);
     }
+    fitSummary();
   }
 
   /* ---------------- on to the booking form ----------------

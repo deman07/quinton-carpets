@@ -171,7 +171,8 @@ export const DEFAULT_SETTINGS: Settings = {
     vinyl: "/site/cat-vinyl.jpg",
   },
   ogImage: "/og.jpg",
-  aboutPhoto: null,
+  // Aman's photo, in public/. settings.about_photo replaces it.
+  aboutPhoto: "/about-aman.jpg",
 };
 
 type SettingsRow = {
@@ -214,7 +215,7 @@ export async function getSettings(): Promise<Settings> {
           vinyl: r.photo_vinyl,
         },
         ogImage: r.og_image,
-        aboutPhoto: blankToNull(r.about_photo ?? null),
+        aboutPhoto: blankToNull(r.about_photo ?? null) ?? DEFAULT_SETTINGS.aboutPhoto,
       };
     });
   } catch (err) {

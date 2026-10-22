@@ -136,16 +136,17 @@
 .opt .p{margin-left:auto; text-align:right; white-space:nowrap; font-family:"DM Mono",monospace; font-size:.86rem}
 
 /* ============ summary ============ */
-/* Never taller than the screen: the total stays pinned at the top and
-   the lines scroll inside the box, so nothing is ever cut off. */
-.summary{position:sticky; top:88px; max-height:calc(100vh - 104px); max-height:calc(100dvh - 104px); overflow-y:auto; overscroll-behavior:contain; border:2px solid var(--ink); border-radius:18px; background:var(--ground)}
-.summary .top{position:sticky; top:0; z-index:1; background:var(--ink); color:var(--ground); padding:16px 20px}
+/* No inner scroll. The box is kept compact, and estimator.ts lowers
+   its sticky top when it is taller than the screen, so it travels with
+   the page until its bottom is in view instead of being cut off. */
+.summary{position:sticky; top:88px; border:2px solid var(--ink); border-radius:18px; overflow:hidden; background:var(--ground)}
+.summary .top{background:var(--ink); color:var(--ground); padding:14px 18px}
 .summary .hint{font-size:.78rem; line-height:1.5; color:var(--muted)}
 .summary .l.todo span:last-child{font-family:inherit; color:var(--muted); font-size:.85rem}
 .summary .top .k{font-family:"DM Mono",monospace; font-size:.7rem; letter-spacing:.16em; text-transform:uppercase; opacity:.7}
-.summary .top .v{font-family:"Archivo",sans-serif; font-stretch:118%; font-weight:900; font-size:2.1rem; line-height:1.1; margin-top:2px}
+.summary .top .v{font-family:"Archivo",sans-serif; font-stretch:118%; font-weight:900; font-size:1.95rem; line-height:1.1; margin-top:2px}
 .summary .top .v small{font-size:.9rem; font-weight:600; opacity:.75; font-stretch:100%}
-.lines{padding:16px 20px; display:grid; gap:9px; font-size:.9rem}
+.lines{padding:14px 18px 12px; display:grid; gap:7px; font-size:.9rem}
 .lines .l{display:flex; justify-content:space-between; gap:14px}
 .lines .l span:last-child{font-family:"DM Mono",monospace; font-variant-numeric:tabular-nums; white-space:nowrap}
 .lines .l.sub{color:var(--muted); font-size:.82rem}
@@ -243,7 +244,7 @@ footer.site .fine{
 /* ============ home: about, partners, work, reviews ============ */
 .about-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:clamp(28px,5vw,72px);align-items:stretch}
 .about-photo{min-height:420px;background:var(--surface);overflow:hidden}
-.about-photo img{display:block;width:100%;height:100%;object-fit:cover}
+.about-photo img{display:block;width:100%;height:100%;object-fit:cover;object-position:50% 22%}
 /* Until the owner's photo is in settings.about_photo. */
 .about-card{height:100%;min-height:inherit;display:grid;gap:6px;align-content:center;padding:clamp(28px,4vw,48px);background:var(--yellow);color:#15120C}
 .about-card b{font-family:"Archivo",sans-serif;font-stretch:125%;font-size:clamp(4rem,2.5rem + 6vw,7.5rem);line-height:.9;letter-spacing:-.04em}
@@ -288,7 +289,7 @@ footer.site .fine{
 .review-actions{display:flex;gap:10px;flex-wrap:wrap}
 @media (max-width:760px){
   .about-grid{grid-template-columns:1fr;gap:24px}
-  .about-photo{min-height:0;aspect-ratio:4/3}
+  .about-photo{min-height:0;aspect-ratio:1/1}
   .partner-bar{padding:22px 0 18px}
   .partner-title{font-size:1.2rem;gap:10px;margin-bottom:16px}
   .partner-title::before,.partner-title::after{flex-basis:22px}
