@@ -64,10 +64,10 @@ const schema = {
 
           <div class="ctas">
             {r.sampleUrl && (
-              <a class="btn" href={r.sampleUrl} target="_blank" rel="noopener noreferrer">Order a Free Sample</a>
+              <a class="btn" href={r.sampleUrl} target="_blank" rel="noopener noreferrer">Order a free sample</a>
             )}
-            <a class="btn yellow magnet" href={`/estimate/?range=${r.id}`}>Estimate my room in this</a>
-            <a class="btn ghost" href="/book/">Book a free measure</a>
+            <a class={`btn yellow${r.sampleUrl ? "" : " solo"}`} href={`/estimate/?range=${r.id}`}>Estimate my room</a>
+            <a class="textbtn" href="/book/">Book a free measure →</a>
           </div>
 
           <dl>

@@ -146,49 +146,31 @@ const schema = {
               shop than we can show here.
             </p>
           ) : (
-            list.map((r) =>
-              r.brand ? (
-                <article class="rangecard">
-                  <a href={`/ranges/${r.id}/`} tabindex="-1" aria-hidden="true">
-                    <Swatch photo={r.photo} alt="" texture={r} tag={r.category ?? r.brand} />
-                  </a>
-                  <div class="body">
-                    <h2 style="font-size:1.02rem;font-stretch:112%;font-weight:700;letter-spacing:-.005em">
-                      <a class="rangelink" href={`/ranges/${r.id}/`}>{r.name}</a>
-                    </h2>
-                    {r.body && <p class="meta">{r.body}</p>}
-                    <p class="meta" style="color:var(--yellow-ink);font-weight:600">{[r.spec, ...r.features].slice(0, 3).join(" · ")}</p>
-                    <p class="meta"><b>Suitable rooms:</b> {r.rooms.join(", ")}</p>
-                    {r.colourNames.length > 0 && <p class="meta"><b>Colours:</b> {r.colourNames.join(", ")}</p>}
-                    <div class="rowend">
-                      <span class="price"><b>{r.priceFrom ? "From " : ""}{money(r.price)}/m²</b></span>
+            list.map((r) => (
+              // Kept short so the grid reads at a glance: the name, what
+              // it's made of, the price, and two equal buttons along the
+              // bottom. Features, rooms and colours are on the range page.
+              <article class="rangecard">
+                <a href={`/ranges/${r.id}/`} tabindex="-1" aria-hidden="true">
+                  <Swatch photo={r.photo} alt="" texture={r} tag={r.category ?? r.material} />
+                </a>
+                <div class="body">
+                  <h2 class="rangename"><a class="rangelink" href={`/ranges/${r.id}/`}>{r.name}</a></h2>
+                  <p class="meta">{r.spec}</p>
+                  <div class="cardfoot">
+                    <p class="price">{r.priceFrom && <small>From </small>}<b>{money(r.price)}</b> /m²</p>
+                    <div class="cardbtns">
                       <a class="btn ghost sm" href={`/ranges/${r.id}/`}>View range</a>
-                    </div>
-                    {r.sampleUrl && (
-                      <a class="btn sm" href={r.sampleUrl} target="_blank" rel="noopener noreferrer">Order a Free Sample</a>
-                    )}
-                  </div>
-                </article>
-              ) : (
-                <article class="rangecard">
-                  <Swatch photo={r.photo} alt={`${r.name} — ${r.spec}`} texture={r} tag={r.material} />
-                  <div class="body">
-                    <h2 style="font-size:1.02rem;font-stretch:112%;font-weight:700;letter-spacing:-.005em">
-                      {r.name}
-                    </h2>
-                    <p class="meta">{r.spec}</p>
-                    <p class="meta" style="color:var(--yellow-ink);font-weight:600">{r.grade}</p>
-                    <p class="meta">
-                      {r.widths ? `${r.widths.join("m and ")}m roll widths` : "Sold by the square metre"}
-                    </p>
-                    <div class="rowend">
-                      <span class="price"><b>{money(r.price)}</b> /m²</span>
-                      <a class="btn ghost sm" href={`/estimate/?range=${r.id}`}>Estimate this</a>
+                      {r.sampleUrl ? (
+                        <a class="btn sm" href={r.sampleUrl} target="_blank" rel="noopener noreferrer">Free sample</a>
+                      ) : (
+                        <a class="btn sm" href={`/estimate/?range=${r.id}`}>Estimate</a>
+                      )}
                     </div>
                   </div>
-                </article>
-              ),
-            )
+                </div>
+              </article>
+            ))
           )
         }
       </div>

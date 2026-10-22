@@ -30,16 +30,25 @@ async function pickDay(page: Page, weekday?: number): Promise<string> {
 test("estimate, then book, and come away with a reference", async ({ page }) => {
   await page.goto("/estimate/");
 
-  // The summary is live from the first paint — no empty state to click past.
+  // Nothing is priced until the customer chooses: the summary shows
+  // what's missing, not a made-up number.
   const total = page.locator("#estTotal");
-  await expect(total).toContainText("£");
+  await expect(total).toContainText("£—");
+
+  // A floor and a room's sizes, and the number appears.
+  await page.locator("#estRanges [data-floor]").first().click();
+  await page.locator("#rn0").fill("Living room");
+  await page.locator("#rw0").fill("4.2");
+  await page.locator("#rl0").fill("4.6");
+  await expect(total).not.toContainText("£—");
   const opening = await total.textContent();
 
   // The roll width the fitter would use is shown, not hidden.
   await expect(page.locator("#estLines")).toContainText("roll width, trim included");
 
-  // Adding a room moves the number.
-  await page.getByRole("button", { name: "+ Add a room" }).click();
+  // Adding stairs moves the number.
+  await page.getByRole("button", { name: "+ Add stairs & landing" }).click();
+  await page.locator("#rs1").fill("13");
   await expect(total).not.toHaveText(opening ?? "");
 
   // Going on to book saves the estimate, and the server mints its code.

@@ -45,10 +45,10 @@ if (root) {
   const byId = new Map(cfg.floors.map((f) => [f.id, f]));
   const ulById = new Map(cfg.underlays.map((u) => [u.id, u]));
 
-  // A range link from /ranges/ pre-selects that floor.
+  // Nothing is chosen until the customer chooses it — except a range
+  // link from /ranges/, which pre-selects that floor.
   const wanted = new URLSearchParams(location.search).get("range");
-  const defaultFloor =
-    (wanted && byId.has(wanted) ? wanted : null) ?? cfg.floors[0]?.id ?? "";
+  const defaultFloor = wanted && byId.has(wanted) ? wanted : "";
   const defaultUnderlay =
     cfg.underlays.find((u) => !u.forHard)?.id ?? cfg.underlays[0]?.id ?? "none";
 
@@ -57,14 +57,14 @@ if (root) {
     underlay: defaultUnderlay,
     fit: "fitted" as "fitted" | "supply",
     extras: { uplift: true, gripper: true, doorbars: true, furniture: false },
-    rooms: [
-      { kind: "room", name: "Living room", width: 4.2, length: 4.6 },
-      { kind: "stairs", name: "Stairs & landing", steps: 13 },
-    ] as RoomInput[],
+    // One empty room to fill in; the boxes show examples, not values.
+    rooms: [{ kind: "room", name: "", width: 0, length: 0 }] as RoomInput[],
     discount: null as DiscountVerdict | null,
   };
 
-  const currentFloor = () => byId.get(state.floor)!;
+  const currentFloor = () => byId.get(state.floor);
+  /** A size box shows blank, with its example, until something is typed. */
+  const num = (v: number) => (v > 0 ? String(v) : "");
 
   /* ---------------- step 1: the floor ---------------- */
   function drawFloors() {
@@ -104,9 +104,9 @@ if (root) {
         if (r.kind === "stairs") {
           return `<div class="roomrow">
             <div class="field"><label for="rn${i}">Area</label>
-              <input id="rn${i}" value="${esc(r.name)}" data-i="${i}" data-p="name"></div>
+              <input id="rn${i}" value="${esc(r.name)}" placeholder="e.g. Stairs &amp; landing" data-i="${i}" data-p="name"></div>
             <div class="field"><label for="rs${i}">Steps</label>
-              <input id="rs${i}" class="mono" inputmode="numeric" value="${r.steps}" data-i="${i}" data-p="steps"></div>
+              <input id="rs${i}" class="mono" inputmode="numeric" value="${num(r.steps)}" placeholder="e.g. 13" data-i="${i}" data-p="steps"></div>
             <div class="field" style="grid-column:span 2"><label for="rs${i}-note">&nbsp;</label>
               <p class="hint" id="rs${i}-note" style="padding:11px 0">Priced per step, including the landing return.</p></div>
             <button class="iconbtn" type="button" data-del="${i}" aria-label="Remove ${esc(r.name)}">✕</button>
@@ -114,13 +114,13 @@ if (root) {
         }
         return `<div class="roomrow">
           <div class="field"><label for="rn${i}">Room</label>
-            <input id="rn${i}" value="${esc(r.name)}" data-i="${i}" data-p="name"></div>
+            <input id="rn${i}" value="${esc(r.name)}" placeholder="e.g. Living room" data-i="${i}" data-p="name"></div>
           <div class="field"><label for="rw${i}">Width (m)</label>
-            <input id="rw${i}" class="mono" inputmode="decimal" value="${r.width}" data-i="${i}" data-p="width"></div>
+            <input id="rw${i}" class="mono" inputmode="decimal" value="${num(r.width)}" placeholder="e.g. 4.2" data-i="${i}" data-p="width"></div>
           <div class="field"><label for="rl${i}">Length (m)</label>
-            <input id="rl${i}" class="mono" inputmode="decimal" value="${r.length}" data-i="${i}" data-p="length"></div>
+            <input id="rl${i}" class="mono" inputmode="decimal" value="${num(r.length)}" placeholder="e.g. 4.6" data-i="${i}" data-p="length"></div>
           <div class="field"><span class="hint" style="font-weight:700;color:var(--ink);font-size:.85rem">Floor area</span>
-            <p class="mono" style="padding:11px 0;font-size:.9rem">${(r.width * r.length).toFixed(1)} m²</p></div>
+            <p class="mono" id="ra${i}" style="padding:11px 0;font-size:.9rem">${r.width * r.length > 0 ? (r.width * r.length).toFixed(1) + " m²" : "—"}</p></div>
           <button class="iconbtn" type="button" data-del="${i}" aria-label="Remove ${esc(r.name)}">✕</button>
         </div>`;
       })
@@ -138,12 +138,14 @@ if (root) {
           const v = parseFloat(input.value.replace(",", "."));
           // A blank box means zero, not NaN — the total keeps working while you type.
           (room as Record<string, unknown>)[p] = Number.isNaN(v) ? 0 : Math.max(0, v);
+          // Only this row's readout changes. Redrawing the whole list
+          // here would replace the box the customer is moving into.
+          const area = $(`#ra${i}`);
+          if (area && room.kind === "room") {
+            const a = room.width * room.length;
+            area.textContent = a > 0 ? `${a.toFixed(1)} m²` : "—";
+          }
         }
-        calc();
-      });
-      // Re-render on blur so the floor-area readout catches up.
-      input.addEventListener("change", () => {
-        drawRooms();
         calc();
       });
     });
@@ -282,9 +284,32 @@ if (root) {
   }
 
   /* ---------------- the answer ---------------- */
+  /** The summary before there is anything to price: what's missing, not £0. */
+  function drawEmpty(floor: Floor | undefined) {
+    const row = (label: string, done: boolean, hint: string) =>
+      `<div class="l ${done ? "" : "todo"}"><span>${label}</span><span>${done ? "✓" : esc(hint)}</span></div>`;
+    const lines = $("#estLines");
+    if (lines) {
+      lines.innerHTML =
+        row(floor ? esc(floor.name) : "Floor", Boolean(floor), "Pick one") +
+        row("Room sizes", false, "Add them") +
+        row("Underlay", false, "—") +
+        row("Fitting & extras", false, "—") +
+        `<hr><div class="l" style="font-weight:800"><span>Estimate incl. VAT</span><span>£—</span></div>
+         <p class="hint" style="margin-top:12px">${floor ? "Now put your room sizes in" : "Choose a floor and put your room sizes in"} — the price builds here as you go.</p>`;
+    }
+    const total = $("#estTotal");
+    if (total) total.innerHTML = `£—<small> incl. VAT</small>`;
+  }
+
   function calc() {
     const floor = currentFloor();
-    if (!floor) return;
+    const hasSize = state.rooms.some((r) => (r.kind === "stairs" ? r.steps > 0 : r.width > 0 && r.length > 0));
+    if (!floor || !hasSize) {
+      drawEmpty(floor);
+      drawFoot();
+      return;
+    }
     const underlay = state.underlay === "none" ? null : ulById.get(state.underlay) ?? null;
 
     const input: EstimateInput = {
@@ -321,6 +346,10 @@ if (root) {
     const total = $("#estTotal");
     if (total) total.innerHTML = `${out.total > 0 ? money(out.total) : "£0"}<small> incl. VAT</small>`;
 
+    drawFoot();
+  }
+
+  function drawFoot() {
     const foot = $("#estFoot");
     if (foot && !foot.querySelector("#estBook")) {
       foot.innerHTML = `
@@ -378,12 +407,12 @@ if (root) {
   document.querySelectorAll<HTMLAnchorElement>("a[data-book]").forEach((a) => a.addEventListener("click", book));
 
   $("#addRoom")?.addEventListener("click", () => {
-    state.rooms.push({ kind: "room", name: `Room ${state.rooms.length + 1}`, width: 3.0, length: 3.5 });
+    state.rooms.push({ kind: "room", name: "", width: 0, length: 0 });
     drawRooms();
     calc();
   });
   $("#addStairs")?.addEventListener("click", () => {
-    state.rooms.push({ kind: "stairs", name: "Stairs & landing", steps: 13 });
+    state.rooms.push({ kind: "stairs", name: "Stairs & landing", steps: 0 });
     drawRooms();
     calc();
   });

@@ -20,7 +20,7 @@
 /* ============ responsive ============ */
 @media (max-width:980px){
   .est-layout{grid-template-columns:1fr}
-  .summary{position:static}
+  .summary{position:static; max-height:none; overflow:visible}
   .g4{grid-template-columns:repeat(2,minmax(0,1fr))}
   .steps{grid-template-columns:repeat(2,minmax(0,1fr))}
   .cols{column-count:2}
