@@ -24,7 +24,6 @@ for (const bp of BREAKPOINTS) {
       await expect(h1).toBeVisible();
       await expect(h1).toContainText("When it comes to carpets, we're on a roll.");
       await expect(page.locator(".hero-sub")).toBeVisible();
-      await expect(page.locator(".showcase .room")).toBeVisible();
 
       // The page never scrolls sideways.
       const overflow = await page.evaluate(
@@ -52,9 +51,10 @@ test("the headline splits into words but keeps the highlight whole", async ({ pa
   await expect(em).toHaveText("on a roll.");
 });
 
+// The animated room heads the ranges page.
 test("the floor lays flat as you scroll", async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
-  await page.goto("/");
+  await page.goto("/ranges/");
 
   const rx = () =>
     page.locator(".showcase-inner").evaluate((el) => getComputedStyle(el).getPropertyValue("--rx").trim());
@@ -70,7 +70,7 @@ test("the floor lays flat as you scroll", async ({ page }) => {
 });
 
 test("the showcase rotates through the ranges and a click takes over", async ({ page }) => {
-  await page.goto("/");
+  await page.goto("/ranges/");
   const name = page.locator("#scName");
   const first = await name.textContent();
 
@@ -93,17 +93,20 @@ test("reduced motion stops everything and leaves the page readable", async ({ pa
   const opacity = await page.locator("h1 .w").first().evaluate((el) => getComputedStyle(el).opacity);
   expect(Number(opacity)).toBe(1);
 
-  // The showcase renders flat.
+  // The sheen, the ticker and the ping are all off.
+  for (const sel of [".pill .dot", ".ticker .track", ".aurora i"]) {
+    const anim = await page.locator(sel).first().evaluate((el) => getComputedStyle(el).animationName);
+    expect(anim, `${sel} should not animate`).toBe("none");
+  }
+
+  // On the ranges page, the showcase renders flat and its beam is still.
+  await page.goto("/ranges/");
   const transform = await page
     .locator(".showcase-inner")
     .evaluate((el) => getComputedStyle(el).transform);
   expect(transform === "none" || transform === "matrix(1, 0, 0, 1, 0, 0)").toBe(true);
-
-  // The beam, the sheen, the ticker and the ping are all off.
-  for (const sel of [".room .scanline", ".pill .dot", ".ticker .track", ".aurora i"]) {
-    const anim = await page.locator(sel).first().evaluate((el) => getComputedStyle(el).animationName);
-    expect(anim, `${sel} should not animate`).toBe("none");
-  }
+  const beam = await page.locator(".room .scanline").evaluate((el) => getComputedStyle(el).animationName);
+  expect(beam, "the scanline should not animate").toBe("none");
 });
 
 test("nothing is parked at opacity 0 waiting on a scroll", async ({ page }) => {
@@ -139,7 +142,7 @@ test("the ticker is decorative, and its facts appear as real text", async ({ pag
   // Same facts, in text a screen reader will actually read.
   const body = await page.locator("main").innerText();
   expect(body).toContain("Free measure");
-  expect(body).toContain("Mon–Sat 10am – 6pm");
+  expect(body).toContain("Booking is free");
   expect(body).toContain("No appointment needed");
 });
 

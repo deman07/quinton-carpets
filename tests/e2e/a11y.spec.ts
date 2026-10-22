@@ -107,11 +107,17 @@ test("errors sit next to the field they belong to", async ({ page }) => {
 
 test("decorative layers are hidden from screen readers", async ({ page }) => {
   await page.goto("/");
-  for (const sel of ["#pile", ".aurora", ".ticker", ".scanline", ".floor"]) {
+  for (const sel of ["#pile", ".aurora", ".ticker"]) {
+    const hidden = await page.locator(sel).first().getAttribute("aria-hidden");
+    expect(hidden, `${sel} should be aria-hidden`).toBe("true");
+  }
+  await page.goto("/ranges/");
+  for (const sel of [".scanline", ".floor"]) {
     const hidden = await page.locator(sel).first().getAttribute("aria-hidden");
     expect(hidden, `${sel} should be aria-hidden`).toBe("true");
   }
   // The map is not decorative — it carries a role and a full label.
+  await page.goto("/visit/");
   const map = page.locator(".mapbox svg").first();
   await expect(map).toHaveAttribute("role", "img");
   const label = await map.getAttribute("aria-label");

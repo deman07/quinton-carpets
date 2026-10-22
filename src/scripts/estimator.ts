@@ -21,6 +21,8 @@ type Floor = {
   name: string;
   material: string;
   price: number;
+  /** A starting price: shown as "From £x/m²". */
+  priceFrom?: boolean;
   widths: number[] | null;
   hard: boolean;
   swatch: string;
@@ -77,7 +79,7 @@ if (root) {
           <span class="swatch" style="display:block;height:66px;${r.swatch}"></span>
           <span class="body" style="padding:11px 12px 13px;gap:3px">
             <b style="font-size:.9rem">${esc(r.name)}</b>
-            <span class="meta" style="font-size:.76rem">${esc(r.material)} · ${money(r.price)}/m²</span>
+            <span class="meta" style="font-size:.76rem">${esc(r.material)} · ${r.priceFrom ? "From " : ""}${money(r.price)}/m²</span>
           </span>
         </button>`,
       )
@@ -372,6 +374,9 @@ if (root) {
     location.href = target;
   }
 
+  // The band at the foot of the page books with this estimate too.
+  document.querySelectorAll<HTMLAnchorElement>("a[data-book]").forEach((a) => a.addEventListener("click", book));
+
   $("#addRoom")?.addEventListener("click", () => {
     state.rooms.push({ kind: "room", name: `Room ${state.rooms.length + 1}`, width: 3.0, length: 3.5 });
     drawRooms();
@@ -393,10 +398,10 @@ if (root) {
   // Coming back with the Back button restores the page as it was
   // left, mid-save. Put the button back.
   window.addEventListener("pageshow", () => {
-    const link = $<HTMLAnchorElement>("#estBook");
-    if (!link) return;
-    link.removeAttribute("aria-busy");
-    link.textContent = "Book a free measure";
+    document.querySelectorAll<HTMLAnchorElement>("#estBook, a[data-book]").forEach((link) => {
+      link.removeAttribute("aria-busy");
+      link.textContent = "Book a free measure";
+    });
   });
 
   void RM; // reduced motion is handled in CSS here; nothing to animate

@@ -19,7 +19,10 @@ import { BUSINESS } from "../data/business.ts";
         an appointment, just pop in.
       </p>
 
-      <div style="margin-bottom:30px"><MapSvg /></div>
+      <a class="maplink" href={BUSINESS.mapsUrl} target="_blank" rel="noopener" aria-label="Open Quinton Carpets in Google Maps">
+        <MapSvg />
+        <span class="maphint">Open in Google Maps ↗</span>
+      </a>
 
       <div class="grid g3">
         <div class="card">

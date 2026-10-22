@@ -305,6 +305,15 @@ if (form && cal) {
               : ""
           }
 
+<section class="referpromo" aria-label="Refer a friend">
+            <div>
+              <p class="eyebrow">Refer a friend</p>
+              <h2>They save 10%.<br />You save 20% next time.</h2>
+              <p>Pass your code to family, friends or neighbours. Anyone who books with it takes 10% off their fitting, and every code that gets used puts 20% off your next job on your account.</p>
+            </div>
+            <a class="btn yellow" href="/referrals/">How the code works</a>
+          </section>
+
           <p style="margin-top:20px;font-size:.86rem;color:var(--muted)">
             Need to change it? Ring the shop on <a href="tel:01214233322">0121 423 3322</a> with your reference,
             or look it up at <a href="/booking/${encodeURIComponent(ref)}/">/booking/${esc(ref)}/</a>.

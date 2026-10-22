@@ -1,9 +1,10 @@
 /**
  * Everything factual about the shop, in one place.
  *
- * Nothing goes in here that the shop has not told us. No founding
- * year, no awards, no accreditations, no parking arrangements, no
- * bus routes — if it isn't below, it isn't on the site.
+ * Nothing goes in here that the shop has not told us. No awards, no
+ * accreditations, no parking arrangements, no bus routes — if it
+ * isn't below, it isn't on the site. (The founding year and the
+ * brands came from the owner's own About Us text.)
  */
 
 export const BUSINESS = {
@@ -20,10 +21,12 @@ export const BUSINESS = {
   mobile: "07855 555 599",
   mobileHref: "tel:07855555599",
   email: "quintoncarpets@gmail.com",
+  /** The year the shop opened, from the owner. */
+  founded: 2002,
   /** Where the shop actually is, for LocalBusiness `geo`. */
   geo: { lat: 52.4562, lon: -2.0092 },
-  mapsUrl:
-    "https://www.google.com/maps/search/?api=1&query=589-613+Hagley+Road+West+Birmingham+B32+1BY",
+  /** The shop's own Google Maps listing: directions, photos and reviews. */
+  mapsUrl: "https://maps.app.goo.gl/QyfaHBydkeHGdDxL9",
 } as const;
 
 export const ADDRESS_LINES = [
@@ -31,6 +34,7 @@ export const ADDRESS_LINES = [
   "Birmingham",
   "B32 1BY",
 ] as const;
+
 
 /** Mon–Sat 10am–6pm, Sunday 10am–4pm. */
 export const HOURS = [
@@ -48,12 +52,20 @@ export const AREAS = [
   "Woodgate",
 ] as const;
 
+/** The mills and brands the shop buys from, in the order they scroll past. */
+export const SUPPLIERS = [
+  { id: "cormar", name: "Cormar Carpet Co" },
+  { id: "kingsmead", name: "Kingsmead Carpets" },
+  { id: "regency", name: "Regency Carpets" },
+  { id: "lifestyle", name: "Lifestyle Floors" },
+  { id: "cloud", name: "Cloud 9" },
+  { id: "cfs", name: "CFS" },
+] as const;
+
 export const NAV = [
   { href: "/", label: "Home" },
   { href: "/ranges/", label: "Ranges" },
   { href: "/estimate/", label: "Instant estimate" },
-  { href: "/book/", label: "Book a measure" },
-  { href: "/referrals/", label: "Refer a friend" },
   { href: "/visit/", label: "Visit us" },
 ] as const;
 

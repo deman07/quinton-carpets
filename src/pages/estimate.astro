@@ -28,6 +28,7 @@ const floors = await Promise.all(
       name: r.name,
       material: r.material,
       price: r.price,
+      priceFrom: r.priceFrom,
       widths: r.widths,
       hard: r.hard,
       swatch: photo
@@ -140,11 +141,22 @@ const config = { floors, underlays, rates };
       </div>
 
       <p class="notice info" style="margin-top:26px">
-        Fitting is charged at {money(rates.fitCarpet)}/m² for carpet and
-        {money(rates.fitHard)}/m² for laminate and LVT, and stairs are
+        Fitting is charged at {money(rates.fitCarpet)}/m² for carpet and{" "}
+        {money(rates.fitHard)}/m² for laminate and LVT, and stairs are{" "}
         {money(rates.fitStair)} a step. These are guide rates — the figure on the free
         measure is the one that counts.
       </p>
+    </div>
+  </div>
+
+  <div class="section plain bookband">
+    <div class="wrap">
+      <div>
+        <p class="eyebrow">Next step</p>
+        <h2>Happy with the number? Book a free measure.</h2>
+        <p>We come to you, measure properly and give you the exact figure in writing. It costs nothing and commits you to nothing.</p>
+      </div>
+      <a class="btn yellow" href="/book/" data-book>Book a free measure</a>
     </div>
   </div>
 

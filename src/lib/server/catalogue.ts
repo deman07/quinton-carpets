@@ -56,6 +56,12 @@ type RangeRow = {
   sort_order: number;
   showcase: number | null;
   description: string;
+  brand: string | null;
+  category: string | null;
+  features: string[] | null;
+  colour_names: string[] | null;
+  sample_url: string | null;
+  price_from: boolean | null;
 };
 
 const toRange = (r: RangeRow): Range => ({
@@ -75,6 +81,12 @@ const toRange = (r: RangeRow): Range => ({
   photo: r.photo_url?.trim() || null,
   body: r.description.trim(),
   hard: isHard(r.material, r.widths),
+  brand: r.brand?.trim() || null,
+  category: r.category?.trim() || null,
+  features: [...(r.features ?? [])],
+  colourNames: [...(r.colour_names ?? [])],
+  sampleUrl: r.sample_url?.trim() || null,
+  priceFrom: Boolean(r.price_from),
 });
 
 /** Every range on sale, in the shop's order. Hidden ones are left out. */
@@ -83,7 +95,8 @@ export const getRanges = (): Promise<Range[]> =>
     const { results } = await db
       .prepare(
         `SELECT id, name, material, spec, price, grade, rooms, widths, pile, colours,
-                photo_url, sort_order, showcase, description
+                photo_url, sort_order, showcase, description,
+                brand, category, features, colour_names, sample_url, price_from
            FROM ranges WHERE active ORDER BY sort_order, name`,
       )
       .all<RangeRow>();
@@ -141,6 +154,8 @@ export interface Settings {
   photos: { carpets: string; underlay: string; laminate: string; vinyl: string };
   /** The picture used when the site is shared. */
   ogImage: string;
+  /** Aman's photo for About Us on the home page; null shows the section without one. */
+  aboutPhoto: string | null;
 }
 
 /** What the site uses until the settings row says otherwise. Matches the column defaults. */
@@ -156,6 +171,7 @@ export const DEFAULT_SETTINGS: Settings = {
     vinyl: "/site/cat-vinyl.jpg",
   },
   ogImage: "/og.jpg",
+  aboutPhoto: null,
 };
 
 type SettingsRow = {
@@ -170,6 +186,7 @@ type SettingsRow = {
   photo_laminate: string;
   photo_vinyl: string;
   og_image: string;
+  about_photo: string | null;
 };
 
 const blankToNull = (v: string | null) => v?.trim() || null;
@@ -197,6 +214,7 @@ export async function getSettings(): Promise<Settings> {
           vinyl: r.photo_vinyl,
         },
         ogImage: r.og_image,
+        aboutPhoto: blankToNull(r.about_photo ?? null),
       };
     });
   } catch (err) {

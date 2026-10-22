@@ -31,7 +31,23 @@ export interface Range {
   photo: string | null;
   /** Laminate and LVT are fitted at the hard-floor rate and sold by area. */
   hard: boolean;
+  /** The maker, for branded ranges: "Cormar". */
+  brand: string | null;
+  /** The maker's family: "Easy Clean", "Wool Twist". */
+  category: string | null;
+  /** Short selling points: "Bleach cleanable", "10 Year Stain & Wear Guarantee". */
+  features: string[];
+  /** The shades, by name. */
+  colourNames: string[];
+  /** The maker's free-sample page. */
+  sampleUrl: string | null;
+  /** The price is a starting price: "from £20.00/m²". */
+  priceFrom: boolean;
 }
+
+/** "£20.00/m²", or "From £20.00/m²" for a starting price. */
+export const priceLabel = (r: Pick<Range, "price" | "priceFrom">, money: (n: number) => string) =>
+  `${r.priceFrom ? "From " : ""}${money(r.price)}/m²`;
 
 export const MATERIALS = ["Carpet", "Laminate", "Vinyl", "Underlay"] as const;
 export const ROOMS = ["Living", "Bedroom", "Stairs", "Hall", "Kitchen", "Bathroom"] as const;

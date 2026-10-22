@@ -43,11 +43,39 @@ function sql(): postgres.Sql {
     // prepared statement alive between queries. Without this, every
     // second request fails with "prepared statement already exists".
     prepare: false,
-    max: 1,
+    // One per serverless instance; the long-lived dev server serves a
+    // whole browser's worth of requests at once, so it gets a few.
+    max: import.meta.env.DEV ? 4 : 1,
     idle_timeout: 20,
     connect_timeout: 15,
   });
   return client;
+}
+
+/** Longest any query or transaction may take before we give up. */
+const QUERY_TIMEOUT_MS = 12_000;
+
+/**
+ * A connection the pooler has silently dropped never answers, and
+ * every request queued behind it would wait forever — the site just
+ * stops loading. So a query that runs too long fails, the client is
+ * thrown away, and the next request connects afresh.
+ */
+async function guard<T>(work: (s: postgres.Sql) => Promise<T>): Promise<T> {
+  const s = sql();
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const timeout = new Promise<never>((_, reject) => {
+    timer = setTimeout(() => {
+      if (client === s) client = null;
+      void s.end({ timeout: 0 }).catch(() => {});
+      reject(new Error(`Database did not answer within ${QUERY_TIMEOUT_MS / 1000}s`));
+    }, QUERY_TIMEOUT_MS);
+  });
+  try {
+    return await Promise.race([work(s), timeout]);
+  } finally {
+    clearTimeout(timer);
+  }
 }
 
 /** True when the site has somewhere to read bookings from. */
@@ -70,17 +98,17 @@ export class Statement {
   }
 
   async all<T = Record<string, unknown>>(): Promise<{ results: T[] }> {
-    const rows = await sql().unsafe(this.text, this.params as never[]);
+    const rows = await guard((s) => s.unsafe(this.text, this.params as never[]));
     return { results: rows as unknown as T[] };
   }
 
   async first<T = Record<string, unknown>>(): Promise<T | null> {
-    const rows = await sql().unsafe(this.text, this.params as never[]);
+    const rows = await guard((s) => s.unsafe(this.text, this.params as never[]));
     return ((rows as unknown as T[])[0] ?? null) as T | null;
   }
 
   async run(): Promise<void> {
-    await sql().unsafe(this.text, this.params as never[]);
+    await guard((s) => s.unsafe(this.text, this.params as never[]));
   }
 }
 
@@ -96,12 +124,12 @@ export const db = {
    * RETURNING or SELECT.
    */
   async batch(statements: Statement[]): Promise<Record<string, unknown>[][]> {
-    return sql().begin(async (tx) => {
+    return guard((s) => s.begin(async (tx) => {
       const out: Record<string, unknown>[][] = [];
       for (const s of statements) {
         out.push((await tx.unsafe(s.text, s.params as never[])) as unknown as Record<string, unknown>[]);
       }
       return out;
-    });
+    }) as Promise<Record<string, unknown>[][]>);
   },
 };

@@ -1,5 +1,5 @@
 import type { APIRoute } from "astro";
-import { getSettings } from "../lib/server/catalogue.ts";
+import { getRanges, getSettings } from "../lib/server/catalogue.ts";
 
 /**
  * Only the pages a customer should land on from a search. The
@@ -20,9 +20,17 @@ export const GET: APIRoute = async () => {
   const base = (await getSettings()).siteUrl;
   const today = new Date().toISOString().slice(0, 10);
 
+  // A page per range. Without the database the sitemap still lists
+  // the fixed pages rather than failing.
+  const ranges = await getRanges().catch(() => []);
+  const pages = [
+    ...PAGES,
+    ...ranges.map((r) => ({ path: `/ranges/${r.id}/`, priority: "0.7", changefreq: "monthly" })),
+  ];
+
   const body = `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-${PAGES.map(
+${pages.map(
   (p) => `  <url>
     <loc>${base}${p.path}</loc>
     <lastmod>${today}</lastmod>

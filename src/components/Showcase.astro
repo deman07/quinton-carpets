@@ -1,0 +1,100 @@
+---
+import { floorStyle } from "../lib/textures.ts";
+import { getImage } from "astro:assets";
+import type { Range } from "../lib/ranges.ts";
+import { money } from "../lib/pricing.ts";
+
+interface Props {
+  showcase: Range[];
+}
+const { showcase } = Astro.props;
+const first = showcase[0]!;
+
+// The animated room: a floor that lays flat as you scroll, cycling
+// through the showcase ranges. It heads the ranges page.
+//
+// The rotation is handed to the client as data, so the markup ships
+// with the first range already painted — the banner is correct in
+// the first frame, before any script runs.
+const rotation = await Promise.all(
+  showcase.map(async (r) => {
+    const photo = r.photo
+      ? await getImage({ src: r.photo, width: 960, height: 960, format: "webp", quality: 78 })
+      : null;
+    return {
+      name: r.name,
+      spec: r.spec,
+      price: `${r.priceFrom ? "from " : ""}${money(r.price)}/m²`,
+      grade: r.gradeShort,
+      style: photo
+        ? `background-image:url(${photo.src});background-size:cover;background-position:50% 100%`
+        : floorStyle(r),
+    };
+  }),
+);
+const firstStyle = rotation[0]?.style;
+---
+
+<!-- For a carpet shop, a floor laying flat as you scroll isn't an
+     effect, it's the product. -->
+<div class="wrap">
+  <div class="showcase" id="showcase" data-rotation={JSON.stringify(rotation)}>
+    <div class="showcase-inner">
+      <div class="room">
+        <div class="wall" aria-hidden="true">
+          <div class="window"></div>
+          <div class="beam"></div>
+          <div class="skirting"></div>
+        </div>
+
+        <svg class="furniture" viewBox="0 0 560 210" aria-hidden="true" preserveAspectRatio="xMaxYMax meet">
+          <g fill="none" stroke="#15120C" stroke-width="4" stroke-linejoin="round" stroke-linecap="round">
+            <path d="M62 208v-26"></path><path d="M40 182h44"></path>
+            <path d="M62 182v-44"></path>
+            <path d="M34 138h56l-12-40H46Z" fill="#FFC61A"></path>
+            <path d="M300 208v-16M492 208v-16"></path>
+            <path d="M286 192h220a10 10 0 0 0 10-10v-40a14 14 0 0 0-14-14H290a14 14 0 0 0-14 14v40a10 10 0 0 0 10 10Z" fill="var(--surface)"></path>
+            <path d="M292 128v-38a14 14 0 0 1 14-14h184a14 14 0 0 1 14 14v38" fill="var(--surface)"></path>
+            <path d="M330 128v-52M456 128v-52" stroke-width="3" opacity=".45"></path>
+            <rect x="352" y="86" width="42" height="42" rx="8" fill="#FFC61A" transform="rotate(-8 373 107)"></rect>
+            <path d="M182 208v-40"></path>
+            <path d="M160 168h44l-6 40h-32Z" fill="var(--surface)"></path>
+            <path d="M182 168c-2-30-22-38-34-34 2 22 16 34 34 34Z" fill="#DDE7D8"></path>
+            <path d="M182 168c2-34 24-44 38-40-2 26-18 40-38 40Z" fill="#C8D9C2"></path>
+          </g>
+        </svg>
+
+        <div class="floor" id="floorA" style={firstStyle} aria-hidden="true"></div>
+        <div class="floor fade" id="floorB" aria-hidden="true"></div>
+
+        <div class="roomcard">
+          <span class="k">Now showing</span>
+          <b id="scName">{first?.name}</b>
+          <span class="m" id="scSpec">{first?.spec}</span>
+          <div class="rowk">
+            <span id="scPrice" class="mono">{rotation[0]?.price ?? ""}</span>
+            <span class="grade mono" id="scGrade">{first?.gradeShort}</span>
+          </div>
+        </div>
+
+        <div class="picker" id="scPicker" role="group" aria-label="Preview another range">
+          {
+            showcase.map((r, i) => (
+              <button
+                type="button"
+                data-i={i}
+                aria-pressed={i === 0 ? "true" : "false"}
+                aria-label={`Preview ${r.name}`}
+                style={rotation[i]?.style}
+              />
+            ))
+          }
+        </div>
+
+        <!-- One thin measuring line, never a grid. -->
+        <div class="scanline" aria-hidden="true"></div>
+      </div>
+    </div>
+    <p class="showhint">Scroll — the floor lays flat.</p>
+  </div>
+</div>

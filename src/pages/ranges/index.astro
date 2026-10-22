@@ -1,8 +1,9 @@
 ---
 import Base from "../../layouts/Base.astro";
-import { filterRanges, MATERIALS, ROOMS } from "../../lib/ranges.ts";
+import { filterRanges, showcaseRanges, MATERIALS, ROOMS } from "../../lib/ranges.ts";
 import { getRanges, getSettings } from "../../lib/server/catalogue.ts";
 import Swatch from "../../components/Swatch.astro";
+import Showcase from "../../components/Showcase.astro";
 import { money } from "../../lib/pricing.ts";
 import { BUSINESS } from "../../data/business.ts";
 
@@ -25,6 +26,7 @@ const filtered = material !== "All" || room !== "All";
 
 const [ranges, settings] = await Promise.all([getRanges(), getSettings()]);
 const list = filterRanges(ranges, material, room);
+const showcase = showcaseRanges(ranges);
 
 const hrefFor = (key: "material" | "room", value: string) => {
   const q = new URLSearchParams();
@@ -33,7 +35,8 @@ const hrefFor = (key: "material" | "room", value: string) => {
   if (m !== "All") q.set("material", m);
   if (r !== "All") q.set("room", r);
   const s = q.toString();
-  return s ? `/ranges/?${s}` : "/ranges/";
+  // Straight to the list, past the banner.
+  return s ? `/ranges/?${s}#list` : "/ranges/#list";
 };
 
 const titleBits = [
@@ -60,6 +63,8 @@ const schema = {
     item: {
       "@type": "Product",
       name: r.name,
+      url: `${settings.siteUrl}/ranges/${r.id}/`,
+      ...(r.brand ? { brand: { "@type": "Brand", name: r.brand } } : {}),
       description: `${r.spec}. ${r.grade}.`,
       category: r.material,
       offers: {
@@ -83,17 +88,25 @@ const schema = {
   canonicalPath="/ranges/"
   noindex={filtered}
 >
-  <div class="section plain">
-    <div class="wrap">
+  <div class="hero ranges-hero">
+    <div class="aurora" aria-hidden="true"><i></i><i></i><i></i></div>
+    <canvas id="pile" aria-hidden="true"></canvas>
+    <div class="wrap hero-inner">
       <p class="eyebrow">The ranges</p>
       <h1 style="font-size:clamp(1.9rem,1.25rem + 2.5vw,3rem); margin-bottom:14px">
         Come and have a look at our extensive ranges.
       </h1>
-      <p class="lede" style="margin-bottom:26px">
+      <p class="lede hero-sub">
         Hundreds of carpet samples to look at and feel, a large variety of vinyl for various
         needs, and high quality laminate. Prices below are per square metre, supply only —
         fitting is priced separately so you can see what you're paying for.
       </p>
+    </div>
+    {showcase.length > 0 && <Showcase showcase={showcase} />}
+  </div>
+
+  <div class="section plain" id="list">
+    <div class="wrap">
 
       <div class="chips" role="group" aria-label="Filter by material">
         {
@@ -133,32 +146,57 @@ const schema = {
               shop than we can show here.
             </p>
           ) : (
-            list.map((r) => (
-              <article class="rangecard">
-                <Swatch photo={r.photo} alt={`${r.name} — ${r.spec}`} texture={r} tag={r.material} />
-                <div class="body">
-                  <h2 style="font-size:1.02rem;font-stretch:112%;font-weight:700;letter-spacing:-.005em">
-                    {r.name}
-                  </h2>
-                  <p class="meta">{r.spec}</p>
-                  <p class="meta" style="color:var(--yellow-ink);font-weight:600">{r.grade}</p>
-                  <p class="meta">
-                    {r.widths ? `${r.widths.join("m and ")}m roll widths` : "Sold by the square metre"}
-                  </p>
-                  <div class="rowend">
-                    <span class="price"><b>{money(r.price)}</b> /m²</span>
-                    <a class="btn ghost sm" href={`/estimate/?range=${r.id}`}>Estimate this</a>
+            list.map((r) =>
+              r.brand ? (
+                <article class="rangecard">
+                  <a href={`/ranges/${r.id}/`} tabindex="-1" aria-hidden="true">
+                    <Swatch photo={r.photo} alt="" texture={r} tag={r.category ?? r.brand} />
+                  </a>
+                  <div class="body">
+                    <h2 style="font-size:1.02rem;font-stretch:112%;font-weight:700;letter-spacing:-.005em">
+                      <a class="rangelink" href={`/ranges/${r.id}/`}>{r.name}</a>
+                    </h2>
+                    {r.body && <p class="meta">{r.body}</p>}
+                    <p class="meta" style="color:var(--yellow-ink);font-weight:600">{[r.spec, ...r.features].slice(0, 3).join(" · ")}</p>
+                    <p class="meta"><b>Suitable rooms:</b> {r.rooms.join(", ")}</p>
+                    {r.colourNames.length > 0 && <p class="meta"><b>Colours:</b> {r.colourNames.join(", ")}</p>}
+                    <div class="rowend">
+                      <span class="price"><b>{r.priceFrom ? "From " : ""}{money(r.price)}/m²</b></span>
+                      <a class="btn ghost sm" href={`/ranges/${r.id}/`}>View range</a>
+                    </div>
+                    {r.sampleUrl && (
+                      <a class="btn sm" href={r.sampleUrl} target="_blank" rel="noopener noreferrer">Order a Free Sample</a>
+                    )}
                   </div>
-                </div>
-              </article>
-            ))
+                </article>
+              ) : (
+                <article class="rangecard">
+                  <Swatch photo={r.photo} alt={`${r.name} — ${r.spec}`} texture={r} tag={r.material} />
+                  <div class="body">
+                    <h2 style="font-size:1.02rem;font-stretch:112%;font-weight:700;letter-spacing:-.005em">
+                      {r.name}
+                    </h2>
+                    <p class="meta">{r.spec}</p>
+                    <p class="meta" style="color:var(--yellow-ink);font-weight:600">{r.grade}</p>
+                    <p class="meta">
+                      {r.widths ? `${r.widths.join("m and ")}m roll widths` : "Sold by the square metre"}
+                    </p>
+                    <div class="rowend">
+                      <span class="price"><b>{money(r.price)}</b> /m²</span>
+                      <a class="btn ghost sm" href={`/estimate/?range=${r.id}`}>Estimate this</a>
+                    </div>
+                  </div>
+                </article>
+              ),
+            )
           )
         }
       </div>
 
       <p class="notice info" style="margin-top:26px">
-        Range names and guide prices here are placeholders for layout purposes pending the
-        shop's real ranges. The shop's stock changes with the mills — call
+        Carpet prices are Cormar's starting prices per square metre, supply only. Laminate, vinyl
+        and underlay names and prices are still placeholders pending the shop's real ranges. Stock
+        changes with the mills — call
         <b style="white-space:nowrap">&nbsp;{BUSINESS.phone}</b>&nbsp;or pop in for today's prices.
       </p>
     </div>

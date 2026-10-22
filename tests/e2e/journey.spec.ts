@@ -43,7 +43,7 @@ test("estimate, then book, and come away with a reference", async ({ page }) => 
   await expect(total).not.toHaveText(opening ?? "");
 
   // Going on to book saves the estimate, and the server mints its code.
-  await page.getByRole("link", { name: "Book a free measure" }).click();
+  await page.getByRole("complementary", { name: "Your estimate" }).getByRole("link", { name: "Book a free measure" }).click();
   await expect(page).toHaveURL(/\/book\/\?estimate=QC-EST-[A-Z0-9]{5}$/);
 
   // It carried the code across rather than making them retype it.
@@ -226,7 +226,7 @@ test("the ranges filter lives in the URL and works server-side", async ({ page }
 
   // Case-insensitive, because people type it themselves.
   await page.goto("/ranges/?material=carpet&room=stairs");
-  await expect(page.locator(".rangecard")).toHaveCount(4);
+  await expect(page.locator(".rangecard")).toHaveCount(22);
 
   // A combination with nothing in it says so, in the shop's voice.
   await page.goto("/ranges/?material=Underlay&room=Bathroom");

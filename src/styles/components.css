@@ -63,7 +63,7 @@
 
 /* ============ steps ============ */
 .steps{display:grid; gap:2px; grid-template-columns:repeat(4,minmax(0,1fr))}
-.step{padding:26px 22px 30px; background:var(--surface); position:relative; border-radius:0}
+.step{padding:28px 22px 30px; background:var(--surface); position:relative; border-radius:12px; border:1px solid var(--line); box-shadow:0 14px 28px -24px rgba(21,18,12,.9); min-height:190px}
 .step:nth-child(odd){background:var(--surface-2)}
 .step .n{
   font-family:"DM Mono",monospace; font-size:.74rem; letter-spacing:.14em; color:var(--yellow-ink);
@@ -199,3 +199,93 @@ footer.site .fine{
     transition:opacity .55s ease, transform .7s cubic-bezier(.2,.8,.3,1); transition-delay:calc(var(--i,0) * 70ms);
   }
 }
+
+/* ============ range cards and the range page ============ */
+.rangecard .rangelink{color:inherit; text-decoration:none}
+.rangecard .rangelink:hover{text-decoration:underline; text-decoration-thickness:2px; text-underline-offset:3px}
+.rangecard .price small{font-size:.75rem; font-weight:600; color:var(--muted)}
+.back{display:inline-block;margin-bottom:26px;color:var(--ink-2);text-decoration:underline;text-underline-offset:3px}
+.rangedetail{display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:clamp(24px,4vw,56px); align-items:start}
+.rangedetail .photo{border:2px solid var(--ink); border-radius:var(--r-m); overflow:hidden; box-shadow:6px 6px 0 var(--ink)}
+.rangedetail .photo .swatch{aspect-ratio:1}
+.rangedetail h1{font-size:clamp(2rem,1.3rem + 2.6vw,3.2rem); margin:4px 0 12px}
+.rangedetail .bigprice{font-family:"Archivo",sans-serif; font-stretch:112%; font-size:1.6rem; font-weight:800; margin:14px 0 4px}
+.rangedetail .bigprice small{font-size:.9rem; font-weight:600; color:var(--muted)}
+.rangedetail .ctas{display:flex; flex-wrap:wrap; gap:10px; margin:18px 0 24px}
+.rangedetail dl{display:grid; grid-template-columns:auto 1fr; gap:10px 18px; margin:0; border-top:1px solid var(--line); padding-top:16px}
+.rangedetail dt{font-size:.82rem; color:var(--muted)}
+.rangedetail dd{margin:0; font-weight:600}
+.rangedetail .featlist{display:flex; flex-wrap:wrap; gap:6px; list-style:none; padding:0; margin:0}
+.rangedetail .featlist li{border:1px solid var(--line-strong); border-radius:99px; padding:3px 10px; font-size:.8rem; font-weight:600}
+@media (max-width:760px){ .rangedetail{grid-template-columns:1fr} }
+
+/* ============ home: about, partners, work, reviews ============ */
+.about-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:clamp(28px,5vw,72px);align-items:stretch}
+.about-photo{min-height:420px;background:var(--surface);overflow:hidden}
+.about-photo img{display:block;width:100%;height:100%;object-fit:cover}
+/* Until the owner's photo is in settings.about_photo. */
+.about-card{height:100%;min-height:inherit;display:grid;gap:6px;align-content:center;padding:clamp(28px,4vw,48px);background:var(--yellow);color:#15120C}
+.about-card b{font-family:"Archivo",sans-serif;font-stretch:125%;font-size:clamp(4rem,2.5rem + 6vw,7.5rem);line-height:.9;letter-spacing:-.04em}
+.about-card .k{font-family:"DM Mono",monospace;font-size:.75rem;letter-spacing:.14em;text-transform:uppercase}
+.about-copy{display:flex;flex-direction:column;justify-content:center;gap:16px;padding:clamp(10px,2vw,28px) 0}
+.about-copy h2{max-width:15ch;margin:0}
+.about-copy p{max-width:58ch}
+.partner-bar{padding:30px 0 26px;background:var(--yellow);color:#15120C;border-top:3px solid #15120C;border-bottom:3px solid #15120C;overflow:hidden}
+.partner-title{margin:0 0 14px;text-align:center;font-family:"DM Mono",monospace;font-size:.8rem;font-weight:500;letter-spacing:.2em;text-transform:uppercase;color:#15120C}
+/* Runs left to right, the opposite way to the ticker above it. */
+.partner-track{display:flex;width:max-content;animation:slide 38s linear infinite reverse}
+.partner-bar:hover .partner-track{animation-play-state:paused}
+.partner-logos{display:flex;align-items:center;margin:0;padding:0;list-style:none}
+.partner-logo{display:inline-flex;align-items:center;justify-content:center;min-height:78px;padding:0 clamp(30px,4vw,56px);font-weight:700;line-height:.9;color:#15120C;text-align:center;white-space:nowrap}
+.partner-logo > span{display:inline-flex;flex-direction:column;align-items:center}
+.partner-logo small{display:block;font-size:.48em;letter-spacing:.16em;margin-top:10px}
+.partner-logo.cormar{font-size:2.25rem;font-weight:400;letter-spacing:.05em}.partner-logo.cormar small{font-size:.34em;font-weight:600}
+.partner-logo.kingsmead{font-family:Georgia,"Times New Roman",serif;font-size:1.9rem;font-weight:400;letter-spacing:.06em}.partner-logo.kingsmead small{font-size:.32em;letter-spacing:.9em;margin-top:8px}
+.partner-logo.regency > span{flex-direction:row;gap:12px;font-family:Georgia,"Times New Roman",serif}
+.partner-logo.regency b{font-size:3.6rem;font-weight:400;line-height:.8}
+.partner-logo.regency span span{font-size:.82rem;font-weight:400;letter-spacing:.32em;line-height:1.5;text-align:left}
+.partner-logo.lifestyle{font-size:2.6rem;font-weight:300;line-height:.75}.partner-logo.lifestyle small{font-size:.45em;font-weight:400}
+.partner-logo.cloud{font-size:1.25rem;line-height:.8}.partner-logo.cloud b{font-size:2.6rem;margin-top:2px}
+.partner-logo.cfs > span{width:78px;height:78px;justify-content:center;background:#fff;color:#15120C;border-radius:4px;font-size:1.8rem}.partner-logo.cfs small{font-size:.55em;font-weight:800;margin-top:4px}
+@media (prefers-reduced-motion: reduce){
+  .partner-track{animation:none;width:auto;justify-content:center}
+  .partner-logos{flex-wrap:wrap;justify-content:center;row-gap:12px}
+  .partner-logos[aria-hidden="true"]{display:none}
+}
+.work-section{background:var(--surface)}
+.work-section .lede,.work-section .eyebrow{color:var(--ink-2)}
+.work-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px}
+.work-card{margin:0;overflow:hidden;background:var(--ground);border:1px solid var(--line);box-shadow:0 12px 24px -22px rgba(21,18,12,.85)}
+.work-card img{display:block;width:100%;height:auto;aspect-ratio:4/3;object-fit:cover}
+.work-card figcaption{padding:14px 16px;font-weight:700;font-size:1rem}
+.review-strip{display:flex;align-items:center;justify-content:space-between;gap:24px;margin-top:18px;padding:20px 22px;border:1px solid var(--line);border-radius:var(--r-m);background:var(--surface)}
+.review-score{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.review-stars{color:#00b67a;font-size:1.35rem;letter-spacing:.08em}
+.review-score strong{font-size:.92rem}
+.review-score small{width:100%;color:var(--ink-2);margin-left:2px}
+.review-actions{display:flex;gap:10px;flex-wrap:wrap}
+@media (max-width:760px){
+  .about-grid{grid-template-columns:1fr;gap:24px}
+  .about-photo{min-height:0;aspect-ratio:4/3}
+  .partner-bar{padding:22px 0 18px}
+  .partner-logo{min-height:60px;padding:0 26px}
+  .partner-logo.lifestyle{font-size:1.8rem}.partner-logo.cormar{font-size:1.45rem}.partner-logo.kingsmead{font-size:1.3rem}.partner-logo.regency b{font-size:2.6rem}.partner-logo.cfs > span{width:58px;height:58px;font-size:1.4rem}.partner-logo.cloud{font-size:1rem}.partner-logo.cloud b{font-size:2rem}
+  .work-grid{grid-template-columns:1fr 1fr}
+  .review-strip{align-items:flex-start;flex-direction:column}.review-actions{width:100%}.review-actions .btn{flex:1;text-align:center}
+}
+
+/* ============ next-step bands ============ */
+.referpromo{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:18px 28px;margin-top:24px;padding:clamp(22px,3vw,32px);border-radius:var(--r-m);background:var(--slab);color:var(--slab-ink-2)}
+.referpromo .eyebrow{color:var(--slab-muted)}
+.referpromo h2{color:var(--slab-head);font-size:clamp(1.3rem,1rem + 1.2vw,1.9rem);margin:6px 0 10px}
+.referpromo p{max-width:56ch;font-size:.92rem}
+.bookband{background:var(--yellow);color:#15120C;border-top:3px solid #15120C}
+.bookband .wrap{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:18px 32px}
+.bookband .eyebrow{color:#15120C}
+.bookband h2{margin:6px 0 10px;color:#15120C}
+.bookband p{max-width:56ch}
+.bookband .btn.yellow{background:#15120C;color:var(--yellow);border-color:#15120C}
+.maplink{display:block;position:relative;margin-bottom:30px;color:inherit;text-decoration:none}
+.maplink .maphint{position:absolute;right:14px;bottom:14px;padding:7px 12px;border-radius:99px;background:var(--ground);border:1px solid var(--line-strong);font-weight:700;font-size:.85rem}
+.maplink:hover .mapbox{border-color:var(--ink)}
+.bookband .eyebrow::before{background:#15120C}

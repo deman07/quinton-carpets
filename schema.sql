@@ -133,6 +133,16 @@ CREATE TABLE IF NOT EXISTS ranges (
   active      BOOLEAN NOT NULL DEFAULT true                   -- false hides it everywhere without deleting it
 );
 
+-- Added for branded ranges (Cormar first). ADD COLUMN IF NOT EXISTS,
+-- so a database made before them gains them on the next db:setup.
+ALTER TABLE ranges ADD COLUMN IF NOT EXISTS brand        TEXT;                         -- 'Cormar'; NULL for the shop's own
+ALTER TABLE ranges ADD COLUMN IF NOT EXISTS category     TEXT;                         -- the maker's family: 'Easy Clean', 'Wool Twist'
+ALTER TABLE ranges ADD COLUMN IF NOT EXISTS features     TEXT[] NOT NULL DEFAULT '{}'; -- short bullet points: 'Bleach cleanable'
+ALTER TABLE ranges ADD COLUMN IF NOT EXISTS colour_names TEXT[] NOT NULL DEFAULT '{}'; -- the shades by name; colours above are the CSS fallback
+ALTER TABLE ranges ADD COLUMN IF NOT EXISTS sample_url   TEXT                          -- where to order a free sample from the maker
+  CHECK (sample_url IS NULL OR sample_url ~ '^https://');
+ALTER TABLE ranges ADD COLUMN IF NOT EXISTS price_from   BOOLEAN NOT NULL DEFAULT false; -- show the price as "from £x"
+
 -- The fitting rates. Exactly one row: id is always 1.
 CREATE TABLE IF NOT EXISTS rates (
   id                 INTEGER PRIMARY KEY DEFAULT 1 CHECK (id = 1),
@@ -213,6 +223,10 @@ CREATE TABLE IF NOT EXISTS booking_events (
 );
 
 CREATE INDEX IF NOT EXISTS events_by_ref ON booking_events (ref, id);
+
+-- Aman's photo for About Us on the home page. A path under public/ or a
+-- full URL; empty shows the section without a photo.
+ALTER TABLE settings ADD COLUMN IF NOT EXISTS about_photo TEXT;
 
 -- Rate limiting, per IP, per hour. Cheaper than a CAPTCHA and it
 -- does not make a customer prove they are human to book a measure.

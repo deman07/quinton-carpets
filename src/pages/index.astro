@@ -2,54 +2,25 @@
 import Base from "../layouts/Base.astro";
 import Hero from "../components/Hero.astro";
 import Ticker from "../components/Ticker.astro";
-import MapSvg from "../components/MapSvg.astro";
-import { showcaseRanges } from "../lib/ranges.ts";
-import { getRanges, getSettings } from "../lib/server/catalogue.ts";
-import Swatch from "../components/Swatch.astro";
+import { getSettings } from "../lib/server/catalogue.ts";
 import { QUOTES } from "../data/quotes.ts";
-import { BUSINESS } from "../data/business.ts";
+import { BUSINESS, SUPPLIERS } from "../data/business.ts";
 
-// Rendered on demand: the banner, the prices and the category photos
-// all come from the database.
+// Rendered on demand: the photos come from the database.
 export const prerender = false;
 
-const [ranges, settings] = await Promise.all([getRanges(), getSettings()]);
-const showcase = showcaseRanges(ranges);
+const settings = await getSettings();
 
-// The four things the shop sells, as the customer thinks of them.
-const CATS = [
-  {
-    cat: "Carpets",
-    photo: settings.photos.carpets,
-    href: "/ranges/?material=Carpet",
-    body: "Hundreds of samples to look at and feel — twist, saxony, loop and berber, in wool-rich and hard-wearing man-made.",
-    pile: "twist" as const,
-    colours: ["#B8AE9C", "#8E8474", "#6B6355"],
-  },
-  {
-    cat: "Underlay",
-    photo: settings.photos.underlay,
-    href: "/ranges/?material=Underlay",
-    body: "The bit nobody sees and everybody feels. PU underlay from 8mm to 11mm, plus combi board for hard floors.",
-    pile: "foam" as const,
-    colours: ["#6FAF8E", "#4E8C6C"],
-  },
-  {
-    cat: "Laminate",
-    photo: settings.photos.laminate,
-    href: "/ranges/?material=Laminate",
-    body: "High quality laminate in AC4 and AC5, 8mm and 12mm, with water-resistant cores for kitchens and halls.",
-    pile: "plank" as const,
-    colours: ["#C69B63", "#9A733F"],
-  },
-  {
-    cat: "Vinyl",
-    photo: settings.photos.vinyl,
-    href: "/ranges/?material=Vinyl",
-    body: "A large variety of vinyl for various needs — cushioned sheet for bathrooms and kitchens, and click-fit LVT.",
-    pile: "herring" as const,
-    colours: ["#B78A55", "#8C6435"],
-  },
+// The gallery. Stand-in photographs until the shop's own job photos
+// are in; swap the paths and captions here.
+const WORK = [
+  { title: "Laminate flooring project", image: settings.photos.laminate, alt: "Laminate flooring project by Quinton Carpets" },
+  { title: "Living room carpet", image: settings.photos.carpets, alt: "Living room carpet project by Quinton Carpets" },
+  { title: "Vinyl flooring project", image: settings.photos.vinyl, alt: "Vinyl flooring project by Quinton Carpets" },
+  { title: "Stair carpet fitting", image: "/ranges/hagley-twist.jpg", alt: "Stair carpet fitting by Quinton Carpets" },
+  { title: "Berber carpet project", image: "/ranges/bartley-berber.jpg", alt: "Berber carpet project by Quinton Carpets" },
+  { title: "Herringbone flooring project", image: "/ranges/californian-herringbone.jpg", alt: "Herringbone flooring project by Quinton Carpets" },
+  { title: "Loop carpet project", image: "/ranges/woodgate-loop.jpg", alt: "Loop carpet project by Quinton Carpets" },
 ];
 
 const STEPS = [
@@ -64,37 +35,98 @@ const STEPS = [
   title="Quinton Carpets — carpets, laminate and vinyl in Quinton, Birmingham"
   description="Birmingham's favourite carpet shop, on Hagley Road West in Quinton. Hundreds of samples, our own fitters, a free measure and an instant online estimate."
 >
-  <Hero showcase={showcase} />
+  <Hero />
   <Ticker />
 
-  <!-- ranges preview -->
-  <div class="section plain">
+  <!-- about the shop: the owner's own words -->
+  <div class="section plain about-section">
     <div class="wrap">
-      <div class="rv" style="display:flex; flex-wrap:wrap; gap:18px; align-items:flex-end; justify-content:space-between; margin-bottom:34px">
-        <div>
-          <p class="eyebrow">What we sell</p>
-          <h2>Four floors, one shop.</h2>
-        </div>
-        <p class="lede" style="max-width:44ch; font-size:1.02rem">
-          Come and have a look at our extensive ranges — hundreds of carpet samples to look at
-          and feel, a large variety of vinyl, and high quality laminate.
-        </p>
-      </div>
-
-      <div class="grid g4 rv">
-        {
-          CATS.map((x) => (
-            <a class="rangecard" href={x.href} style="text-decoration:none">
-              <Swatch photo={x.photo} alt={`${x.cat} at Quinton Carpets`} texture={x} />
-              <div class="body">
-                <h4>{x.cat}</h4>
-                <p class="meta" style="font-size:.88rem;color:var(--ink-2)">{x.body}</p>
-                <span class="rowend" style="font-weight:700;font-size:.9rem">
-                  See the range
-                  <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 8h12M9 3l5 5-5 5" /></svg>
-                </span>
+      <div class="about-grid rv">
+        <div class="about-photo">
+          {
+            settings.aboutPhoto ? (
+              <img src={settings.aboutPhoto} alt="Aman, owner of Quinton Carpets" loading="lazy" />
+            ) : (
+              <div class="about-card" aria-hidden="true">
+                <span class="k">Family run since</span>
+                <b>{BUSINESS.founded}</b>
+                <span class="k">Family prices · family service</span>
               </div>
-            </a>
+            )
+          }
+        </div>
+        <div class="about-copy">
+          <p class="eyebrow">About Us</p>
+          <h2>Hi, I am Aman and I am the owner of Quinton Carpets.</h2>
+          <p class="lede">
+            Hi, I am Aman and I am the owner of Quinton Carpets, a Birmingham carpet shop which
+            I run together with my brother. We are a local carpet and flooring business
+            established in {BUSINESS.founded} with the motto: family run, family prices and family service.
+          </p>
+          <p>
+            I, myself, have two beautiful sons and really do appreciate what type of carpet or
+            flooring different families need. I also fully understand budget amounts and that
+            customers, like yourselves, get the best value for money.
+          </p>
+          <p>
+            We really do pride ourselves in these morals. I want my business to be successful
+            long-term for my children and this means that the basics for my customers have to be
+            done right. And this is really what I guarantee. <strong>We will do it right.</strong>
+          </p>
+          <p>
+            I, personally, can come and measure for you, fit for you or give you honest advice
+            (if wanted or needed). We charge honest amounts and make sure you are happy with what
+            you have bought and paid for. We want to carry on trading and we make sure we look
+            after our customers to do this.
+          </p>
+          <p>
+            Have a look at our reviews to hear what some of our customers – just like you – have
+            said.
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- suppliers: a moving band, like the ticker. The first copy is
+       the real list; the second only closes the loop, so it is hidden
+       from screen readers. -->
+  <section class="partner-bar" aria-labelledby="partners-title">
+    <h2 class="partner-title" id="partners-title">Our trusted partners</h2>
+    <div class="partner-track">
+      {[0, 1].map((copy) => (
+        <ul class="partner-logos" aria-hidden={copy === 1 ? "true" : undefined}>
+          {SUPPLIERS.map((s) => (
+            <li class={`partner-logo ${s.id}`} aria-label={copy === 0 ? s.name : undefined}>
+              {s.id === "cormar" && <span aria-hidden="true">CORMAR<small>CARPET CO</small></span>}
+              {s.id === "kingsmead" && <span aria-hidden="true">KINGSMEAD<small>CARPETS</small></span>}
+              {s.id === "regency" && <span aria-hidden="true"><b>R</b><span>REGENCY<br />CARPETS</span></span>}
+              {s.id === "lifestyle" && <span aria-hidden="true">lifestyle<small>FLOORS</small></span>}
+              {s.id === "cloud" && <span aria-hidden="true">CLOUD<b>9</b></span>}
+              {s.id === "cfs" && <span aria-hidden="true">◆<small>CFS</small></span>}
+            </li>
+          ))}
+        </ul>
+      ))}
+    </div>
+  </section>
+
+  <!-- work gallery -->
+  <div class="section plain work-section">
+    <div class="wrap">
+      <p class="eyebrow rv">Our work</p>
+      <h2 class="rv" style="margin-bottom:12px">Some of our work.</h2>
+      <p class="lede rv" style="margin-bottom:30px">
+        From a single bedroom to a full house, our own fitters take care of the details from
+        preparation through to the final clean-up.
+      </p>
+      <div class="work-grid rv">
+        {
+          WORK.map((item) => (
+            <figure class="work-card">
+              <img src={item.image} alt={item.alt} loading="lazy" width="640" height="480" />
+              <figcaption>{item.title}</figcaption>
+            </figure>
           ))
         }
       </div>
@@ -104,14 +136,14 @@ const STEPS = [
   <!-- how it works -->
   <div class="section">
     <div class="wrap">
-      <p class="eyebrow rv">From first look to fitted</p>
-      <h2 class="rv" style="margin-bottom:12px">Four steps, in this order.</h2>
-      <p class="lede rv" style="margin-bottom:34px">
+      <p class="eyebrow">From first look to fitted</p>
+      <h2 style="margin-bottom:12px">Four steps, in this order.</h2>
+      <p class="lede" style="margin-bottom:34px">
         Every step before the fitting is free. You only pay once you've chosen, in the shop.
       </p>
     </div>
     <div class="wrap">
-      <div class="steps rv">
+      <div class="steps">
         {
           STEPS.map((s) => (
             <div class="step">
@@ -121,40 +153,6 @@ const STEPS = [
             </div>
           ))
         }
-      </div>
-    </div>
-  </div>
-
-  <!-- estimator teaser -->
-  <div class="section plain on-tint" style="background:var(--surface)">
-    <div class="wrap">
-      <div class="grid g2 rv" style="align-items:center; gap:44px">
-        <div>
-          <p class="eyebrow">New this year</p>
-          <h2 style="margin-bottom:16px">Know the number before you come in.</h2>
-          <p class="lede" style="margin-bottom:22px">
-            The estimator works the way our fitters do: it works your rooms against 4m and 5m
-            roll widths, adds the trimming allowance, then prices underlay, gripper, door bars
-            and taking the old floor away — separately, so you can see what each part costs.
-          </p>
-          <a class="btn yellow" href="/estimate/">Start your estimate</a>
-        </div>
-        <div class="panel" aria-hidden="true">
-          <div class="head">
-            <span class="n">£</span>
-            <b style="font-family:'Archivo',sans-serif;font-stretch:112%">Example: lounge + stairs</b>
-          </div>
-          <div class="lines" style="padding:18px 22px 22px">
-            <div class="l"><span>Hagley Twist, 4m roll · 18.4 m²</span><span>£459.60</span></div>
-            <div class="l"><span>Stairs &amp; landing, 13 steps</span><span>£286.00</span></div>
-            <div class="l"><span>8mm PU underlay</span><span>£82.80</span></div>
-            <div class="l"><span>Fitting, gripper &amp; door bars</span><span>£154.30</span></div>
-            <div class="l"><span>Uplift &amp; disposal of old carpet</span><span>£36.80</span></div>
-            <hr />
-            <div class="l" style="font-weight:800; font-size:1.05rem"><span>Estimate</span><span>£1,019.50</span></div>
-            <div class="l sub"><span>Confirmed on the free measure</span><span>QC-EST-4K7QW</span></div>
-          </div>
-        </div>
       </div>
     </div>
   </div>
@@ -187,56 +185,16 @@ const STEPS = [
           ))
         }
       </div>
-    </div>
-  </div>
-
-  <!-- referral -->
-  <div class="section plain" style="background:var(--slab); color:var(--slab-ink)">
-    <div class="wrap">
-      <div class="grid g2 rv" style="align-items:center; gap:44px">
-        <div>
-          <p class="eyebrow" style="color:var(--slab-muted)">Refer a friend</p>
-          <h2 style="color:var(--slab-head); margin-bottom:16px">They save 10%.<br />You save 20% next time.</h2>
-          <p style="color:var(--slab-ink-2); max-width:52ch; margin-bottom:24px">
-            When your fitting is finished you get a personal referral code. Anyone who books
-            with it takes 10% off their fitting — and every code that gets used puts 20% off
-            your next job on your account. No cards, no app, just the code.
-          </p>
-          <a class="btn yellow" href="/referrals/">How the code works</a>
+      <div class="review-strip rv">
+        <div class="review-score" aria-label="Five star Google reviews">
+          <span class="review-stars" aria-hidden="true">★★★★★</span>
+          <strong>Real reviews from real customers</strong>
+          <small>Read the latest reviews on Google</small>
         </div>
-        <div style="display:grid; gap:14px">
-          <div style="border:2px dashed rgba(255,255,255,.28); border-radius:14px; padding:22px">
-            <p style="font-family:'DM Mono',monospace; font-size:.7rem; letter-spacing:.16em; text-transform:uppercase; color:var(--slab-muted); margin-bottom:10px">
-              Your code looks like this
-            </p>
-            <p class="mono" style="font-size:1.7rem; letter-spacing:.1em; color:var(--yellow)">QC-REF-7T4M</p>
-          </div>
+        <div class="review-actions">
+          <a class="btn ghost sm" href={BUSINESS.mapsUrl} target="_blank" rel="noopener noreferrer">Read our Google reviews</a>
+          <a class="btn yellow sm" href={BUSINESS.mapsUrl} target="_blank" rel="noopener noreferrer">Leave a review</a>
         </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- visit -->
-  <div class="section">
-    <div class="wrap">
-      <div class="grid g2 rv" style="gap:40px; align-items:start">
-        <div>
-          <p class="eyebrow">Come and see us</p>
-          <h2 style="margin-bottom:18px">589–613 Hagley Road West.</h2>
-          <p class="lede" style="margin-bottom:22px">
-            We're on the A456 in Quinton. No need to book an appointment — just pop in and
-            we'll put the kettle on while you look through the samples.
-          </p>
-          <dl class="kv" style="margin-bottom:24px">
-            <dt>Address</dt><dd>589–613 Hagley Road West,<br />Birmingham, B32 1BY</dd>
-            <dt>Shop</dt><dd><a href={BUSINESS.phoneHref} style="text-decoration:none">{BUSINESS.phone}</a></dd>
-            <dt>Mobile</dt><dd><a href={BUSINESS.mobileHref} style="text-decoration:none">{BUSINESS.mobile}</a></dd>
-            <dt>Email</dt><dd><a href={`mailto:${BUSINESS.email}`} style="text-decoration:none">{BUSINESS.email}</a></dd>
-            <dt>Opening hours</dt><dd>Mon–Sat 10am – 6pm<br />Sunday 10am – 4pm</dd>
-          </dl>
-          <a class="btn ghost" href={BUSINESS.mapsUrl} target="_blank" rel="noopener">Open in Google Maps ↗</a>
-        </div>
-        <MapSvg />
       </div>
     </div>
   </div>

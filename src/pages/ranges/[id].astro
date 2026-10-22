@@ -1,0 +1,113 @@
+---
+import Base from "../../layouts/Base.astro";
+import Swatch from "../../components/Swatch.astro";
+import { getRanges, getSettings } from "../../lib/server/catalogue.ts";
+import { money } from "../../lib/pricing.ts";
+import { BUSINESS } from "../../data/business.ts";
+
+// One page per range, straight from the ranges table, so a range the
+// shop adds in Supabase gets its own page without a deploy. A hidden
+// or unknown range is a real 404.
+export const prerender = false;
+
+const [ranges, settings] = await Promise.all([getRanges(), getSettings()]);
+const r = ranges.find((x) => x.id === Astro.params.id);
+if (!r) return Astro.rewrite("/404");
+
+const price = `${r.priceFrom ? "From " : ""}${money(r.price)}`;
+const maker = r.brand ? `${r.brand} ` : "";
+const roomsText = r.rooms.length ? r.rooms.join(", ") : "Ask in the shop";
+const widthsText = r.widths ? `${r.widths.join("m and ")}m rolls` : "Sold by the square metre";
+const others = ranges
+  .filter((x) => x.id !== r.id && x.material === r.material && (x.category === r.category || !r.category))
+  .slice(0, 4);
+
+const title = `${r.name} — ${maker}${r.material.toLowerCase()} at Quinton Carpets, Birmingham`;
+const description = `${r.name}${r.brand ? ` by ${r.brand}` : ""}: ${r.spec}, ${r.grade.toLowerCase()}. ${price}/m² supply only. See it in our Quinton shop, or get an instant estimate.`;
+
+const schema = {
+  "@context": "https://schema.org",
+  "@type": "Product",
+  name: r.name,
+  url: `${settings.siteUrl}/ranges/${r.id}/`,
+  ...(r.photo ? { image: new URL(r.photo, `${settings.siteUrl}/`).toString() } : {}),
+  ...(r.brand ? { brand: { "@type": "Brand", name: r.brand } } : {}),
+  description: r.body || `${r.spec}. ${r.grade}.`,
+  category: r.material,
+  offers: {
+    "@type": "Offer",
+    price: r.price.toFixed(2),
+    priceCurrency: "GBP",
+    unitText: "square metre",
+    availability: "https://schema.org/InStoreOnly",
+    seller: { "@id": `${settings.siteUrl}/#shop` },
+  },
+};
+---
+
+<Base title={title} description={description} schema={schema} canonicalPath={`/ranges/${r.id}/`}>
+  <div class="section plain">
+    <div class="wrap">
+      <a class="back" href={`/ranges/?material=${r.material}`}>Back to {r.material.toLowerCase()} ranges</a>
+
+      <div class="rangedetail">
+        <div class="photo">
+          <Swatch photo={r.photo} alt={`${r.name}${r.brand ? ` by ${r.brand}` : ""}, close up`} texture={r} eager />
+        </div>
+
+        <div>
+          <p class="eyebrow">{r.brand ? `${r.brand} · ` : ""}{r.category ?? r.material}</p>
+          <h1>{r.name}</h1>
+          {r.body && <p class="lede">{r.body}</p>}
+          <p class="bigprice">{price}<small> /m², supply only</small></p>
+          <p class="hint">Fitting, underlay and gripper are priced separately — the estimator shows each part.</p>
+
+          <div class="ctas">
+            {r.sampleUrl && (
+              <a class="btn" href={r.sampleUrl} target="_blank" rel="noopener noreferrer">Order a Free Sample</a>
+            )}
+            <a class="btn yellow magnet" href={`/estimate/?range=${r.id}`}>Estimate my room in this</a>
+            <a class="btn ghost" href="/book/">Book a free measure</a>
+          </div>
+
+          <dl>
+            <dt>Made of</dt><dd>{r.spec}</dd>
+            <dt>Wear rating</dt><dd>{r.grade}</dd>
+            <dt>Widths</dt><dd>{widthsText}</dd>
+            <dt>Good for</dt><dd>{roomsText}</dd>
+            {r.colourNames.length > 0 && (<><dt>Shades</dt><dd>{r.colourNames.join(", ")} <span class="hint">— and more in the shop</span></dd></>)}
+            {r.features.length > 0 && (
+              <>
+                <dt>Features</dt>
+                <dd><ul class="featlist">{r.features.map((f) => <li>{f}</li>)}</ul></dd>
+              </>
+            )}
+          </dl>
+
+          <p class="hint" style="margin-top:18px">
+            {r.brand ? `Photograph and product details from ${r.brand}. ` : ""}Colours vary on screen — see
+            the sample in the shop, or ring <a href={BUSINESS.phoneHref}>{BUSINESS.phone}</a>.
+          </p>
+        </div>
+      </div>
+
+      {others.length > 0 && (
+        <section style="margin-top:clamp(40px,6vw,72px)">
+          <h2 style="margin-bottom:18px">More like this</h2>
+          <div class="grid g4">
+            {others.map((o) => (
+              <article class="rangecard">
+                <a href={`/ranges/${o.id}/`} tabindex="-1" aria-hidden="true"><Swatch photo={o.photo} alt="" texture={o} tag={o.brand ?? o.material} /></a>
+                <div class="body">
+                  <h3 style="font-size:1rem"><a class="rangelink" href={`/ranges/${o.id}/`}>{o.name}</a></h3>
+                  <p class="meta">{o.spec}</p>
+                  <span class="price">{o.priceFrom && <small>From </small>}<b>{money(o.price)}</b> /m²</span>
+                </div>
+              </article>
+            ))}
+          </div>
+        </section>
+      )}
+    </div>
+  </div>
+</Base>

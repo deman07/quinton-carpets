@@ -145,6 +145,9 @@
   text-transform:uppercase; color:var(--muted); margin-top:16px; opacity:var(--hint,1); transition:opacity .3s;
 }
 
+/* --- the ranges page wears the same banner, with the room --- */
+.ranges-hero .hero-inner{padding-block:clamp(34px,4.4vw,60px) 0}
+
 /* --- ticker band --- */
 .ticker{background:var(--yellow); color:#15120C; border-block:2px solid #15120C; overflow:hidden; padding:11px 0}
 .ticker .track{display:flex; gap:0; width:max-content; animation:slide 34s linear infinite}
@@ -156,3 +159,4 @@
 .ticker li::after{content:""; width:7px; height:7px; background:#15120C; transform:rotate(45deg)}
 .ticker ul{display:flex; margin:0; padding:0}
 @keyframes slide{to{transform:translateX(-50%)}}
+.ranges-hero + .section{padding-top:clamp(18px,2.6vw,34px)}

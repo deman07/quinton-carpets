@@ -41,6 +41,9 @@ const PROBES: Record<string, string[]> = {
   ".showcase": ["perspective"],
 };
 
+/** The animated room moved to the ranges page, so it is measured there. */
+const ROOM_PROBES = [".room", ".room .floor", ".room .scanline", ".roomcard", ".picker button", ".showhint", ".showcase"];
+
 /** The design tokens themselves, read off the root. */
 const TOKENS = [
   "--ground", "--surface", "--surface-2", "--ink", "--ink-2", "--muted",
@@ -108,6 +111,10 @@ for (const width of BREAKPOINTS) {
       await page.goto("/");
       await page.waitForTimeout(250);
       const actual = await measure(page);
+      await page.goto("/ranges/");
+      await page.waitForTimeout(250);
+      const ranges = await measure(page);
+      for (const sel of ROOM_PROBES) actual[sel] = ranges[sel]!;
 
       // Compared section by section, so a failure names what drifted.
       for (const sel of Object.keys(PROBES)) {

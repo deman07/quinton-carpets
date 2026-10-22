@@ -141,6 +141,32 @@ legend{padding:0}
 .adminpanel h2{margin-bottom:12px}
 .feed{display:flex; gap:8px; flex-wrap:wrap}
 .feed input{flex:1 1 260px; font-family:"DM Mono",monospace; font-size:.8rem; border:1px solid var(--line-strong); border-radius:var(--r-s); padding:9px 11px; background:var(--ground); color:var(--ink)}
-.mailpreview{border:1px solid var(--line); border-radius:var(--r-m); overflow:hidden; margin-bottom:26px; background:var(--ground)}
-.mailpreview header{display:flex; flex-wrap:wrap; gap:8px; justify-content:space-between; align-items:center; padding:12px 16px; border-bottom:1px solid var(--line)}
-.mailpreview iframe{display:block; width:100%; height:900px; border:0; background:#F5F3EE}
+
+/* The email viewer: the list down the side, one email at a time. */
+.mailviewer{display:grid; grid-template-columns:240px minmax(0,1fr); gap:22px; align-items:start}
+.maillist{display:grid; gap:6px; position:sticky; top:96px}
+.maillist a{display:grid; gap:2px; padding:11px 14px; border:1px solid var(--line); border-radius:var(--r-s); background:var(--ground); color:var(--ink); text-decoration:none}
+.maillist a span{font-size:.75rem; color:var(--muted)}
+.maillist a:hover{border-color:var(--line-strong)}
+.maillist a[aria-current="page"]{background:var(--ink); color:var(--ground); border-color:var(--ink)}
+.maillist a[aria-current="page"] span{color:var(--ground); opacity:.7}
+.mailstage{display:grid; gap:14px; min-width:0}
+.mailmeta dl{display:grid; grid-template-columns:auto 1fr; gap:6px 14px; margin:0; padding:14px 16px; border:1px solid var(--line); border-radius:var(--r-s); background:var(--surface)}
+.mailmeta dt{font-size:.78rem; color:var(--muted)}
+.mailmeta dd{margin:0; font-size:.9rem; font-weight:600}
+.mailtools{display:flex; flex-wrap:wrap; gap:10px; align-items:center}
+.seg{display:inline-flex; border:1px solid var(--line-strong); border-radius:99px; overflow:hidden}
+.seg a{padding:7px 14px; font-size:.85rem; font-weight:700; color:var(--ink); text-decoration:none}
+.seg a[aria-current="true"]{background:var(--ink); color:var(--ground)}
+.sendtest{display:flex; gap:8px; margin-left:auto; flex:0 1 340px}
+.sendtest input{flex:1; min-width:0; border:1px solid var(--line-strong); border-radius:var(--r-s); padding:8px 11px; background:var(--ground); color:var(--ink)}
+.mailframe{background:#E9E5DC; border:1px solid var(--line); border-radius:var(--r-m); padding:18px; display:flex; justify-content:center}
+.mailframe iframe{display:block; width:100%; height:1100px; border:0; background:#F5F3EE; border-radius:8px}
+.mailframe[data-w="phone"] iframe{width:390px; max-width:100%; border:10px solid #15120C; border-radius:34px}
+.mailtext{width:100%; margin:0; white-space:pre-wrap; font-family:"DM Mono",monospace; font-size:.82rem; line-height:1.55; background:var(--ground); color:var(--ink); padding:20px; border-radius:8px}
+@media (max-width:860px){
+  .mailviewer{grid-template-columns:1fr}
+  .maillist{position:static; grid-template-columns:repeat(auto-fill,minmax(150px,1fr))}
+  .sendtest{margin-left:0; flex-basis:100%}
+  .mailframe{padding:8px}
+}
