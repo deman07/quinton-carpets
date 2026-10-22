@@ -314,3 +314,26 @@ footer.site .fine{
 .maplink .maphint{position:absolute;right:14px;bottom:14px;padding:7px 12px;border-radius:99px;background:var(--ground);border:1px solid var(--line-strong);font-weight:700;font-size:.85rem}
 .maplink:hover .mapbox{border-color:var(--ink)}
 .bookband .eyebrow::before{background:#15120C}
+
+/* ============ estimator: paged floors, one step at a time ============ */
+.floortabs{margin-bottom:14px}
+.floorgrid{display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px}
+.floorgrid .rangecard .swatch{height:110px}
+.floorpager{display:flex; align-items:center; justify-content:space-between; gap:12px; margin-top:14px}
+.floorpager:empty{display:none}
+.floorpager .pg{font-family:"DM Mono",monospace; font-size:.8rem; color:var(--muted)}
+.stepnext{display:flex; justify-content:flex-end; margin-top:18px}
+.stepnext .btn[disabled]{opacity:.5}
+.panel{transition:opacity .35s ease, border-color .25s ease, box-shadow .25s ease; scroll-margin-top:96px}
+.panel.current{border-color:var(--yellow); box-shadow:0 0 0 1px var(--yellow)}
+.panel.locked{opacity:.42}
+.panel.locked > .bd{pointer-events:none; user-select:none}
+.panel.locked > .head .n{background:var(--surface-2); color:var(--muted)}
+.panel > .head .lockmsg{margin-left:auto; font-size:.78rem; color:var(--muted); display:none}
+.panel.locked > .head .lockmsg{display:inline}
+.panel > .head .opt-tag{font-family:"DM Mono",monospace; font-size:.66rem; font-weight:500; letter-spacing:.1em; text-transform:uppercase; color:var(--muted); margin-left:6px}
+@media (max-width:760px){
+  .floorgrid{gap:10px}
+  .floorgrid .rangecard .swatch{height:84px}
+  .panel > .head .lockmsg{font-size:.7rem}
+}

@@ -36,7 +36,11 @@ test("estimate, then book, and come away with a reference", async ({ page }) => 
   await expect(total).toContainText("£—");
 
   // A floor and a room's sizes, and the number appears.
+  // Steps open one at a time: a floor, then Continue, then the rooms.
+  await expect(page.locator('.panel[data-step="2"]')).toHaveClass(/locked/);
   await page.locator("#estRanges [data-floor]").first().click();
+  await page.locator('[data-next="2"]').click();
+  await expect(page.locator('.panel[data-step="2"]')).not.toHaveClass(/locked/);
   await page.locator("#rn0").fill("Living room");
   await page.locator("#rw0").fill("4.2");
   await page.locator("#rl0").fill("4.6");

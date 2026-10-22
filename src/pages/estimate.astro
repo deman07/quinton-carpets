@@ -75,15 +75,18 @@ const config = { floors, underlays, rates };
 
       <div class="est-layout" id="estimator" data-config={JSON.stringify(config)}>
         <div class="stack" style="gap:22px">
-          <div class="panel">
-            <div class="head"><span class="n">1</span><h2 style="font-size:1.02rem;font-stretch:112%;font-weight:700">Choose your floor</h2></div>
+          <div class="panel" data-step="1">
+            <div class="head"><span class="n">1</span><h2 style="font-size:1.02rem;font-stretch:112%;font-weight:700">Choose your floor</h2><span class="lockmsg"></span></div>
             <div class="bd">
-              <div class="grid g3" id="estRanges" style="gap:14px"></div>
+              <div class="chips floortabs" id="estTabs" role="group" aria-label="Show floors of one kind"></div>
+              <div class="floorgrid" id="estRanges"></div>
+              <div class="floorpager" id="estPager"></div>
+              <div class="stepnext"><button class="btn sm" type="button" data-next="2" disabled>Choose a floor to continue</button></div>
             </div>
           </div>
 
-          <div class="panel">
-            <div class="head"><span class="n">2</span><h2 style="font-size:1.02rem;font-stretch:112%;font-weight:700">Your rooms</h2></div>
+          <div class="panel" data-step="2">
+            <div class="head"><span class="n">2</span><h2 style="font-size:1.02rem;font-stretch:112%;font-weight:700">Your rooms</h2><span class="lockmsg">Choose a floor first</span></div>
             <div class="bd">
               <div id="rooms"></div>
               <div style="display:flex; gap:10px; flex-wrap:wrap; margin-top:6px">
@@ -95,24 +98,29 @@ const config = { floors, underlays, rates };
                 Round up to the nearest 10cm — it's better to have a little too much than a
                 seam you didn't want.
               </p>
+              <div class="stepnext"><button class="btn sm" type="button" data-next="3" disabled>Add a size to continue</button></div>
             </div>
           </div>
 
-          <div class="panel">
-            <div class="head"><span class="n">3</span><h2 style="font-size:1.02rem;font-stretch:112%;font-weight:700">Underlay</h2></div>
-            <div class="bd"><div class="optlist" id="underlayOpts"></div></div>
+          <div class="panel" data-step="3">
+            <div class="head"><span class="n">3</span><h2 style="font-size:1.02rem;font-stretch:112%;font-weight:700">Underlay</h2><span class="lockmsg">Add your rooms first</span></div>
+            <div class="bd">
+              <div class="optlist" id="underlayOpts"></div>
+              <div class="stepnext"><button class="btn sm" type="button" data-next="4">Continue to fitting →</button></div>
+            </div>
           </div>
 
-          <div class="panel">
-            <div class="head"><span class="n">4</span><h2 style="font-size:1.02rem;font-stretch:112%;font-weight:700">Fitting &amp; extras</h2></div>
+          <div class="panel" data-step="4">
+            <div class="head"><span class="n">4</span><h2 style="font-size:1.02rem;font-stretch:112%;font-weight:700">Fitting &amp; extras</h2><span class="lockmsg">Choose underlay first</span></div>
             <div class="bd stack" style="gap:16px">
               <div class="optlist" id="fitOpts"></div>
               <div class="optlist" id="extraOpts"></div>
+              <div class="stepnext"><button class="btn sm" type="button" data-next="5">Continue →</button></div>
             </div>
           </div>
 
-          <div class="panel">
-            <div class="head"><span class="n">5</span><h2 style="font-size:1.02rem;font-stretch:112%;font-weight:700">Promotion or referral code</h2></div>
+          <div class="panel" data-step="5">
+            <div class="head"><span class="n">5</span><h2 style="font-size:1.02rem;font-stretch:112%;font-weight:700">Promotion or referral code <small class="opt-tag">optional</small></h2><span class="lockmsg">Choose fitting first</span></div>
             <div class="bd">
               <div class="field" style="margin-bottom:10px">
                 <label for="promo">Got a code?</label>

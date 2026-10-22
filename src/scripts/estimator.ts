@@ -60,7 +60,20 @@ if (root) {
     // One empty room to fill in; the boxes show examples, not values.
     rooms: [{ kind: "room", name: "", width: 0, length: 0 }] as RoomInput[],
     discount: null as DiscountVerdict | null,
+    /** Set once the customer picks an underlay; until then it follows the floor. */
+    underlayPicked: false,
+    /** The furthest step unlocked. Steps open one at a time. */
+    reached: defaultFloor ? 2 : 1,
+    /** Which kind of floor the picker shows, and which page of it. */
+    kind: "All",
+    page: 0,
   };
+
+  const PER_PAGE = 4;
+  const KINDS = ["All", ...new Set(cfg.floors.map((f) => f.material))];
+  const shownFloors = () => cfg.floors.filter((f) => state.kind === "All" || f.material === state.kind);
+  // Open on the page holding a pre-selected floor.
+  if (defaultFloor) state.page = Math.floor(shownFloors().findIndex((f) => f.id === defaultFloor) / PER_PAGE);
 
   const currentFloor = () => byId.get(state.floor);
   /** A size box shows blank, with its example, until something is typed. */
@@ -70,13 +83,48 @@ if (root) {
   function drawFloors() {
     const box = $("#estRanges");
     if (!box) return;
-    box.innerHTML = cfg.floors
+    const all = shownFloors();
+    const pages = Math.max(1, Math.ceil(all.length / PER_PAGE));
+    state.page = Math.min(state.page, pages - 1);
+
+    const tabs = $("#estTabs");
+    if (tabs) {
+      tabs.innerHTML = KINDS.map(
+        (k) => `<button class="chip" type="button" data-kind="${esc(k)}" aria-pressed="${state.kind === k}">${k === "All" ? "All floors" : esc(k)}</button>`,
+      ).join("");
+      $$<HTMLButtonElement>("#estTabs [data-kind]").forEach((b) =>
+        b.addEventListener("click", () => {
+          state.kind = b.dataset.kind!;
+          state.page = 0;
+          drawFloors();
+        }),
+      );
+    }
+
+    const pager = $("#estPager");
+    if (pager) {
+      pager.innerHTML =
+        pages > 1
+          ? `<button class="btn ghost sm" type="button" data-pg="-1"${state.page === 0 ? " disabled" : ""} aria-label="Previous floors">‹ Prev</button>
+             <span class="pg">${state.page + 1} of ${pages}</span>
+             <button class="btn ghost sm" type="button" data-pg="1"${state.page >= pages - 1 ? " disabled" : ""} aria-label="More floors">Next ›</button>`
+          : "";
+      $$<HTMLButtonElement>("#estPager [data-pg]").forEach((b) =>
+        b.addEventListener("click", () => {
+          state.page += Number(b.dataset.pg);
+          drawFloors();
+        }),
+      );
+    }
+
+    box.innerHTML = all
+      .slice(state.page * PER_PAGE, state.page * PER_PAGE + PER_PAGE)
       .map(
         (r) => `
         <button class="rangecard${state.floor === r.id ? " picked" : ""}" type="button"
           data-floor="${r.id}" aria-pressed="${state.floor === r.id}"
           style="text-align:left;padding:0;cursor:pointer;background:var(--ground)">
-          <span class="swatch" style="display:block;height:66px;${r.swatch}"></span>
+          <span class="swatch" style="display:block;${r.swatch}"></span>
           <span class="body" style="padding:11px 12px 13px;gap:3px">
             <b style="font-size:.9rem">${esc(r.name)}</b>
             <span class="meta" style="font-size:.76rem">${esc(r.material)} · ${r.priceFrom ? "From " : ""}${money(r.price)}/m²</span>
@@ -87,6 +135,12 @@ if (root) {
     $$<HTMLButtonElement>("#estRanges [data-floor]").forEach((b) =>
       b.addEventListener("click", () => {
         state.floor = b.dataset.floor!;
+        // Carpet gets carpet underlay, laminate and LVT get board — the
+        // one we'd suggest — unless they've already chosen for themselves.
+        if (!state.underlayPicked) {
+          const hard = currentFloor()?.hard ?? false;
+          state.underlay = cfg.underlays.find((u) => u.forHard === hard)?.id ?? state.underlay;
+        }
         drawFloors();
         drawUnderlay();
         drawFit();
@@ -182,6 +236,7 @@ if (root) {
     $$<HTMLInputElement>("#underlayOpts input").forEach((i) =>
       i.addEventListener("change", () => {
         state.underlay = i.value;
+        state.underlayPicked = true;
         drawUnderlay();
         calc();
       }),
@@ -301,10 +356,48 @@ if (root) {
     if (total) total.innerHTML = `£—<small> incl. VAT</small>`;
   }
 
+  /* ---------------- the steps ----------------
+     Each step opens once the one above is done, so the page reads
+     top to bottom: later steps are dimmed and inert until then. */
+  const hasSize = () =>
+    state.rooms.some((r) => (r.kind === "stairs" ? r.steps > 0 : r.width > 0 && r.length > 0));
+
+  function steps() {
+    $$<HTMLElement>("#estimator .panel[data-step]").forEach((panel) => {
+      const n = Number(panel.dataset.step);
+      const locked = n > state.reached;
+      panel.classList.toggle("locked", locked);
+      panel.classList.toggle("current", n === state.reached);
+      panel.toggleAttribute("inert", locked);
+    });
+    const next1 = $<HTMLButtonElement>('[data-next="2"]');
+    if (next1) {
+      const f = currentFloor();
+      next1.disabled = !f;
+      next1.textContent = f ? `Continue with ${f.name} →` : "Choose a floor to continue";
+    }
+    const next2 = $<HTMLButtonElement>('[data-next="3"]');
+    if (next2) {
+      next2.disabled = !hasSize();
+      next2.textContent = hasSize() ? "Continue to underlay →" : "Add a size to continue";
+    }
+  }
+
+  $$<HTMLButtonElement>("#estimator [data-next]").forEach((b) =>
+    b.addEventListener("click", () => {
+      const n = Number(b.dataset.next);
+      state.reached = Math.max(state.reached, n);
+      steps();
+      const panel = $<HTMLElement>(`#estimator .panel[data-step="${n}"]`);
+      panel?.scrollIntoView({ behavior: RM ? "auto" : "smooth", block: "start" });
+      panel?.querySelector<HTMLElement>(".bd input, .bd button")?.focus({ preventScroll: true });
+    }),
+  );
+
   function calc() {
+    steps();
     const floor = currentFloor();
-    const hasSize = state.rooms.some((r) => (r.kind === "stairs" ? r.steps > 0 : r.width > 0 && r.length > 0));
-    if (!floor || !hasSize) {
+    if (!floor || !hasSize()) {
       drawEmpty(floor);
       drawFoot();
       return;

@@ -54,8 +54,14 @@
   footer.site .cols4{grid-template-columns:1fr}
   .kv{grid-template-columns:1fr}
 
-  .roomcard{left:12px; bottom:12px; min-width:0; padding:10px 12px}
-  .roomcard b{font-size:.9rem}
+  /* Locked size on phones: the card keeps to the left of the swatches
+     whatever range is showing. Long names end in "…"; the spec line
+     and the wear badge are dropped to keep it to name and price. */
+  .roomcard{left:12px; bottom:12px; min-width:0; width:calc(100% - 192px); max-width:210px; padding:10px 12px}
+  .roomcard .k{font-size:.55rem}
+  .roomcard b{display:block; font-size:.86rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
+  .roomcard .m, .roomcard .grade{display:none}
+  .roomcard .rowk{margin-top:3px; font-size:.74rem; white-space:nowrap}
   .picker{right:12px; bottom:12px; gap:6px}
   .picker button{width:26px; height:26px; border-radius:7px}
   .room{aspect-ratio:16/11}
