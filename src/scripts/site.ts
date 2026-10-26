@@ -2,8 +2,8 @@
  * Everything that moves, in one place.
  *
  * There is exactly ONE scroll listener on the site. It is passive,
- * rAF-throttled, and it drives the sticky header, the progress bar
- * and the showcase tilt together. Handlers write to CSS custom
+ * rAF-throttled, and it drives the sticky header and the progress
+ * bar together. Handlers write to CSS custom
  * properties; nothing here animates a layout property.
  *
  * No animation library. All of this is hand-written.
@@ -81,10 +81,6 @@ const $$ = <T extends Element = Element>(s: string, r: ParentNode = document) =>
   bar.id = "progress";
   header.appendChild(bar);
 
-  const showcaseEl = $<HTMLElement>("#showcase");
-  const inner = showcaseEl ? $<HTMLElement>(".showcase-inner", showcaseEl) : null;
-  const hint = showcaseEl ? $<HTMLElement>(".showhint", showcaseEl) : null;
-
   let queued = false;
 
   const update = () => {
@@ -95,18 +91,6 @@ const $$ = <T extends Element = Element>(s: string, r: ParentNode = document) =>
 
     const scrollable = document.documentElement.scrollHeight - window.innerHeight;
     bar.style.width = (scrollable > 0 ? Math.min(100, (y / scrollable) * 100) : 0) + "%";
-
-    // The floor lays flat: p goes 0 → 1 as the panel rises through
-    // the viewport, and the panel un-tilts and grows to meet it.
-    if (inner && !RM) {
-      const r = showcaseEl!.getBoundingClientRect();
-      const vh = window.innerHeight || 800;
-      const p = 1 - Math.min(1, Math.max(0, (r.top - vh * 0.18) / (vh * 0.62)));
-      inner.style.setProperty("--rx", (20 * (1 - p)).toFixed(2) + "deg");
-      inner.style.setProperty("--sc", (0.93 + 0.07 * p).toFixed(4));
-      inner.style.setProperty("--sh", (50 - 34 * p).toFixed(0) + "px");
-      hint?.style.setProperty("--hint", (1 - p).toFixed(2));
-    }
   };
 
   const onScroll = () => {

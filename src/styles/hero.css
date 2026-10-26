@@ -70,17 +70,41 @@
 }
 .hero-sub{margin-top:24px; max-width:56ch}
 .hero-cta{display:flex; flex-wrap:wrap; gap:13px; margin-top:30px}
-.trustrow{display:flex; flex-wrap:wrap; gap:9px 20px; margin-top:26px; font-size:.86rem; color:var(--ink-2)}
-.trustrow span{display:flex; align-items:center; gap:7px}
-.tick{width:16px; height:16px; flex:none}
 
-/* --- layer 5: the showcase, the floor lays flat as you scroll --- */
-.showcase{position:relative; z-index:2; perspective:1600px; margin-top:clamp(18px,2.4vw,32px)}
-.showcase-inner{
-  transform:rotateX(var(--rx,20deg)) scale(var(--sc,.93)); transform-origin:50% 0%;
-  will-change:transform; box-shadow:0 var(--sh,50px) var(--shb,70px) -40px rgba(21,18,12,.75);
-  border-radius:20px;
+/* --- the home banner's two columns: the copy, and a carpet sample
+   hanging beside it (scripts/cloth.ts). The sample column is sized
+   so the headline keeps the prototype's line breaks. --- */
+.hero-split{display:grid; grid-template-columns:minmax(0,1fr) clamp(280px,28vw,420px); gap:32px; align-items:center}
+.hero-cloth{position:relative; aspect-ratio:5/6}
+#cloth{position:absolute; inset:0; width:100%; height:100%; display:block; opacity:0; transition:opacity .9s ease}
+#cloth.on{opacity:1}
+@media (prefers-reduced-motion: reduce){ #cloth{transition:none} }
+/* Below 980px there is one column, so the copy's box steps aside and
+   the sample hangs centred between the words and the buttons. */
+@media (max-width:979px){
+  .hero-split{grid-template-columns:minmax(0,1fr); row-gap:0}
+  .hero-copy{display:contents}
+  .hero-split .pill{justify-self:start}
+  .hero-cloth{order:1; justify-self:center; width:min(80%,340px); margin-top:14px}
+  .hero-split .hero-cta{order:2; margin-top:10px}
 }
+/* Phones get the headline, the sample and the one button that
+   matters. The paragraph and the street name wait for a wider
+   screen, and "Browse the ranges" steps down to a quieter link. */
+@media (max-width:600px){
+  .hero-split{padding-block:44px 30px}
+  .hero-split .pill-street, .hero-split .hero-sub{display:none}
+  .hero-split .pill{margin-bottom:24px}
+  .hero-split .hero-cta{flex-direction:column; align-items:stretch; gap:8px}
+  .hero-split .hero-cta .btn.ghost{
+    border-color:transparent; background:none; text-decoration:underline;
+    text-decoration-thickness:2px; text-decoration-color:var(--yellow); text-underline-offset:5px;
+  }
+}
+
+/* --- layer 5: the showcase, a still room whose floor cycles through the ranges --- */
+.showcase{position:relative; z-index:2; margin-top:clamp(18px,2.4vw,32px)}
+.showcase-inner{box-shadow:0 16px 70px -40px rgba(21,18,12,.75); border-radius:20px}
 .room{
   position:relative; aspect-ratio:16/7.4; min-height:250px; border:2px solid var(--ink);
   border-radius:20px; overflow:hidden; background:#EFEAE0;
@@ -140,10 +164,6 @@
 }
 .picker button:hover{transform:translateY(-3px)}
 .picker button[aria-pressed="true"]{border-color:var(--yellow); box-shadow:0 0 0 2px #15120C, 0 0 0 5px var(--yellow)}
-.showhint{
-  text-align:center; font-family:"DM Mono",monospace; font-size:.7rem; letter-spacing:.15em;
-  text-transform:uppercase; color:var(--muted); margin-top:16px; opacity:var(--hint,1); transition:opacity .3s;
-}
 
 /* --- the ranges page wears the same banner, with the room --- */
 .ranges-hero .hero-inner{padding-block:clamp(34px,4.4vw,60px) 0}

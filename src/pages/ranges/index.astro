@@ -96,13 +96,15 @@ const schema = {
       <h1 style="font-size:clamp(1.9rem,1.25rem + 2.5vw,3rem); margin-bottom:14px">
         Come and have a look at our extensive ranges.
       </h1>
+    </div>
+    {showcase.length > 0 && <Showcase showcase={showcase} />}
+    <div class="wrap">
       <p class="lede hero-sub">
         Hundreds of carpet samples to look at and feel, a large variety of vinyl for various
         needs, and high quality laminate. Prices below are per square metre, supply only —
         fitting is priced separately so you can see what you're paying for.
       </p>
     </div>
-    {showcase.length > 0 && <Showcase showcase={showcase} />}
   </div>
 
   <div class="section plain" id="list">

@@ -2,6 +2,7 @@
 import Base from "../layouts/Base.astro";
 import Hero from "../components/Hero.astro";
 import Ticker from "../components/Ticker.astro";
+import WorkReel from "../components/WorkReel.astro";
 import { getSettings } from "../lib/server/catalogue.ts";
 import { QUOTES } from "../data/quotes.ts";
 import { BUSINESS, SUPPLIERS } from "../data/business.ts";
@@ -11,8 +12,8 @@ export const prerender = false;
 
 const settings = await getSettings();
 
-// The gallery. Stand-in photographs until the shop's own job photos
-// are in; swap the paths and captions here.
+// The work reel. Stand-in photographs until the shop's own job photos
+// are in; swap the paths and captions here. Square photos crop best.
 const WORK = [
   { title: "Laminate flooring project", image: settings.photos.laminate, alt: "Laminate flooring project by Quinton Carpets" },
   { title: "Living room carpet", image: settings.photos.carpets, alt: "Living room carpet project by Quinton Carpets" },
@@ -45,7 +46,10 @@ const STEPS = [
         <div class="about-photo">
           {
             settings.aboutPhoto ? (
-              <img src={settings.aboutPhoto} alt="Aman, owner of Quinton Carpets" loading="lazy" />
+              <>
+                <img src={settings.aboutPhoto} alt="Aman, owner of Quinton Carpets" loading="lazy" />
+                <span class="about-tag" aria-hidden="true"><b>Aman</b>Owner, Quinton Carpets</span>
+              </>
             ) : (
               <div class="about-card" aria-hidden="true">
                 <span class="k">Family run since</span>
@@ -57,32 +61,21 @@ const STEPS = [
         </div>
         <div class="about-copy">
           <p class="eyebrow">About Us</p>
-          <h2>Hi, I am Aman and I am the owner of Quinton Carpets.</h2>
+          <h2>Hi, I'm Aman, owner of Quinton Carpets.</h2>
           <p class="lede">
-            Hi, I am Aman and I am the owner of Quinton Carpets, a Birmingham carpet shop which
-            I run together with my brother. We are a local carpet and flooring business
-            established in {BUSINESS.founded} with the motto: family run, family prices and family service.
+            I run the shop with my brother. We've been Birmingham's local carpet and flooring
+            business since {BUSINESS.founded}, and our motto hasn't changed:
           </p>
+          <ul class="about-motto">
+            <li>Family run</li>
+            <li>Family prices</li>
+            <li>Family service</li>
+          </ul>
           <p>
-            I, myself, have two beautiful sons and really do appreciate what type of carpet or
-            flooring different families need. I also fully understand budget amounts and that
-            customers, like yourselves, get the best value for money.
+            As a dad of two, I know what families need from a floor, and from a budget. I'll
+            measure, fit or give you honest advice myself, at an honest price. <strong>We will do it right.</strong>
           </p>
-          <p>
-            We really do pride ourselves in these morals. I want my business to be successful
-            long-term for my children and this means that the basics for my customers have to be
-            done right. And this is really what I guarantee. <strong>We will do it right.</strong>
-          </p>
-          <p>
-            I, personally, can come and measure for you, fit for you or give you honest advice
-            (if wanted or needed). We charge honest amounts and make sure you are happy with what
-            you have bought and paid for. We want to carry on trading and we make sure we look
-            after our customers to do this.
-          </p>
-          <p>
-            Have a look at our reviews to hear what some of our customers – just like you – have
-            said.
-          </p>
+          <a class="about-more" href="#reviews">Read what our customers say</a>
         </div>
       </div>
     </div>
@@ -116,21 +109,12 @@ const STEPS = [
     <div class="wrap">
       <p class="eyebrow rv">Our work</p>
       <h2 class="rv" style="margin-bottom:12px">Some of our work.</h2>
-      <p class="lede rv" style="margin-bottom:30px">
+      <p class="lede rv">
         From a single bedroom to a full house, our own fitters take care of the details from
         preparation through to the final clean-up.
       </p>
-      <div class="work-grid rv">
-        {
-          WORK.map((item) => (
-            <figure class="work-card">
-              <img src={item.image} alt={item.alt} loading="lazy" width="640" height="480" />
-              <figcaption>{item.title}</figcaption>
-            </figure>
-          ))
-        }
-      </div>
     </div>
+    <WorkReel work={WORK} />
   </div>
 
   <!-- how it works -->
@@ -158,7 +142,7 @@ const STEPS = [
   </div>
 
   <!-- testimonials -->
-  <div class="section">
+  <div class="section" id="reviews">
     <div class="wrap">
       <p class="eyebrow rv">What Birmingham says</p>
       <h2 class="rv" style="margin-bottom:10px">Reviews from Google, Yell, Facebook and Yelp.</h2>
@@ -193,7 +177,7 @@ const STEPS = [
         </div>
         <div class="review-actions">
           <a class="btn ghost sm" href={BUSINESS.mapsUrl} target="_blank" rel="noopener noreferrer">Read our Google reviews</a>
-          <a class="btn yellow sm" href={BUSINESS.mapsUrl} target="_blank" rel="noopener noreferrer">Leave a review</a>
+          <a class="btn yellow sm" href={BUSINESS.reviewUrl} target="_blank" rel="noopener noreferrer">Leave a review</a>
         </div>
       </div>
     </div>

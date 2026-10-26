@@ -242,9 +242,13 @@ footer.site .fine{
 @media (max-width:760px){ .rangedetail{grid-template-columns:1fr} }
 
 /* ============ home: about, partners, work, reviews ============ */
-.about-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:clamp(28px,5vw,72px);align-items:stretch}
-.about-photo{min-height:420px;background:var(--surface);overflow:hidden}
+.about-grid{display:grid;grid-template-columns:minmax(0,5fr) minmax(0,6fr);gap:clamp(28px,5vw,72px);align-items:center}
+/* The photo keeps its own 4:5 shape, but never grows taller than the
+   screen under the header, so the whole of it is seen without a scroll. */
+.about-photo{position:relative;aspect-ratio:4/5;max-height:calc(100vh - 150px);max-height:calc(100svh - 150px);min-height:320px;background:var(--surface);overflow:hidden;border:2px solid #15120C;border-radius:var(--r-m);box-shadow:8px 8px 0 var(--yellow)}
 .about-photo img{display:block;width:100%;height:100%;object-fit:cover;object-position:50% 22%}
+.about-tag{position:absolute;left:14px;bottom:14px;display:grid;gap:1px;padding:8px 13px;border:2px solid #15120C;border-radius:var(--r-s);background:var(--yellow);color:#15120C;font-size:.76rem;font-weight:600;line-height:1.25}
+.about-tag b{font-family:"Archivo",sans-serif;font-stretch:112%;font-size:1.05rem;font-weight:800}
 /* Until the owner's photo is in settings.about_photo. */
 .about-card{height:100%;min-height:inherit;display:grid;gap:6px;align-content:center;padding:clamp(28px,4vw,48px);background:var(--yellow);color:#15120C}
 .about-card b{font-family:"Archivo",sans-serif;font-stretch:125%;font-size:clamp(4rem,2.5rem + 6vw,7.5rem);line-height:.9;letter-spacing:-.04em}
@@ -252,6 +256,11 @@ footer.site .fine{
 .about-copy{display:flex;flex-direction:column;justify-content:center;gap:16px;padding:clamp(10px,2vw,28px) 0}
 .about-copy h2{max-width:15ch;margin:0}
 .about-copy p{max-width:58ch}
+.about-motto{display:flex;flex-wrap:wrap;gap:8px;margin:0;padding:0;list-style:none}
+.about-motto li{border:1.5px solid var(--line-strong);border-radius:99px;padding:5px 13px;font-weight:700;font-size:.86rem}
+.about-more{align-self:flex-start;margin-top:4px;font-weight:700;color:var(--ink);text-decoration:underline;text-decoration-thickness:2px;text-decoration-color:var(--yellow);text-underline-offset:5px}
+.about-more:hover{text-decoration-color:var(--ink)}
+#reviews{scroll-margin-top:72px}
 .partner-bar{padding:30px 0 26px;background:var(--yellow);color:#15120C;border-top:3px solid #15120C;border-bottom:3px solid #15120C;overflow:hidden}
 .partner-title{display:flex;align-items:center;justify-content:center;gap:clamp(12px,2vw,22px);margin:6px 22px 22px;text-align:center;font-family:"Archivo",sans-serif;font-stretch:125%;font-size:clamp(1.35rem,1rem + 1.5vw,2.1rem);font-weight:800;letter-spacing:-.01em;line-height:1.05;color:#15120C}
 .partner-title::before,.partner-title::after{content:"";flex:0 1 72px;height:3px;background:#15120C}
@@ -275,12 +284,22 @@ footer.site .fine{
   .partner-logos{flex-wrap:wrap;justify-content:center;row-gap:12px}
   .partner-logos[aria-hidden="true"]{display:none}
 }
-.work-section{background:var(--surface)}
+.work-section{background:var(--surface);padding-bottom:clamp(16px,3vw,44px)}
 .work-section .lede,.work-section .eyebrow{color:var(--ink-2)}
-.work-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px}
-.work-card{margin:0;overflow:hidden;background:var(--ground);border:1px solid var(--line);box-shadow:0 12px 24px -22px rgba(21,18,12,.85)}
-.work-card img{display:block;width:100%;height:auto;aspect-ratio:4/3;object-fit:cover}
-.work-card figcaption{padding:14px 16px;font-weight:700;font-size:1rem}
+/* The work reel. The geometry is in lib/reel.ts, which sets the
+   custom properties on .reel; a tile is 16 slices (SLICES there),
+   each turned round the ring by its own share of the tile's arc. */
+.reel{position:relative;height:clamp(300px,36vw,480px);max-width:1600px;margin-inline:auto;overflow:hidden;container-type:size}
+.reel-stage{position:absolute;inset:0;pointer-events:none;perspective:var(--view);perspective-origin:50% 50%;-webkit-mask-image:linear-gradient(90deg,transparent,#000 12%,#000 88%,transparent);mask-image:linear-gradient(90deg,transparent,#000 12%,#000 88%,transparent)}
+.reel-col{position:absolute;left:calc(50% - var(--tile) * var(--aspect) / 2);top:calc(50% - var(--tile) / 2);width:calc(var(--tile) * var(--aspect));height:var(--tile);transform-style:preserve-3d;animation:reel-turn var(--period) linear infinite}
+.reel-slice{position:absolute;top:0;left:calc(var(--tile) * var(--aspect) * 15 / 32);width:calc(var(--tile) * var(--aspect) / 16 + 1px);height:var(--tile);overflow:hidden;background:var(--surface-2);transform:translateZ(var(--ring)) rotateY(calc(var(--unit) * var(--aspect) * (7.5 - var(--s)) / 16)) translateZ(calc(var(--ring) * -1))}
+.reel-slice:first-child{border-radius:var(--r-s) 0 0 var(--r-s)}
+.reel-slice:last-child{width:calc(var(--tile) * var(--aspect) / 16);border-radius:0 var(--r-s) var(--r-s) 0}
+.reel-face{position:absolute;top:0;left:calc(var(--tile) * var(--aspect) * var(--s) / -16);width:calc(var(--tile) * var(--aspect));height:var(--tile)}
+.reel-face img{display:block;width:100%;height:100%;object-fit:cover}
+.reel-face span{position:absolute;inset:auto 0 0;padding:calc(var(--tile) * .14) calc(var(--tile) * .07) calc(var(--tile) * .06);background:linear-gradient(transparent,rgba(21,18,12,.78));color:#fff;font-weight:700;font-size:max(.72rem,calc(var(--tile) * .072));line-height:1.2}
+@media (hover:hover){ .reel:hover .reel-col{animation-play-state:paused} }
+@media (prefers-reduced-motion: reduce){ .reel-col{animation-play-state:paused} }
 .review-strip{display:flex;align-items:center;justify-content:space-between;gap:24px;margin-top:18px;padding:20px 22px;border:1px solid var(--line);border-radius:var(--r-m);background:var(--surface)}
 .review-score{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
 .review-stars{color:#00b67a;font-size:1.35rem;letter-spacing:.08em}
@@ -288,14 +307,14 @@ footer.site .fine{
 .review-score small{width:100%;color:var(--ink-2);margin-left:2px}
 .review-actions{display:flex;gap:10px;flex-wrap:wrap}
 @media (max-width:760px){
-  .about-grid{grid-template-columns:1fr;gap:24px}
-  .about-photo{min-height:0;aspect-ratio:1/1}
+  .about-grid{grid-template-columns:1fr;gap:30px}
+  .about-photo{min-height:0;max-height:min(66svh,560px)}
+  .about-copy{gap:14px;padding:0}
   .partner-bar{padding:22px 0 18px}
   .partner-title{font-size:1.2rem;gap:10px;margin-bottom:16px}
   .partner-title::before,.partner-title::after{flex-basis:22px}
   .partner-logo{min-height:60px;padding:0 26px}
   .partner-logo.lifestyle{font-size:1.8rem}.partner-logo.cormar{font-size:1.45rem}.partner-logo.kingsmead{font-size:1.3rem}.partner-logo.regency b{font-size:2.6rem}.partner-logo.cfs > span{width:58px;height:58px;font-size:1.4rem}.partner-logo.cloud{font-size:1rem}.partner-logo.cloud b{font-size:2rem}
-  .work-grid{grid-template-columns:1fr 1fr}
   .review-strip{align-items:flex-start;flex-direction:column}.review-actions{width:100%}.review-actions .btn{flex:1;text-align:center}
 }
 

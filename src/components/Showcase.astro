@@ -10,8 +10,8 @@ interface Props {
 const { showcase } = Astro.props;
 const first = showcase[0]!;
 
-// The animated room: a floor that lays flat as you scroll, cycling
-// through the showcase ranges. It heads the ranges page.
+// The room: a still panel whose floor cycles through the showcase
+// ranges. It heads the ranges page.
 //
 // The rotation is handed to the client as data, so the markup ships
 // with the first range already painted — the banner is correct in
@@ -35,8 +35,6 @@ const rotation = await Promise.all(
 const firstStyle = rotation[0]?.style;
 ---
 
-<!-- For a carpet shop, a floor laying flat as you scroll isn't an
-     effect, it's the product. -->
 <div class="wrap">
   <div class="showcase" id="showcase" data-rotation={JSON.stringify(rotation)}>
     <div class="showcase-inner">
@@ -95,6 +93,5 @@ const firstStyle = rotation[0]?.style;
         <div class="scanline" aria-hidden="true"></div>
       </div>
     </div>
-    <p class="showhint">Scroll — the floor lays flat.</p>
   </div>
 </div>

@@ -2,7 +2,7 @@
    Every animation in section 4 of the brief is switched off here.
    The glow stops drifting, the pile stops swaying, the sheen and
    the measuring beam are gone, the dot stops pinging, the
-   headline is simply there, and the showcase renders flat. */
+   headline is simply there. */
 @media (prefers-reduced-motion: reduce){
   *{scroll-behavior:auto!important}
   .ticker .track{animation:none}
@@ -13,7 +13,6 @@
   .room .scanline{animation:none; opacity:0}
   .pill .dot{animation:none}
   .js .hero h1 .w{opacity:1; transform:none; filter:none}
-  .showcase-inner{transform:none!important}
   .btn:hover::after{transform:translateX(-120%); transition:none}
 }
 
@@ -65,7 +64,6 @@
   .picker{right:12px; bottom:12px; gap:6px}
   .picker button{width:26px; height:26px; border-radius:7px}
   .room{aspect-ratio:16/11}
-  .showcase-inner{--rx:12deg}
 }
 
 /* At 390px the wordmark, the hamburger and the call icon came to

@@ -27,6 +27,12 @@ export const BUSINESS = {
   geo: { lat: 52.4562, lon: -2.0092 },
   /** The shop's own Google Maps listing: directions, photos and reviews. */
   mapsUrl: "https://maps.app.goo.gl/QyfaHBydkeHGdDxL9",
+  /**
+   * Opens Google's "write a review" box for that same listing (place
+   * ID ChIJSQ2JNTqWcEgROnfHDK1Md1c). Anyone not signed in to Google is
+   * asked to sign in first, then lands on the box.
+   */
+  reviewUrl: "https://search.google.com/local/writereview?placeid=ChIJSQ2JNTqWcEgROnfHDK1Md1c",
 } as const;
 
 export const ADDRESS_LINES = [

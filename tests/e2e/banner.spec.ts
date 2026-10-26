@@ -23,7 +23,9 @@ for (const bp of BREAKPOINTS) {
       const h1 = page.getByRole("heading", { level: 1 });
       await expect(h1).toBeVisible();
       await expect(h1).toContainText("When it comes to carpets, we're on a roll.");
-      await expect(page.locator(".hero-sub")).toBeVisible();
+      // Phones drop the paragraph to give the headline room.
+      if (bp.width > 600) await expect(page.locator(".hero-sub")).toBeVisible();
+      else await expect(page.locator(".hero-sub")).toBeHidden();
 
       // The page never scrolls sideways.
       const overflow = await page.evaluate(
@@ -31,9 +33,12 @@ for (const bp of BREAKPOINTS) {
       );
       expect(overflow, `no horizontal scroll at ${bp.name}`).toBeLessThanOrEqual(1);
 
+      // The hanging sample is a WebGL loop that "animations: disabled"
+      // cannot freeze, so it is masked out of the comparison.
       await expect(page).toHaveScreenshot(`banner-${bp.name}-${scheme}.png`, {
         maxDiffPixelRatio: 0.02,
         animations: "disabled",
+        mask: [page.locator("#cloth")],
       });
     });
   }
@@ -51,22 +56,19 @@ test("the headline splits into words but keeps the highlight whole", async ({ pa
   await expect(em).toHaveText("on a roll.");
 });
 
-// The animated room heads the ranges page.
-test("the floor lays flat as you scroll", async ({ page }) => {
+// The room heads the ranges page, flat and still.
+test("the room does not tilt as you scroll", async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto("/ranges/");
 
-  const rx = () =>
-    page.locator(".showcase-inner").evaluate((el) => getComputedStyle(el).getPropertyValue("--rx").trim());
+  const transform = () =>
+    page.locator(".showcase-inner").evaluate((el) => getComputedStyle(el).transform);
 
-  const before = await rx();
-  await page.locator(".showcase").scrollIntoViewIfNeeded();
+  // Flat on arrival, and scrolling does not move it.
+  expect(await transform()).toBe("none");
+  await page.mouse.wheel(0, 400);
   await page.waitForTimeout(200);
-  const after = await rx();
-
-  // It starts tilted and ends flat.
-  expect(parseFloat(before)).toBeGreaterThan(1);
-  expect(parseFloat(after)).toBeLessThan(parseFloat(before));
+  expect(await transform()).toBe("none");
 });
 
 test("the showcase rotates through the ranges and a click takes over", async ({ page }) => {

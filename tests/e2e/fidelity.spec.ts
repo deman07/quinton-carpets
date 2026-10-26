@@ -29,20 +29,17 @@ const PROBES: Record<string, string[]> = {
   ".pill": ["fontSize", "letterSpacing", "borderRadius", "paddingTop", "paddingLeft"],
   ".pill .dot": ["width", "height", "backgroundColor"],
   ".btn.yellow": ["borderRadius", "boxShadow", "paddingTop", "paddingLeft", "fontSize", "fontWeight"],
-  ".trustrow": ["fontSize", "columnGap", "marginTop"],
   ".room": ["borderRadius", "borderTopWidth", "aspectRatio"],
   ".room .floor": ["clipPath", "top"],
   ".room .scanline": ["height", "top"],
   ".roomcard": ["borderRadius", "paddingTop", "minWidth"],
   ".picker button": ["width", "height", "borderRadius"],
-  ".showhint": ["fontSize", "letterSpacing", "marginTop"],
   ".ticker": ["backgroundColor", "paddingTop", "borderTopWidth"],
   ".ticker li": ["fontSize", "fontWeight", "paddingLeft"],
-  ".showcase": ["perspective"],
 };
 
 /** The animated room moved to the ranges page, so it is measured there. */
-const ROOM_PROBES = [".room", ".room .floor", ".room .scanline", ".roomcard", ".picker button", ".showhint", ".showcase"];
+const ROOM_PROBES = [".room", ".room .floor", ".room .scanline", ".roomcard", ".picker button"];
 
 /** The design tokens themselves, read off the root. */
 const TOKENS = [
