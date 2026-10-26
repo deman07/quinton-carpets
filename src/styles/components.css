@@ -286,31 +286,17 @@ footer.site .fine{
 }
 .work-section{background:var(--surface)}
 .work-section .lede,.work-section .eyebrow{color:var(--ink-2)}
-/* The work gallery, after the Expanding Cards on 21st.dev: one card
-   open at a time, the rest folded to grey strips with their titles on
-   edge. scripts/work-cards.ts sets --tracks, where the open card has
-   five shares. Across on wide screens, down on phones. */
-.work-cards{display:grid;gap:8px;height:500px;margin:0;padding:0;list-style:none;grid-template-columns:var(--tracks);grid-template-rows:1fr;transition:grid-template-columns .5s ease-out,grid-template-rows .5s ease-out}
-.work-card{position:relative;min-width:0;min-height:0;overflow:hidden;border:1px solid var(--line);border-radius:var(--r-m);background:var(--surface-2);cursor:pointer}
-.work-card:focus-visible{outline:3px solid var(--yellow);outline-offset:2px}
-.work-card img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;transform:scale(1.1);filter:grayscale(1);transition:transform .3s ease-out,filter .3s ease-out}
-.work-card::after{content:"";position:absolute;inset:0;background:linear-gradient(to top,rgba(0,0,0,.8),rgba(0,0,0,.4) 50%,transparent)}
-/* A tint over the closed cards, so their labels read on pale carpet. */
-.work-card::before{content:"";position:absolute;inset:0;z-index:1;background:rgba(0,0,0,.38);transition:opacity .3s ease-out}
-.wc-label{position:absolute;z-index:1;top:18px;left:50%;transform:translateX(-50%);writing-mode:vertical-rl;white-space:nowrap;font-family:"DM Mono",monospace;font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:rgba(255,255,255,.92);text-shadow:0 1px 2px rgba(0,0,0,.5);transition:opacity .3s ease-out}
-/* At least 20rem wide, so the words don't reflow as a card opens. */
-.wc-body{position:absolute;z-index:1;left:0;bottom:0;width:max(100%,20rem);display:grid;justify-items:start;gap:8px;padding:20px}
-.wc-body > *{opacity:0;transition:opacity .3s ease-out}
-.wc-icon{width:24px;height:24px;color:rgba(255,255,255,.9)}
-.wc-body h3{font-size:1.3rem;color:#fff}
-.wc-body p{max-width:24rem;font-size:.9rem;line-height:1.5;color:rgba(255,255,255,.82)}
-.work-card[data-active="true"] img{transform:none;filter:none}
-.work-card[data-active="true"]::before,.work-card[data-active="true"] .wc-label{opacity:0}
-.work-card[data-active="true"] .wc-body > *{opacity:1}
-.work-card[data-active="true"] .wc-icon{transition-delay:75ms}
-.work-card[data-active="true"] .wc-body h3{transition-delay:150ms}
-.work-card[data-active="true"] .wc-body p{transition-delay:225ms}
-@media (prefers-reduced-motion: reduce){ .work-cards,.work-card img,.work-card::before,.wc-label,.wc-body > *{transition:none} }
+/* The work gallery, after the Image Gallery on 21st.dev: a row of
+   photos, and the one under the pointer (or keyboard focus, or a tap
+   on a phone) widens to take most of the row. CSS only. On phones the
+   row turns on its side and the photos stack. */
+.gallery{display:flex;gap:8px;height:400px}
+.gallery-item{flex:1 1 0;min-width:0;min-height:0;overflow:hidden;border:1px solid var(--line);border-radius:var(--r-m);background:var(--surface-2);cursor:pointer;transition:flex-grow .5s ease}
+.gallery-item:hover,.gallery-item:focus-visible{flex-grow:5}
+.gallery-item:focus-visible{outline:3px solid var(--yellow);outline-offset:2px}
+.gallery-item img{display:block;width:100%;height:100%;object-fit:cover;object-position:center}
+@media (hover:none){ .gallery-item:focus{flex-grow:5} }
+@media (prefers-reduced-motion: reduce){ .gallery-item{transition:none} }
 .review-strip{display:flex;align-items:center;justify-content:space-between;gap:24px;margin-top:18px;padding:20px 22px;border:1px solid var(--line);border-radius:var(--r-m);background:var(--surface)}
 .review-score{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
 .review-stars{color:#00b67a;font-size:1.35rem;letter-spacing:.08em}
@@ -321,9 +307,7 @@ footer.site .fine{
   .about-grid{grid-template-columns:1fr;gap:30px}
   .about-photo{min-height:0;max-height:min(66svh,560px)}
   .about-copy{gap:14px;padding:0}
-  .work-cards{height:600px;grid-template-columns:1fr;grid-template-rows:var(--tracks)}
-  .wc-label{top:50%;left:18px;transform:translateY(-50%);writing-mode:horizontal-tb}
-  .wc-body{width:100%;padding:16px}
+  .gallery{flex-direction:column;height:520px;gap:6px}
   .partner-bar{padding:22px 0 18px}
   .partner-title{font-size:1.2rem;gap:10px;margin-bottom:16px}
   .partner-title::before,.partner-title::after{flex-basis:22px}

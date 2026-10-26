@@ -1,0 +1,25 @@
+---
+import { getImage } from "astro:assets";
+
+interface Props {
+  photos: { src: string; width: number; height: number; alt: string }[];
+}
+const { photos } = Astro.props;
+
+// An open photo is at most about 560px wide by 400px tall.
+const images = await Promise.all(
+  photos.map((p) =>
+    getImage({ src: p.src, width: 1200, height: Math.round((1200 * p.height) / p.width), format: "webp", quality: 76 }),
+  ),
+);
+---
+
+<div class="gallery rv">
+  {
+    photos.map((p, i) => (
+      <div class="gallery-item" tabindex="0">
+        <img src={images[i]!.src} alt={p.alt} loading="lazy" decoding="async" />
+      </div>
+    ))
+  }
+</div>
