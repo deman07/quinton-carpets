@@ -50,14 +50,9 @@ header.site{
 header.site.stuck{border-bottom-color:var(--line); box-shadow:0 8px 30px -22px rgba(21,18,12,.6)}
 #progress{position:absolute; left:0; bottom:-1px; height:2px; width:0; background:var(--yellow); z-index:2}
 .bar{display:flex; align-items:center; gap:18px; height:70px}
-.brand{display:flex; align-items:center; gap:11px; text-decoration:none; flex:none}
-.brand .mark{width:38px; height:38px; flex:none}
-.brand .wordmark{
-  font-family:"Archivo",sans-serif; font-stretch:122%; font-weight:900;
-  font-size:1.06rem; letter-spacing:-.02em; line-height:1;
-}
-.brand .wordmark span{display:block; font-size:.6rem; font-weight:600; font-stretch:100%;
-  letter-spacing:.19em; color:var(--muted); margin-top:3px; font-family:"DM Mono",monospace}
+.brand{display:flex; align-items:center; text-decoration:none; flex:none; color:var(--ink)}
+/* components/Logo.astro: the lettering follows `color`, the roll stays gold. */
+.brand .logo{display:block; height:34px; width:auto}
 nav.main{display:flex; gap:2px; margin-left:auto; align-items:center}
 nav.main a{
   text-decoration:none; padding:8px 13px; border-radius:99px; font-size:.94rem;

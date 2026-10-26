@@ -66,29 +66,23 @@
   .room{aspect-ratio:16/11}
 }
 
-/* At 390px the wordmark, the hamburger and the call icon came to
-   11px more than the viewport. Tightening the header's own gaps
-   fixes it without moving anything else on the page. */
+/* On phones the logo, the hamburger and the call icon share 390px,
+   so the header's own gaps tighten and the logo steps down. */
 @media (max-width:420px){
   .bar{gap:12px}
-  .brand .wordmark{font-size:1rem}
   .brand{min-width:0}
+  .brand .logo{height:28px}
 }
 
 /* Older 360px phones need a little more again. Only the header's
    own padding moves — the rest of the page keeps its 22px gutter. */
 @media (max-width:380px){
   header.site .wrap{padding-inline:16px}
-  .brand .wordmark{font-size:.94rem}
-  .brand .mark{width:34px; height:34px}
+  .brand .logo{height:25px}
 }
 
-/* Below 340px there is not room for the wordmark's strapline as
-   well as the hamburger and the call icon. The name stays; the
-   strapline goes, and it is still in the footer. */
 @media (max-width:340px){
-  .brand .wordmark{font-size:.85rem; font-stretch:108%}
-  .brand .wordmark span{display:none}
+  .brand .logo{height:22px}
 }
 
 /* No hover affordances on touch: the magnetic pull is a

@@ -2,7 +2,7 @@
 import Base from "../layouts/Base.astro";
 import Hero from "../components/Hero.astro";
 import Ticker from "../components/Ticker.astro";
-import WorkReel from "../components/WorkReel.astro";
+import WorkCards from "../components/WorkCards.astro";
 import { getSettings } from "../lib/server/catalogue.ts";
 import { QUOTES } from "../data/quotes.ts";
 import { BUSINESS, SUPPLIERS } from "../data/business.ts";
@@ -12,16 +12,24 @@ export const prerender = false;
 
 const settings = await getSettings();
 
-// The work reel. Stand-in photographs until the shop's own job photos
-// are in; swap the paths and captions here. Square photos crop best.
+// The work gallery. Stand-in photographs until the shop's own job
+// photos are in; swap the paths, titles and descriptions here. `icon`
+// is one of the names in WorkCards.astro. Square photos crop best.
 const WORK = [
-  { title: "Laminate flooring project", image: settings.photos.laminate, alt: "Laminate flooring project by Quinton Carpets" },
-  { title: "Living room carpet", image: settings.photos.carpets, alt: "Living room carpet project by Quinton Carpets" },
-  { title: "Vinyl flooring project", image: settings.photos.vinyl, alt: "Vinyl flooring project by Quinton Carpets" },
-  { title: "Stair carpet fitting", image: "/ranges/hagley-twist.jpg", alt: "Stair carpet fitting by Quinton Carpets" },
-  { title: "Berber carpet project", image: "/ranges/bartley-berber.jpg", alt: "Berber carpet project by Quinton Carpets" },
-  { title: "Herringbone flooring project", image: "/ranges/californian-herringbone.jpg", alt: "Herringbone flooring project by Quinton Carpets" },
-  { title: "Loop carpet project", image: "/ranges/woodgate-loop.jpg", alt: "Loop carpet project by Quinton Carpets" },
+  { title: "Laminate flooring project", icon: "layers", image: settings.photos.laminate, alt: "Laminate flooring project by Quinton Carpets",
+    description: "Click-fit laminate laid over a level underlay, finished neatly at the skirting." },
+  { title: "Living room carpet", icon: "sofa", image: settings.photos.carpets, alt: "Living room carpet project by Quinton Carpets",
+    description: "Wall-to-wall carpet with new gripper and door bars, hoovered before we leave." },
+  { title: "Vinyl flooring project", icon: "tiles", image: settings.photos.vinyl, alt: "Vinyl flooring project by Quinton Carpets",
+    description: "Water-resistant vinyl for kitchens and bathrooms, cut to the room in one piece." },
+  { title: "Stair carpet fitting", icon: "footprints", image: "/ranges/hagley-twist.jpg", alt: "Stair carpet fitting by Quinton Carpets",
+    description: "Stairs measured first, so the carpet runs true up every tread and riser." },
+  { title: "Berber carpet project", icon: "shield", image: "/ranges/bartley-berber.jpg", alt: "Berber carpet project by Quinton Carpets",
+    description: "A flecked berber that hides everyday wear, made for busy family homes." },
+  { title: "Herringbone flooring project", icon: "ruler", image: "/ranges/californian-herringbone.jpg", alt: "Herringbone flooring project by Quinton Carpets",
+    description: "Herringbone set out from the middle of the room, so the pattern sits square." },
+  { title: "Loop carpet project", icon: "loop", image: "/ranges/woodgate-loop.jpg", alt: "Loop carpet project by Quinton Carpets",
+    description: "A tight loop pile that stands up to hallways, stairs and family life." },
 ];
 
 const STEPS = [
@@ -109,12 +117,12 @@ const STEPS = [
     <div class="wrap">
       <p class="eyebrow rv">Our work</p>
       <h2 class="rv" style="margin-bottom:12px">Some of our work.</h2>
-      <p class="lede rv">
+      <p class="lede rv" style="margin-bottom:30px">
         From a single bedroom to a full house, our own fitters take care of the details from
         preparation through to the final clean-up.
       </p>
+      <WorkCards work={WORK} />
     </div>
-    <WorkReel work={WORK} />
   </div>
 
   <!-- how it works -->

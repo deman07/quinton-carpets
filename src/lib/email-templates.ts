@@ -205,6 +205,10 @@ function render(f: Frame): Rendered {
   const body = f.blocks.map(blockHtml).join("\n");
   const site = f.siteUrl.replace(/\/$/, "");
 
+  // The logo in the header is a PNG, because Gmail and Outlook do not
+  // show SVG. Its gold roll would vanish on yellow, so the band is white
+  // with a yellow rule under it; with images off, the alt text is set in
+  // the wordmark's type.
   const html = `<!doctype html>
 <html lang="en-GB">
 <head>
@@ -226,10 +230,10 @@ function render(f: Frame): Rendered {
 <tr><td align="center" style="padding:28px 12px 36px">
   <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:600px">
 
-    <tr><td class="h-top" style="background:${C.yellow};border:2px solid ${C.ink};border-radius:16px 16px 0 0;padding:18px 26px">
+    <tr><td class="h-top" style="background:${C.card};border:2px solid ${C.ink};border-bottom:4px solid ${C.yellow};border-radius:16px 16px 0 0;padding:18px 26px">
       <table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr>
         <td style="font-family:${DISPLAY};font-weight:800;font-size:19px;letter-spacing:-.01em;color:${C.ink}">
-          <a href="${esc(site)}/" style="color:${C.ink};text-decoration:none">QUINTON&nbsp;CARPETS</a>
+          <a href="${esc(site)}/" style="color:${C.ink};text-decoration:none"><img src="${esc(site)}/logo.png" width="200" height="27" alt="Quinton Carpets" style="display:block;border:0;width:200px;max-width:100%;height:auto"></a>
         </td>
         <td align="right" style="font-family:${MONO};font-size:11px;letter-spacing:.08em;color:${C.ink}">
           <a href="${esc(BUSINESS.phoneHref)}" style="color:${C.ink};text-decoration:none">${esc(BUSINESS.phone)}</a>

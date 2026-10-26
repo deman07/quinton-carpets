@@ -284,22 +284,33 @@ footer.site .fine{
   .partner-logos{flex-wrap:wrap;justify-content:center;row-gap:12px}
   .partner-logos[aria-hidden="true"]{display:none}
 }
-.work-section{background:var(--surface);padding-bottom:clamp(16px,3vw,44px)}
+.work-section{background:var(--surface)}
 .work-section .lede,.work-section .eyebrow{color:var(--ink-2)}
-/* The work reel. The geometry is in lib/reel.ts, which sets the
-   custom properties on .reel; a tile is 16 slices (SLICES there),
-   each turned round the ring by its own share of the tile's arc. */
-.reel{position:relative;height:clamp(300px,36vw,480px);max-width:1600px;margin-inline:auto;overflow:hidden;container-type:size}
-.reel-stage{position:absolute;inset:0;pointer-events:none;perspective:var(--view);perspective-origin:50% 50%;-webkit-mask-image:linear-gradient(90deg,transparent,#000 12%,#000 88%,transparent);mask-image:linear-gradient(90deg,transparent,#000 12%,#000 88%,transparent)}
-.reel-col{position:absolute;left:calc(50% - var(--tile) * var(--aspect) / 2);top:calc(50% - var(--tile) / 2);width:calc(var(--tile) * var(--aspect));height:var(--tile);transform-style:preserve-3d;animation:reel-turn var(--period) linear infinite}
-.reel-slice{position:absolute;top:0;left:calc(var(--tile) * var(--aspect) * 15 / 32);width:calc(var(--tile) * var(--aspect) / 16 + 1px);height:var(--tile);overflow:hidden;background:var(--surface-2);transform:translateZ(var(--ring)) rotateY(calc(var(--unit) * var(--aspect) * (7.5 - var(--s)) / 16)) translateZ(calc(var(--ring) * -1))}
-.reel-slice:first-child{border-radius:var(--r-s) 0 0 var(--r-s)}
-.reel-slice:last-child{width:calc(var(--tile) * var(--aspect) / 16);border-radius:0 var(--r-s) var(--r-s) 0}
-.reel-face{position:absolute;top:0;left:calc(var(--tile) * var(--aspect) * var(--s) / -16);width:calc(var(--tile) * var(--aspect));height:var(--tile)}
-.reel-face img{display:block;width:100%;height:100%;object-fit:cover}
-.reel-face span{position:absolute;inset:auto 0 0;padding:calc(var(--tile) * .14) calc(var(--tile) * .07) calc(var(--tile) * .06);background:linear-gradient(transparent,rgba(21,18,12,.78));color:#fff;font-weight:700;font-size:max(.72rem,calc(var(--tile) * .072));line-height:1.2}
-@media (hover:hover){ .reel:hover .reel-col{animation-play-state:paused} }
-@media (prefers-reduced-motion: reduce){ .reel-col{animation-play-state:paused} }
+/* The work gallery, after the Expanding Cards on 21st.dev: one card
+   open at a time, the rest folded to grey strips with their titles on
+   edge. scripts/work-cards.ts sets --tracks, where the open card has
+   five shares. Across on wide screens, down on phones. */
+.work-cards{display:grid;gap:8px;height:500px;margin:0;padding:0;list-style:none;grid-template-columns:var(--tracks);grid-template-rows:1fr;transition:grid-template-columns .5s ease-out,grid-template-rows .5s ease-out}
+.work-card{position:relative;min-width:0;min-height:0;overflow:hidden;border:1px solid var(--line);border-radius:var(--r-m);background:var(--surface-2);cursor:pointer}
+.work-card:focus-visible{outline:3px solid var(--yellow);outline-offset:2px}
+.work-card img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;transform:scale(1.1);filter:grayscale(1);transition:transform .3s ease-out,filter .3s ease-out}
+.work-card::after{content:"";position:absolute;inset:0;background:linear-gradient(to top,rgba(0,0,0,.8),rgba(0,0,0,.4) 50%,transparent)}
+/* A tint over the closed cards, so their labels read on pale carpet. */
+.work-card::before{content:"";position:absolute;inset:0;z-index:1;background:rgba(0,0,0,.38);transition:opacity .3s ease-out}
+.wc-label{position:absolute;z-index:1;top:18px;left:50%;transform:translateX(-50%);writing-mode:vertical-rl;white-space:nowrap;font-family:"DM Mono",monospace;font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:rgba(255,255,255,.92);text-shadow:0 1px 2px rgba(0,0,0,.5);transition:opacity .3s ease-out}
+/* At least 20rem wide, so the words don't reflow as a card opens. */
+.wc-body{position:absolute;z-index:1;left:0;bottom:0;width:max(100%,20rem);display:grid;justify-items:start;gap:8px;padding:20px}
+.wc-body > *{opacity:0;transition:opacity .3s ease-out}
+.wc-icon{width:24px;height:24px;color:rgba(255,255,255,.9)}
+.wc-body h3{font-size:1.3rem;color:#fff}
+.wc-body p{max-width:24rem;font-size:.9rem;line-height:1.5;color:rgba(255,255,255,.82)}
+.work-card[data-active="true"] img{transform:none;filter:none}
+.work-card[data-active="true"]::before,.work-card[data-active="true"] .wc-label{opacity:0}
+.work-card[data-active="true"] .wc-body > *{opacity:1}
+.work-card[data-active="true"] .wc-icon{transition-delay:75ms}
+.work-card[data-active="true"] .wc-body h3{transition-delay:150ms}
+.work-card[data-active="true"] .wc-body p{transition-delay:225ms}
+@media (prefers-reduced-motion: reduce){ .work-cards,.work-card img,.work-card::before,.wc-label,.wc-body > *{transition:none} }
 .review-strip{display:flex;align-items:center;justify-content:space-between;gap:24px;margin-top:18px;padding:20px 22px;border:1px solid var(--line);border-radius:var(--r-m);background:var(--surface)}
 .review-score{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
 .review-stars{color:#00b67a;font-size:1.35rem;letter-spacing:.08em}
@@ -310,6 +321,9 @@ footer.site .fine{
   .about-grid{grid-template-columns:1fr;gap:30px}
   .about-photo{min-height:0;max-height:min(66svh,560px)}
   .about-copy{gap:14px;padding:0}
+  .work-cards{height:600px;grid-template-columns:1fr;grid-template-rows:var(--tracks)}
+  .wc-label{top:50%;left:18px;transform:translateY(-50%);writing-mode:horizontal-tb}
+  .wc-body{width:100%;padding:16px}
   .partner-bar{padding:22px 0 18px}
   .partner-title{font-size:1.2rem;gap:10px;margin-bottom:16px}
   .partner-title::before,.partner-title::after{flex-basis:22px}
@@ -323,8 +337,11 @@ footer.site .fine{
 .referpromo .eyebrow{color:var(--slab-muted)}
 .referpromo h2{color:var(--slab-head);font-size:clamp(1.3rem,1rem + 1.2vw,1.9rem);margin:6px 0 10px}
 .referpromo p{max-width:56ch;font-size:.92rem}
-.bookband{background:var(--yellow);color:#15120C;border-top:3px solid #15120C}
-.bookband .wrap{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:18px 32px}
+/* The shop floor behind the band, faded back so the ink reads over it.
+   The band stays light in both themes, as the yellow one did. */
+.bookband{position:relative;overflow:hidden;background:#FFFFFF;color:#15120C;border-top:3px solid #15120C}
+.bookband-photo{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:50% 45%;opacity:.3}
+.bookband .wrap{position:relative;display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:18px 32px}
 .bookband .eyebrow{color:#15120C}
 .bookband h2{margin:6px 0 10px;color:#15120C}
 .bookband p{max-width:56ch}

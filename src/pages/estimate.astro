@@ -47,6 +47,9 @@ const underlays = underlayRanges(ranges).map((r) => ({
 }));
 
 const config = { floors, underlays, rates };
+
+// The shop floor, faded back behind the "book a free measure" band.
+const bandPhoto = await getImage({ src: "/site/shop-floor.jpg", width: 1200, height: 800, format: "webp", quality: 72 });
 ---
 
 <Base
@@ -158,6 +161,7 @@ const config = { floors, underlays, rates };
   </div>
 
   <div class="section plain bookband">
+    <img class="bookband-photo" src={bandPhoto.src} alt="" loading="lazy" decoding="async" />
     <div class="wrap">
       <div>
         <p class="eyebrow">Next step</p>

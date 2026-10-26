@@ -1,0 +1,56 @@
+---
+import { getImage } from "astro:assets";
+
+// The lucide icons the cards can use (lucide-static 1.61.0, ISC),
+// drawn inline so the page needs no icon library.
+const ICONS: Record<string, string> = {
+  layers:
+    '<path d="M12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83z"/><path d="M2 12a1 1 0 0 0 .58.91l8.6 3.91a2 2 0 0 0 1.65 0l8.58-3.9A1 1 0 0 0 22 12"/><path d="M2 17a1 1 0 0 0 .58.91l8.6 3.91a2 2 0 0 0 1.65 0l8.58-3.9A1 1 0 0 0 22 17"/>',
+  sofa:
+    '<path d="M20 9V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v3"/><path d="M2 16a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-5a2 2 0 0 0-4 0v1.5a.5.5 0 0 1-.5.5h-11a.5.5 0 0 1-.5-.5V11a2 2 0 0 0-4 0z"/><path d="M4 18v2"/><path d="M20 18v2"/><path d="M12 4v9"/>',
+  tiles:
+    '<path d="M12 3v18"/><path d="M3 12h18"/><rect x="3" y="3" width="18" height="18" rx="2"/>',
+  footprints:
+    '<path d="M4 16v-2.38C4 11.5 2.97 10.5 3 8c.03-2.72 1.49-6 4.5-6C9.37 2 10 3.8 10 5.5c0 3.11-2 5.66-2 8.68V16a2 2 0 1 1-4 0Z"/><path d="M20 20v-2.38c0-2.12 1.03-3.12 1-5.62-.03-2.72-1.49-6-4.5-6C14.63 6 14 7.8 14 9.5c0 3.11 2 5.66 2 8.68V20a2 2 0 1 0 4 0Z"/><path d="M16 17h4"/><path d="M4 13h4"/>',
+  shield:
+    '<path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="m9 12 2 2 4-4"/>',
+  ruler:
+    '<path d="M21.3 15.3a2.4 2.4 0 0 1 0 3.4l-2.6 2.6a2.4 2.4 0 0 1-3.4 0L2.7 8.7a2.41 2.41 0 0 1 0-3.4l2.6-2.6a2.41 2.41 0 0 1 3.4 0Z"/><path d="m14.5 12.5 2-2"/><path d="m11.5 9.5 2-2"/><path d="m8.5 6.5 2-2"/><path d="m17.5 15.5 2-2"/>',
+  loop: '<path d="M6 16c5 0 7-8 12-8a4 4 0 0 1 0 8c-5 0-7-8-12-8a4 4 0 1 0 0 8"/>',
+};
+
+interface Props {
+  /** `icon` is one of the names in ICONS above. */
+  work: { title: string; description: string; icon: string; image: string; alt: string }[];
+}
+const { work } = Astro.props;
+
+// Square sources; an open card is at most about 520px wide.
+const photos = await Promise.all(
+  work.map((w) => getImage({ src: w.image, width: 1080, height: 1080, format: "webp", quality: 78 })),
+);
+
+// One card open at a time: it takes five shares of the space and the
+// rest one each. The first is open before any script runs.
+const tracks = work.map((_, i) => (i === 0 ? "5fr" : "1fr")).join(" ");
+---
+
+<ul class="work-cards rv" id="workCards" style={`--tracks:${tracks}`}>
+  {
+    work.map((w, i) => (
+      <li class="work-card" tabindex="0" data-active={i === 0 ? "true" : "false"}>
+        <img src={photos[i]!.src} alt={w.alt} loading="lazy" decoding="async" />
+        <span class="wc-label" aria-hidden="true">{w.title}</span>
+        <div class="wc-body">
+          <svg class="wc-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" set:html={ICONS[w.icon] ?? ""} />
+          <h3>{w.title}</h3>
+          <p>{w.description}</p>
+        </div>
+      </li>
+    ))
+  }
+</ul>
+
+<script>
+  import "../scripts/work-cards.ts";
+</script>
