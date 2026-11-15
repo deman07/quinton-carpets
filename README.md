@@ -286,11 +286,10 @@ All of it is now data, not code — see **Editing the shop's content** above.
 
    Two caveats. **Halesowen Stripe is not striped** in its photograph; no neutral striped
    flatweave existed in the library and a wrong colour would have been worse, so it carries a
-   dark charcoal loop that matches its swatch. **The three underlays have no photograph at
-   all** — nothing in stock libraries honestly depicts carpet underlay, and acoustic foam or
-   loft insulation would be a worse lie than none, so they fall back to the CSS weave in
-   `lib/textures.ts`. That fallback works for any range: empty its `photo_url` and the weave
-   comes back.
+   dark charcoal loop that matches its swatch. Underlay product images are kept in
+   `public/site/` where supplied. Any underlay with no product image falls back to the CSS
+   weave, which is preferable to showing an unrelated photograph. That fallback works for
+   any range: empty its `photo_url` and the weave comes back.
 
    The category cards on the home page (`photo_…` in `settings`) and the share picture
    (`og_image`) are placeholders too.

@@ -9,9 +9,8 @@
 -- ON CONFLICT DO NOTHING, so running it again adds anything missing
 -- and never writes over an edit.
 
--- The 14 placeholder ranges. Photos are stock pictures of the right
--- material, kept in public/ranges/; the underlays have none and show
--- their texture instead.
+-- The 14 starting ranges. Photos are kept in public/ranges/ and
+-- public/site/; the shop can replace them in the ranges table.
 INSERT INTO ranges
   (id, name, material, spec, price, grade, rooms, widths, pile, colours,
    photo_url, sort_order, showcase, description)
@@ -27,10 +26,29 @@ VALUES
   ('ridgeway-grey', 'Ridgeway Grey 12mm', 'Laminate', 'AC5, water-resistant core', 27.99, 'Commercial · Class 33', ARRAY['Kitchen', 'Hall', 'Living']::text[], NULL, 'plank', ARRAY['#A9A49C', '#7E7972']::text[], '/ranges/ridgeway-grey.jpg', 9, NULL, '12mm and AC5, with a core that will take a spilled washing machine without swelling at the joints. The thickness is what stops it sounding hollow.'),
   ('lapal-vinyl', 'Lapal Cushioned Vinyl', 'Vinyl', 'Cushioned sheet vinyl', 12.99, 'General domestic', ARRAY['Kitchen', 'Bathroom']::text[], ARRAY[3, 4]::double precision[], 'sheet', ARRAY['#DCD6CB', '#B6AEA0']::text[], '/ranges/lapal-vinyl.jpg', 10, NULL, 'Sheet vinyl comes off 3m and 4m rolls, so a bathroom usually goes down in one piece with no seam. Warm underfoot because of the cushioned backing.'),
   ('californian-herringbone', 'Californian Herringbone', 'Vinyl', 'Luxury vinyl tile, click', 34.99, 'Commercial · Class 33', ARRAY['Kitchen', 'Hall', 'Living']::text[], NULL, 'herring', ARRAY['#B78A55', '#8C6435']::text[], '/ranges/californian-herringbone.jpg', 11, 4, 'The best-looking floor in the shop, and the one that takes longest to lay — a herringbone is set out from the centre line, not from a wall.'),
-  ('pu-comfort', '8mm PU Comfort', 'Underlay', '8mm polyurethane · 2.1 tog', 4.5, 'For carpet', ARRAY['Living', 'Bedroom', 'Stairs']::text[], NULL, 'foam', ARRAY['#6FAF8E', '#4E8C6C']::text[], NULL, 12, NULL, 'What we put under most carpets. 2.1 tog, so it holds the heat in, and it takes the drum out of a suspended timber floor.'),
-  ('pu-luxury', '11mm PU Luxury', 'Underlay', '11mm polyurethane · 2.6 tog', 7.5, 'For carpet', ARRAY['Living', 'Bedroom']::text[], NULL, 'foam', ARRAY['#7FA8CF', '#5C86AD']::text[], NULL, 13, NULL, 'Three more millimetres than you think you need, and the difference is obvious the first time you walk on it. Not for stairs — too much give on a nosing.'),
+  ('pu-comfort', 'Standard 10mm', 'Underlay', '10mm cushioned PU foam', 4.99, 'For carpet', ARRAY['Living', 'Bedroom', 'Stairs']::text[], NULL, 'foam', ARRAY['#B9B0A1', '#8E877B']::text[], NULL, 12, NULL, 'A practical 10mm foam underlay that adds cushioning, warmth and everyday noise reduction beneath carpet.'),
+  ('pu-luxury', 'Dreamwalk 11mm', 'Underlay', '11mm premium PU foam · 2.6 tog', 6.99, 'For carpet', ARRAY['Living', 'Bedroom']::text[], NULL, 'foam', ARRAY['#8EAD9C', '#5D806F']::text[], NULL, 13, NULL, 'A thick, dense premium underlay for a noticeably softer feel. Its insulation helps keep warmth in and household noise down.'),
+  ('dreamwalk-9', 'Dreamwalk 9mm', 'Underlay', '9mm premium PU foam', 5.99, 'For carpet', ARRAY['Living', 'Bedroom', 'Stairs']::text[], NULL, 'foam', ARRAY['#8EAD9C', '#5D806F']::text[], NULL, 14, NULL, 'The slightly slimmer Dreamwalk option, giving carpet a comfortable, durable base while helping with warmth and sound.'),
+  ('cumulus-11', 'Cumulus Cloud 9 11mm', 'Underlay', '11mm Cloud 9 PU foam', 7.99, 'For carpet', ARRAY['Living', 'Bedroom']::text[], NULL, 'foam', ARRAY['#C7B79E', '#927C61']::text[], '/site/underlay-cumulus.jpg', 15, NULL, 'A luxury Cloud 9 underlay with a deep, resilient foam cushion for comfort, insulation and a quieter room.'),
+  ('cumulus-9', 'Cumulus Cloud 9 9mm', 'Underlay', '9mm Cloud 9 PU foam', 6.99, 'For carpet', ARRAY['Living', 'Bedroom', 'Stairs']::text[], NULL, 'foam', ARRAY['#B8A58E', '#806B54']::text[], '/site/underlay-cirrus.jpg', 16, NULL, 'A 9mm Cloud 9 foam underlay that balances a softer step with reliable support beneath everyday carpet.'),
   ('combi-board', 'Combi Board 6mm', 'Underlay', 'Foam & foil, for laminate and LVT', 3.2, 'For hard floors', ARRAY['Kitchen', 'Hall', 'Living']::text[], NULL, 'foam', ARRAY['#C9C3B4', '#A49D8C']::text[], NULL, 14, NULL, 'Foam one side, foil the other. The foil is the damp-proof membrane, which is not optional on a concrete floor.')
 ON CONFLICT (id) DO NOTHING;
+
+-- Keep an existing database in step with the underlay prices and copy
+-- above. The seed insert is intentionally non-destructive for other edits.
+UPDATE ranges SET
+  name = 'Standard 10mm',
+  spec = '10mm cushioned PU foam',
+  price = 4.99,
+  description = 'A practical 10mm foam underlay that adds cushioning, warmth and everyday noise reduction beneath carpet.'
+WHERE id = 'pu-comfort';
+
+UPDATE ranges SET
+  name = 'Dreamwalk 11mm',
+  spec = '11mm premium PU foam · 2.6 tog',
+  price = 6.99,
+  description = 'A thick, dense premium underlay for a noticeably softer feel. Its insulation helps keep warmth in and household noise down.'
+WHERE id = 'pu-luxury';
 
 -- The shop's real carpet ranges, from Cormar, with Cormar's own "from"
 -- prices per m², supply only. Photos are Cormar's, kept in
