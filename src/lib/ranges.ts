@@ -49,7 +49,7 @@ export interface Range {
 export const priceLabel = (r: Pick<Range, "price" | "priceFrom">, money: (n: number) => string) =>
   `${r.priceFrom ? "From " : ""}${money(r.price)}/m²`;
 
-export const MATERIALS = ["Carpet", "Laminate", "Vinyl", "Underlay"] as const;
+export const MATERIALS = ["Carpet", "Vinyl", "Underlay"] as const;
 export const ROOMS = ["Living", "Bedroom", "Stairs", "Hall", "Kitchen", "Bathroom"] as const;
 
 /** "Heavy domestic · Class 23" → "Class 23". */
@@ -74,6 +74,7 @@ export const showcaseRanges = (all: Range[]) =>
 export function filterRanges(all: Range[], material: string, room: string): Range[] {
   return all.filter(
     (r) =>
+      r.material !== "Laminate" &&
       (material === "All" || r.material === material) &&
       (room === "All" || r.rooms.includes(room)),
   );

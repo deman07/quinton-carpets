@@ -232,10 +232,10 @@ test("booking a measure is free, and says so in three places", async ({ page }) 
 });
 
 test("the ranges filter lives in the URL and works server-side", async ({ page }) => {
-  await page.goto("/ranges/?material=Laminate");
+  await page.goto("/ranges/?material=Underlay");
   const cards = page.locator(".rangecard");
-  await expect(cards).toHaveCount(2);
-  await expect(page.locator(".swatch .tag").first()).toHaveText("Laminate");
+  await expect(cards).toHaveCount(5);
+  await expect(page.locator(".swatch .tag").first()).toHaveText("Underlay");
 
   // Case-insensitive, because people type it themselves.
   await page.goto("/ranges/?material=carpet&room=stairs");
