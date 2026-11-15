@@ -29,7 +29,7 @@ const floors = await Promise.all(
       material: r.material,
       price: r.price,
       priceFrom: r.priceFrom,
-      widths: r.widths,
+      widths: r.material === "Carpet" ? [4, 5] : r.widths,
       hard: r.hard,
       swatch: photo
         ? `background-image:url(${photo.src});background-size:cover;background-position:50% 50%`
@@ -66,6 +66,12 @@ const bandPhoto = await getImage({ src: "/site/shop-floor.jpg", width: 1200, hei
         Guide prices only. We'll confirm the exact figure on the free measure — carpet is cut
         from 4m and 5m wide rolls, so the true amount depends on how your rooms fall against
         the roll.
+      </p>
+      <p class="notice info" style="margin-bottom:26px">
+        Carpet comes in fixed 4m or 5m roll widths. You cannot choose an arbitrary width because
+        carpet is cut from the roll, and the correct roll width helps reduce costly waste. We
+        choose the best width automatically from your room measurements, then confirm it during
+        the free measure.
       </p>
 
       <noscript>

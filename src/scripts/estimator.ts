@@ -405,7 +405,12 @@ if (root) {
     const underlay = state.underlay === "none" ? null : ulById.get(state.underlay) ?? null;
 
     const input: EstimateInput = {
-      floor: { name: floor.name, pricePerSqm: floor.price, widths: floor.widths, hard: floor.hard },
+      floor: {
+        name: floor.name,
+        pricePerSqm: floor.price,
+        widths: floor.material === "Carpet" ? [4, 5] : floor.widths,
+        hard: floor.hard,
+      },
       underlay: underlay ? { name: underlay.name, pricePerSqm: underlay.price } : null,
       rooms: state.rooms,
       fit: state.fit,

@@ -54,7 +54,12 @@ export const POST: APIRoute = async ({ request }) => {
   const discount = req.discountCode ? await verdictFor(req.discountCode) : null;
 
   const input: EstimateInput = {
-    floor: { name: floor.name, pricePerSqm: floor.price, widths: floor.widths, hard: floor.hard },
+    floor: {
+      name: floor.name,
+      pricePerSqm: floor.price,
+      widths: floor.material === "Carpet" ? [4, 5] : floor.widths,
+      hard: floor.hard,
+    },
     underlay: underlay ? { name: underlay.name, pricePerSqm: underlay.price } : null,
     rooms: req.rooms,
     fit: req.fit,
