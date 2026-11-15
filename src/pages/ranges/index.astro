@@ -178,9 +178,19 @@ const schema = {
       </div>
 
       <p class="notice info" style="margin-top:26px">
-        Carpet prices are Cormar's starting prices per square metre, supply only. Laminate, vinyl
-        and underlay names and prices are still placeholders pending the shop's real ranges. Stock
-        changes with the mills — call
+        {
+          material === "Underlay" ? (
+            <>
+              Underlay prices are per square metre, supply only. The right underlay depends on
+              the carpet, room and feel you want — call
+            </>
+          ) : (
+            <>
+              Carpet prices are Cormar's starting prices per square metre, supply only. Laminate
+              and vinyl prices are guide prices — call
+            </>
+          )
+        }
         <b style="white-space:nowrap">&nbsp;{BUSINESS.phone}</b>&nbsp;or pop in for today's prices.
       </p>
     </div>
