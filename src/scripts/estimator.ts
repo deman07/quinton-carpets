@@ -8,6 +8,7 @@
  */
 
 import {
+  bestRoll,
   estimate,
   money,
   type DiscountVerdict,
@@ -153,6 +154,12 @@ if (root) {
   function drawRooms() {
     const box = $("#rooms");
     if (!box) return;
+    const rollWidthFor = (room: Extract<RoomInput, { kind: "room" }>) => {
+      const floor = currentFloor();
+      const widths = floor?.material === "Carpet" ? [4, 5] : floor?.widths;
+      if (!widths || !(room.width > 0 && room.length > 0)) return "Automatic";
+      return `${bestRoll(room.width, room.length, widths).rollWidth}m roll`;
+    };
     box.innerHTML = state.rooms
       .map((r, i) => {
         if (r.kind === "stairs") {
@@ -169,10 +176,12 @@ if (root) {
         return `<div class="roomrow">
           <div class="field"><label for="rn${i}">Room</label>
             <input id="rn${i}" value="${esc(r.name)}" placeholder="e.g. Living room" data-i="${i}" data-p="name"></div>
-          <div class="field"><label for="rw${i}">Width (m)</label>
+          <div class="field"><label for="rw${i}">Room width (m)</label>
             <input id="rw${i}" class="mono" inputmode="decimal" value="${num(r.width)}" placeholder="e.g. 4.2" data-i="${i}" data-p="width"></div>
           <div class="field"><label for="rl${i}">Length (m)</label>
             <input id="rl${i}" class="mono" inputmode="decimal" value="${num(r.length)}" placeholder="e.g. 4.6" data-i="${i}" data-p="length"></div>
+          <div class="field"><span class="hint" style="font-weight:700;color:var(--ink);font-size:.85rem">Carpet roll width</span>
+            <output class="mono locked-readout" id="rr${i}">${rollWidthFor(r)}</output></div>
           <div class="field"><span class="hint" style="font-weight:700;color:var(--ink);font-size:.85rem">Floor area</span>
             <p class="mono" id="ra${i}" style="padding:11px 0;font-size:.9rem">${r.width * r.length > 0 ? (r.width * r.length).toFixed(1) + " m²" : "—"}</p></div>
           <button class="iconbtn" type="button" data-del="${i}" aria-label="Remove ${esc(r.name)}">✕</button>
@@ -199,6 +208,8 @@ if (root) {
             const a = room.width * room.length;
             area.textContent = a > 0 ? `${a.toFixed(1)} m²` : "—";
           }
+          const roll = $(`#rr${i}`);
+          if (roll && room.kind === "room") roll.textContent = rollWidthFor(room);
         }
         calc();
       });

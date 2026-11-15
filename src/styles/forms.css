@@ -7,6 +7,11 @@
   border-radius:var(--r-s); padding:11px 13px; width:100%;
 }
 .field input:focus, .field select:focus, .field textarea:focus{border-color:var(--yellow-deep)}
+.locked-readout{
+  display:flex; align-items:center; min-height:43px; padding:11px 13px;
+  border:1px solid var(--line); border-radius:var(--r-s); background:var(--surface);
+  color:var(--ink-2); font-size:.88rem;
+}
 .field .err{font-size:.78rem; color:var(--err); font-weight:600; display:none}
 .field.bad input, .field.bad select, .field.bad textarea{border-color:var(--err); background:var(--err-bg)}
 .field.bad .err{display:block}

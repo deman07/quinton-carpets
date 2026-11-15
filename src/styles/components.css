@@ -111,7 +111,7 @@
 }
 .panel > .bd{padding:20px}
 .roomrow{
-  display:grid; grid-template-columns:minmax(0,1.4fr) 90px 90px 90px 34px; gap:9px; align-items:end;
+  display:grid; grid-template-columns:minmax(0,1.25fr) repeat(4,90px) 34px; gap:9px; align-items:end;
   padding-bottom:12px; margin-bottom:12px; border-bottom:1px dashed var(--line);
 }
 .roomrow .field{margin:0}
