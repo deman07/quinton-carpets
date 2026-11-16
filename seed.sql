@@ -106,8 +106,15 @@ INSERT INTO rates
   (id, fit_carpet, fit_hard, fit_stair, uplift, gripper, doorbar, furniture,
    trim, wastage_hard, underlay_allowance, stair_area)
 VALUES
-  (1, 5.5, 9.5, 8.0, 2.2, 2.6, 14.0, 35.0, 0.1, 1.1, 1.05, 0.85)
+  (1, 3.75, 9.5, 8.0, 2.2, 0.99, 7.0, 35.0, 0.1, 1.1, 1.05, 0.85)
 ON CONFLICT (id) DO NOTHING;
+
+UPDATE rates SET
+  fit_carpet = 3.75,
+  uplift = 2.2,
+  gripper = 0.99,
+  doorbar = 7.0
+WHERE id = 1;
 
 -- The settings row, with every column at its default.
 INSERT INTO settings (id) VALUES (1) ON CONFLICT (id) DO NOTHING;

@@ -149,7 +149,7 @@ describe("fitting extras", () => {
     );
     const floorArea = 19.32 + 11.05;
     const perimeter = 2 * (4.2 + 4.6); // 17.6, the room only
-    near(out.extras, floorArea * 2.2 + perimeter * 2.6 + 1 * 14 + 35);
+    near(out.extras, floorArea * 2.2 + perimeter * 0.99 + 1 * 7 + 35);
   });
 
   it("drops the extras entirely on supply only", () => {

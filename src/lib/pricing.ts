@@ -36,18 +36,14 @@ export interface RateCard {
   stairArea: number;
 }
 
-/**
- * PLACEHOLDERS pending the shop's real rates. Item 3 on the
- * client's pre-launch list is confirming every one of these so the
- * estimator matches the counter.
- */
+/** The shop's current fitting and extras rates. */
 export const PRICES: RateCard = {
-  fitCarpet: 5.5,
+  fitCarpet: 3.75,
   fitHard: 9.5,
   fitStair: 8.0,
   uplift: 2.2,
-  gripper: 2.6,
-  doorbar: 14.0,
+  gripper: 0.99,
+  doorbar: 7.0,
   furniture: 35.0,
   trim: 0.1,
   wastageHard: 1.1,
