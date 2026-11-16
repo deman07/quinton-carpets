@@ -3,7 +3,7 @@
  *
  * The page already works without this file: the calendar buttons
  * submit a GET form and the server re-renders. All this does is
- * make it feel like one screen — it takes over the day and slot
+ * make it feel like one screen , it takes over the day and slot
  * buttons so nobody loses what they have typed, validates on
  * submit, and swaps in the confirmation.
  *
@@ -55,7 +55,7 @@ if (form && cal) {
   try {
     for (const k of JSON.parse(calRoot.dataset.full ?? "[]") as string[]) full.add(k);
   } catch {
-    /* nothing greyed out — the server still refuses a full window */
+    /* nothing greyed out , the server still refuses a full window */
   }
 
   /* ---------------- honeypot timing ----------------
@@ -252,7 +252,7 @@ if (form && cal) {
       showConfirmation(data.ref, data.referralCode ?? "", payload as Record<string, string>);
     } catch {
       errBox.textContent =
-        "We couldn't reach the shop's system just now. Please ring 0121 423 3322 — we'll book you in over the phone.";
+        "We couldn't reach the shop's system just now. Please ring 0121 423 3322 , we'll book you in over the phone.";
       errBox.style.display = "flex";
       button.disabled = false;
       button.textContent = original;
@@ -270,7 +270,7 @@ if (form && cal) {
     done.innerHTML = `
       <div class="confirm">
         <div class="top">
-          <p style="font-family:'DM Mono',monospace;font-size:.72rem;letter-spacing:.18em;text-transform:uppercase">Booked — nothing to pay</p>
+          <p style="font-family:'DM Mono',monospace;font-size:.72rem;letter-spacing:.18em;text-transform:uppercase">Booked , nothing to pay</p>
           <p class="refbig">${esc(ref)}</p>
           <p style="font-size:.92rem;margin-top:8px;max-width:52ch">Quote this reference when you ring us, and we'll quote it back when we ring you.</p>
         </div>
@@ -282,14 +282,14 @@ if (form && cal) {
             <dt>Phone</dt><dd class="mono">${esc(b.phone ?? "")}</dd>
             <dt>Email</dt><dd>${esc(b.email ?? "")}</dd>
             ${b.estimate ? `<dt>Estimate</dt><dd class="mono">${esc(b.estimate.toUpperCase())}</dd>` : ""}
-            ${b.referral ? `<dt>Referral</dt><dd class="mono">${esc(b.referral.toUpperCase())} · 10% off fitting applied</dd>` : ""}
+            ${b.referral ? `<dt>Referral</dt><dd class="mono">${esc(b.referral.toUpperCase())} · 5% off fitting applied</dd>` : ""}
           </dl>
 
           <h2 style="font-size:clamp(1.15rem,1rem + .6vw,1.5rem);margin-bottom:10px">What happens next</h2>
           <div class="steps" style="grid-template-columns:repeat(3,minmax(0,1fr));margin-bottom:24px">
             <div class="step"><span class="n">NEXT 01</span><h4>We ring you</h4><p>Within one working day, on ${esc(b.phone ?? "")}, to confirm the slot.</p></div>
             <div class="step"><span class="n">NEXT 02</span><h4>We measure</h4><p>Twenty minutes, no charge, no obligation. You get the exact figure in writing.</p></div>
-            <div class="step"><span class="n">NEXT 03</span><h4>You choose in the shop</h4><p>Samples in your hand, final price agreed, payment taken at the counter — never online.</p></div>
+            <div class="step"><span class="n">NEXT 03</span><h4>You choose in the shop</h4><p>Samples in your hand, final price agreed, payment taken at the counter , never online.</p></div>
           </div>
 
           ${
@@ -297,7 +297,7 @@ if (form && cal) {
               ? `<div class="refcard">
                   <div style="flex:1;min-width:220px">
                     <h4 style="margin-bottom:6px">Your referral code</h4>
-                    <p style="font-size:.9rem;color:var(--ink-2)">Give it to a friend: they get 10% off their fitting, you get 20% off your next one.</p>
+                    <p style="font-size:.9rem;color:var(--ink-2)">Give it to a friend: they get 5% off their fitting, you get 20% off your next one.</p>
                   </div>
                   <span class="refcode">${esc(referralCode)}</span>
                   <button class="btn sm" type="button" id="copyRef">Copy</button>
@@ -308,8 +308,8 @@ if (form && cal) {
 <section class="referpromo" aria-label="Refer a friend">
             <div>
               <p class="eyebrow">Refer a friend</p>
-              <h2>They save 10%.<br />You save 20% next time.</h2>
-              <p>Pass your code to family, friends or neighbours. Anyone who books with it takes 10% off their fitting, and every code that gets used puts 20% off your next job on your account.</p>
+              <h2>They save 5%.<br />You save 20% next time.</h2>
+              <p>Pass your code to family, friends or neighbours. Anyone who books with it takes 5% off their fitting, and every code that gets used puts 20% off your next job on your account.</p>
             </div>
             <a class="btn yellow" href="/referrals/">How the code works</a>
           </section>
@@ -345,6 +345,6 @@ if (form && cal) {
     const est = $<HTMLInputElement>("#bEst");
     if (stored?.code && est && !est.value) est.value = stored.code;
   } catch {
-    /* storage blocked — the customer can type the code in */
+    /* storage blocked , the customer can type the code in */
   }
 }

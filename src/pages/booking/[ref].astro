@@ -11,7 +11,7 @@ type EstimateInputRow = { floor?: { name: string }; rooms?: RoomInput[]; fit?: s
 import { clientIp, ipBlock, overLimit, countAttempt } from "../../lib/server/env.ts";
 
 // Looked up live, so a customer can check their booking without an
-// account and without a password. The reference is the only key —
+// account and without a password. The reference is the only key ,
 // which is why it is four random characters from a 32-letter
 // alphabet on top of the date, and why this page is noindex.
 export const prerender = false;
@@ -100,16 +100,16 @@ if (!booking) {
 Astro.response.headers.set("cache-control", "no-store");
 
 const STATUS: Record<string, string> = {
-  new: "Booked — we'll ring you within one working day",
-  called: "We've spoken — your slot is confirmed",
-  measured: "Measured — pop in to choose and confirm the price",
-  fitted: "Fitted — thanks, and your referral code is live",
-  cancelled: "Cancelled — this visit won't go ahead. Book again any time; it's still free",
+  new: "Booked , we'll ring you within one working day",
+  called: "We've spoken , your slot is confirmed",
+  measured: "Measured , pop in to choose and confirm the price",
+  fitted: "Fitted , thanks, and your referral code is live",
+  cancelled: "Cancelled , this visit won't go ahead. Book again any time; it's still free",
 };
 ---
 
 <Base
-  title={booking ? `Booking ${booking.ref} — Quinton Carpets` : "Booking not found — Quinton Carpets"}
+  title={booking ? `Booking ${booking.ref} , Quinton Carpets` : "Booking not found , Quinton Carpets"}
   description="Look up a free measure booked with Quinton Carpets in Birmingham."
   noindex
 >
@@ -120,7 +120,7 @@ const STATUS: Record<string, string> = {
           <div class="confirm">
             <div class="top">
               <p style="font-family:'DM Mono',monospace;font-size:.72rem;letter-spacing:.18em;text-transform:uppercase">
-                Free measure — nothing to pay
+                Free measure , nothing to pay
               </p>
               <p class="refbig">{booking.ref}</p>
               <p style="font-size:.92rem;margin-top:8px;max-width:52ch">
@@ -136,7 +136,7 @@ const STATUS: Record<string, string> = {
                 <dt>Email</dt><dd>{booking.email}</dd>
                 {booking.estimate_code && (<><dt>Estimate</dt><dd class="mono">{booking.estimate_code}</dd></>)}
                 {booking.referred_by && (
-                  <><dt>Referral</dt><dd class="mono">{booking.referred_by} · 10% off fitting applied</dd></>
+                  <><dt>Referral</dt><dd class="mono">{booking.referred_by} · 5% off fitting applied</dd></>
                 )}
                 {booking.notes && (<><dt>Your notes</dt><dd style="font-weight:400">{booking.notes}</dd></>)}
               </dl>
@@ -159,7 +159,7 @@ const STATUS: Record<string, string> = {
                         Your referral code
                       </h2>
                       <p style="font-size:.9rem;color:var(--ink-2)">
-                        Give it to a friend: they get 10% off their fitting, you get 20% off
+                        Give it to a friend: they get 5% off their fitting, you get 20% off
                         your next one once their job is paid.
                         {booking.redemptions ? ` Used ${booking.redemptions} time${booking.redemptions === 1 ? "" : "s"} so far.` : ""}
                       </p>
@@ -172,8 +172,8 @@ const STATUS: Record<string, string> = {
   <section class="referpromo" aria-label="Refer a friend">
               <div>
                 <p class="eyebrow">Refer a friend</p>
-                <h2>They save 10%.<br />You save 20% next time.</h2>
-                <p>Pass your code to family, friends or neighbours. Anyone who books with it takes 10% off their fitting, and every code that gets used puts 20% off your next job on your account.</p>
+                <h2>They save 5%.<br />You save 20% next time.</h2>
+                <p>Pass your code to family, friends or neighbours. Anyone who books with it takes 5% off their fitting, and every code that gets used puts 20% off your next job on your account.</p>
               </div>
               <a class="btn yellow" href="/referrals/">How the code works</a>
             </section>
@@ -194,11 +194,11 @@ const STATUS: Record<string, string> = {
             <p class="lede" style="margin-bottom:22px">
               {
                 lookupFailed
-                  ? "Something our end is having a moment. Your booking is safe — ring the shop and we'll read it back to you."
+                  ? "Something our end is having a moment. Your booking is safe , ring the shop and we'll read it back to you."
                   : "References look like QC-0809-4K7M and are on your confirmation email. Check it against the email, or ring the shop and we'll find you by name."
               }
             </p>
-            <a class="btn yellow" href={BUSINESS.phoneHref}>Ring the shop — {BUSINESS.phone}</a>
+            <a class="btn yellow" href={BUSINESS.phoneHref}>Ring the shop , {BUSINESS.phone}</a>
           </>
         )
       }

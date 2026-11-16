@@ -1,8 +1,8 @@
 /**
  * Changes staff make to a booking in the diary.
  *
- * Every change is written together with a line in booking_events —
- * who, when, what — in one transaction, so the history on each
+ * Every change is written together with a line in booking_events ,
+ * who, when, what , in one transaction, so the history on each
  * booking is never missing a step. Emails to the customer go after
  * the change is saved and never undo it.
  */
@@ -124,7 +124,7 @@ export async function applyAction(ref: string, a: Action, staff: Staff, now = ne
       ]);
       const booking = (await getBooking(ref))!;
       if (a.status === "fitted" && a.notify) logEmail(ref, "site", "thank-you", sendThanks(booking));
-      return { ok: true, booking, message: a.status === "fitted" && a.notify ? "Saved — thank-you email on its way." : "Saved." };
+      return { ok: true, booking, message: a.status === "fitted" && a.notify ? "Saved , thank-you email on its way." : "Saved." };
     }
 
     case "notes": {
@@ -143,7 +143,7 @@ export async function applyAction(ref: string, a: Action, staff: Staff, now = ne
       if (!parseISO(date)) return fail(400, "Pick a date.");
       if (!SLOTS.some((s) => s.key === slot)) return fail(400, "Pick a window.");
       if (date < todayISO(now)) return fail(400, "That date has already gone.");
-      if (dayOfWeek(date) === 0 && slot === "eve") return fail(400, "The shop shuts at 4pm on a Sunday — pick the morning or afternoon.");
+      if (dayOfWeek(date) === 0 && slot === "eve") return fail(400, "The shop shuts at 4pm on a Sunday , pick the morning or afternoon.");
       if (before.status === "cancelled") return fail(409, "Reinstate the booking before moving it.");
       if (date === before.date && slot === before.slot) return fail(400, "That's when it already is.");
 
@@ -168,7 +168,7 @@ export async function applyAction(ref: string, a: Action, staff: Staff, now = ne
 
       const booking = (await getBooking(ref))!;
       if (a.notify) logEmail(ref, "site", "booking moved", sendRescheduled(booking, { date: before.date, slot: before.slot }));
-      return { ok: true, booking, message: a.notify ? "Moved — the customer is being emailed." : "Moved." };
+      return { ok: true, booking, message: a.notify ? "Moved , the customer is being emailed." : "Moved." };
     }
 
     case "cancel": {
@@ -180,7 +180,7 @@ export async function applyAction(ref: string, a: Action, staff: Staff, now = ne
       ]);
       const booking = (await getBooking(ref))!;
       if (a.notify) logEmail(ref, "site", "booking cancelled", sendCancelled(booking));
-      return { ok: true, booking, message: a.notify ? "Cancelled — the customer is being emailed." : "Cancelled." };
+      return { ok: true, booking, message: a.notify ? "Cancelled , the customer is being emailed." : "Cancelled." };
     }
 
     case "reinstate": {
@@ -216,7 +216,7 @@ export async function applyAction(ref: string, a: Action, staff: Staff, now = ne
     }
 
     case "resend": {
-      if (before.status === "cancelled") return fail(409, "It's cancelled — reinstate it first.");
+      if (before.status === "cancelled") return fail(409, "It's cancelled , reinstate it first.");
       // Only the customer's copy: the shop already has its own.
       logEmail(ref, "site", "confirmation (resent)", sendConfirmation(before));
       await event(ref, who, "Asked for the confirmation to be sent again", now).run();

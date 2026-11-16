@@ -60,7 +60,7 @@ if (Astro.request.method === "POST") {
     }
   } else if (action === "feed") {
     await db.prepare(`UPDATE staff SET calendar_token = ?2 WHERE id = ?1`).bind(me.id, newToken(24)).run();
-    return done("New calendar link made. The old one has stopped working — update your calendar app.");
+    return done("New calendar link made. The old one has stopped working , update your calendar app.");
   } else if (action === "name") {
     const name = str("name", 60);
     if (!name) error = "Please give a name.";
@@ -133,7 +133,7 @@ const team = isOwner
   : [];
 ---
 
-<Base title="Staff — Quinton Carpets diary" description="Staff accounts." noindex>
+<Base title="Staff , Quinton Carpets diary" description="Staff accounts." noindex>
   <div class="section plain admin">
     <div class="wrap" style="max-width:760px">
       <AdminNav current="staff" />
@@ -146,7 +146,7 @@ const team = isOwner
         <h2>Your calendar link</h2>
         <p class="hint" style="margin-bottom:10px">
           Add this to Google Calendar ("Other calendars → From URL") or an iPhone ("Settings → Calendar →
-          Accounts → Add subscribed calendar") to see every measure. It's private to you — anyone with the
+          Accounts → Add subscribed calendar") to see every measure. It's private to you , anyone with the
           link can see the diary, so don't share it.
         </p>
         <div class="feed">
@@ -178,7 +178,7 @@ const team = isOwner
             <input id="current" name="current" type="password" autocomplete="current-password" required />
           </div>
           <div class="field">
-            <label for="next">New password <span class="hint">— at least 10 characters</span></label>
+            <label for="next">New password <span class="hint">, at least 10 characters</span></label>
             <input id="next" name="next" type="password" autocomplete="new-password" minlength="10" required />
           </div>
           <div class="field">
@@ -235,18 +235,18 @@ const team = isOwner
                 <input id="aname" name="name" maxlength="60" required />
               </div>
               <div class="field">
-                <label for="auser">Username <span class="hint">— lower case, no spaces</span></label>
+                <label for="auser">Username <span class="hint">, lower case, no spaces</span></label>
                 <input id="auser" name="username" maxlength="40" pattern="[a-z0-9._\-]{2,40}" autocapitalize="none" required />
               </div>
               <div class="field">
-                <label for="apass">Starting password <span class="hint">— they can change it</span></label>
+                <label for="apass">Starting password <span class="hint">, they can change it</span></label>
                 <input id="apass" name="password" type="text" autocomplete="off" minlength="10" required />
               </div>
               <div class="field">
                 <label for="arole">Can they manage staff?</label>
                 <select id="arole" name="role">
-                  <option value="staff">No — staff</option>
-                  <option value="owner">Yes — owner</option>
+                  <option value="staff">No , staff</option>
+                  <option value="owner">Yes , owner</option>
                 </select>
               </div>
               <div><button class="btn yellow sm" type="submit">Add them</button></div>

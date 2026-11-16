@@ -10,7 +10,7 @@
  *
  * If the database stops answering, the last good copy keeps being
  * served. Settings have safe defaults, so the pages that only need
- * those render even without a database; ranges and rates do not —
+ * those render even without a database; ranges and rates do not ,
  * guessing at a price would be worse than an error page.
  */
 

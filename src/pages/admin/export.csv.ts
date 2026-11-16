@@ -1,5 +1,5 @@
 /**
- * GET /admin/export.csv — whatever the diary is showing, as a
+ * GET /admin/export.csv , whatever the diary is showing, as a
  * spreadsheet. Takes the same query string as /admin/, so the
  * "Download" link on any view downloads that view.
  */

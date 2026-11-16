@@ -1,5 +1,5 @@
 /**
- * POST /api/estimates — save an estimate and hand back its code.
+ * POST /api/estimates , save an estimate and hand back its code.
  *
  * Called when the customer goes from the estimator to the booking
  * form, so the fitter who rings them already has the rooms, the floor
@@ -95,7 +95,7 @@ export const POST: APIRoute = async ({ request }) => {
     }
   }
 
-  return json({ error: "We couldn't save that estimate. You can still book — we'll price it on the measure." }, 500);
+  return json({ error: "We couldn't save that estimate. You can still book , we'll price it on the measure." }, 500);
 };
 
 /** Anything else here is a mistake, and says so plainly. */

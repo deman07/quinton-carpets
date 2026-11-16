@@ -2,7 +2,7 @@
  * Everything factual about the shop, in one place.
  *
  * Nothing goes in here that the shop has not told us. No awards, no
- * accreditations, no parking arrangements, no bus routes — if it
+ * accreditations, no parking arrangements, no bus routes , if it
  * isn't below, it isn't on the site. (The founding year and the
  * brands came from the owner's own About Us text.)
  */
@@ -76,7 +76,7 @@ export const NAV = [
 ] as const;
 
 /**
- * The ticker band. aria-hidden, because it scrolls — every one of
+ * The ticker band. aria-hidden, because it scrolls , every one of
  * these facts appears as real, readable text elsewhere on the page.
  */
 export const TICKER = [

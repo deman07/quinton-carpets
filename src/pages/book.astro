@@ -36,7 +36,7 @@ const selectedSlot =
     : null;
 
 // Month on screen. Follows the chosen date, else the ?m= parameter,
-// else this month — and never earlier than this month.
+// else this month , and never earlier than this month.
 const mValues = params.getAll("m");
 const rawView = mValues[mValues.length - 1] ?? "";
 const viewFromDate = selected ? selected.slice(0, 7) : null;
@@ -50,7 +50,7 @@ void parseISO; // exported for the calendar; referenced here for clarity
 ---
 
 <Base
-  title="Book a free measure — Quinton Carpets, Birmingham"
+  title="Book a free measure , Quinton Carpets, Birmingham"
   description="Book a free home measure in Quinton, Birmingham. Booking is free, there is no payment on this site, and we ring you back within one working day."
   canonicalPath="/book/"
 >
@@ -62,7 +62,7 @@ void parseISO; // exported for the calendar; referenced here for clarity
       </h1>
       <p class="lede" style="margin-bottom:30px">
         Pick a day and a time window and we'll ring you back within one working day to confirm.
-        There is no payment on this website at any point — you settle up in the shop when
+        There is no payment on this website at any point , you settle up in the shop when
         you've chosen.
       </p>
 
@@ -108,7 +108,7 @@ void parseISO; // exported for the calendar; referenced here for clarity
 
           <div class="field">
             <label for="bEst">
-              Estimate code <span class="hint">(optional — from step 5 of the estimator)</span>
+              Estimate code <span class="hint">(optional , from step 5 of the estimator)</span>
             </label>
             <input
               id="bEst"
@@ -133,7 +133,7 @@ void parseISO; // exported for the calendar; referenced here for clarity
               value={referral}
             />
             <span class="err" id="err-referral">
-              That code isn't in the right shape — it should look like QC-REF-7T4M.
+              That code isn't in the right shape , it should look like QC-REF-7T4M.
             </span>
           </div>
 
@@ -184,7 +184,7 @@ void parseISO; // exported for the calendar; referenced here for clarity
       <p class="hint" style="margin-top:26px">
         Would rather just ring? The shop is on
         <a href={BUSINESS.phoneHref}>{BUSINESS.phone}</a>, Mon–Sat 10am–6pm and Sunday
-        10am–4pm. No need to book an appointment either — just pop in.
+        10am–4pm. No need to book an appointment either , just pop in.
       </p>
     </div>
   </div>

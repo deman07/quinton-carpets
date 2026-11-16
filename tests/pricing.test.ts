@@ -176,15 +176,15 @@ describe("discounts — labour only, always", () => {
 
   const labourOf = (i: EstimateInput) => estimate(i).labour;
 
-  it("takes a friend's 10% off the fitting and nothing else", () => {
+  it("takes a friend's 5% off the fitting and nothing else", () => {
     const plain = estimate(fitted);
     const out = estimate({
       ...fitted,
-      discount: { valid: true, kind: "referral", percentOff: 10, message: "Friend's referral code — 10% off fitting" },
+      discount: { valid: true, kind: "referral", percentOff: 5, message: "Friend's referral code, 5% off fitting" },
     });
-    withinAPenny(out.discount, plain.labour * 0.1);
+    withinAPenny(out.discount, plain.labour * 0.05);
     near(out.materials, plain.materials); // materials never move
-    withinAPenny(out.total, plain.subtotal - plain.labour * 0.1);
+    withinAPenny(out.total, plain.subtotal - plain.labour * 0.05);
   });
 
   it("takes an earned reward at 20% of the fitting", () => {
@@ -225,7 +225,7 @@ describe("discounts — labour only, always", () => {
     const supplyOnly = { ...fitted, fit: "supply" as const };
     const out = estimate({
       ...supplyOnly,
-      discount: { valid: true, kind: "referral", percentOff: 10, message: "10% off fitting" },
+      discount: { valid: true, kind: "referral", percentOff: 5, message: "5% off fitting" },
     });
     near(out.discount, 0);
     near(out.total, estimate(supplyOnly).subtotal);

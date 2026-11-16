@@ -3,7 +3,7 @@
  *
  * All arithmetic is delegated to lib/pricing.ts, which is pure and
  * unit-tested. This file only builds inputs, renders the answer and
- * asks the server what a code is worth — it never decides that
+ * asks the server what a code is worth , it never decides that
  * itself.
  */
 
@@ -46,7 +46,7 @@ if (root) {
   const byId = new Map(cfg.floors.map((f) => [f.id, f]));
   const ulById = new Map(cfg.underlays.map((u) => [u.id, u]));
 
-  // Nothing is chosen until the customer chooses it — except a range
+  // Nothing is chosen until the customer chooses it , except a range
   // link from /ranges/, which pre-selects that floor.
   const wanted = new URLSearchParams(location.search).get("range");
   const defaultFloor = wanted && byId.has(wanted) ? wanted : "";
@@ -136,8 +136,8 @@ if (root) {
     $$<HTMLButtonElement>("#estRanges [data-floor]").forEach((b) =>
       b.addEventListener("click", () => {
         state.floor = b.dataset.floor!;
-        // Carpet gets carpet underlay, laminate and LVT get board — the
-        // one we'd suggest — unless they've already chosen for themselves.
+        // Carpet gets carpet underlay, laminate and LVT get board , the
+        // one we'd suggest , unless they've already chosen for themselves.
         if (!state.underlayPicked) {
           const hard = currentFloor()?.hard ?? false;
           state.underlay = cfg.underlays.find((u) => u.forHard === hard)?.id ?? state.underlay;
@@ -183,7 +183,7 @@ if (root) {
           <div class="field"><span class="hint" style="font-weight:700;color:var(--ink);font-size:.85rem">Carpet roll width</span>
             <output class="mono locked-readout" id="rr${i}">${rollWidthFor(r)}</output></div>
           <div class="field"><span class="hint" style="font-weight:700;color:var(--ink);font-size:.85rem">Floor area</span>
-            <p class="mono" id="ra${i}" style="padding:11px 0;font-size:.9rem">${r.width * r.length > 0 ? (r.width * r.length).toFixed(1) + " m²" : "—"}</p></div>
+            <p class="mono" id="ra${i}" style="padding:11px 0;font-size:.9rem">${r.width * r.length > 0 ? (r.width * r.length).toFixed(1) + " m²" : ","}</p></div>
           <button class="iconbtn" type="button" data-del="${i}" aria-label="Remove ${esc(r.name)}">✕</button>
         </div>`;
       })
@@ -199,14 +199,14 @@ if (root) {
           room.name = input.value;
         } else {
           const v = parseFloat(input.value.replace(",", "."));
-          // A blank box means zero, not NaN — the total keeps working while you type.
+          // A blank box means zero, not NaN , the total keeps working while you type.
           (room as Record<string, unknown>)[p] = Number.isNaN(v) ? 0 : Math.max(0, v);
           // Only this row's readout changes. Redrawing the whole list
           // here would replace the box the customer is moving into.
           const area = $(`#ra${i}`);
           if (area && room.kind === "room") {
             const a = room.width * room.length;
-            area.textContent = a > 0 ? `${a.toFixed(1)} m²` : "—";
+            area.textContent = a > 0 ? `${a.toFixed(1)} m²` : ",";
           }
           const roll = $(`#rr${i}`);
           if (roll && room.kind === "room") roll.textContent = rollWidthFor(room);
@@ -240,7 +240,7 @@ if (root) {
           <input type="radio" name="ul" value="${u.id}"${state.underlay === u.id ? " checked" : ""}>
           <span><span class="t">${esc(u.name)}${suggested ? ' <span style="color:var(--yellow-ink);font-size:.76rem">· we\'d suggest this</span>' : ""}</span>
           <span class="d" style="display:block">${esc(u.spec)}</span></span>
-          <span class="p">${u.price ? money(u.price) + "/m²" : "—"}</span>
+          <span class="p">${u.price ? money(u.price) + "/m²" : ","}</span>
         </label>`;
       })
       .join("");
@@ -274,7 +274,7 @@ if (root) {
         <input type="radio" name="fit" value="supply"${state.fit === "supply" ? " checked" : ""}>
         <span><span class="t">Supply only</span>
         <span class="d" style="display:block">You fit it yourself. Free delivery up to 20 miles.</span></span>
-        <span class="p">—</span>
+        <span class="p">,</span>
       </label>`;
     $$<HTMLInputElement>("#fitOpts input").forEach((i) =>
       i.addEventListener("change", () => {
@@ -291,12 +291,12 @@ if (root) {
     if (!box) return;
     if (state.fit !== "fitted") {
       box.innerHTML =
-        '<p class="notice info">Extras below are part of the fitting service — switch to supply &amp; fit to add them.</p>';
+        '<p class="notice info">Extras below are part of the fitting service , switch to supply &amp; fit to add them.</p>';
       return;
     }
     const E = [
       { k: "uplift", t: "Uplift & take the old floor away", d: "Lifted, rolled, loaded and disposed of properly.", p: `${money(cfg.rates.uplift)}/m²` },
-      { k: "gripper", t: "New gripper rods", d: "Fresh gripper round the perimeter — worth it on anything over ten years old.", p: `${money(cfg.rates.gripper)}/lin m` },
+      { k: "gripper", t: "New gripper rods", d: "Fresh gripper round the perimeter , worth it on anything over ten years old.", p: `${money(cfg.rates.gripper)}/lin m` },
       { k: "doorbars", t: "Door bars", d: "One per doorway, colour matched to the floor.", p: `${money(cfg.rates.doorbar)} each` },
       { k: "furniture", t: "Move the furniture", d: "We shift it out and put it back. Beds and wardrobes included.", p: `${money(cfg.rates.furniture)} per room` },
     ] as const;
@@ -359,12 +359,12 @@ if (root) {
       lines.innerHTML =
         row(floor ? esc(floor.name) : "Floor", Boolean(floor), "Pick one") +
         row("Room sizes", false, "Add them") +
-        row("Underlay", false, "—") +
-        row("Fitting & extras", false, "—") +
-        `<hr><div class="l" style="font-weight:800"><span>Estimate incl. VAT</span><span>£—</span></div>`;
+        row("Underlay", false, ",") +
+        row("Fitting & extras", false, ",") +
+        `<hr><div class="l" style="font-weight:800"><span>Estimate incl. VAT</span><span>£,</span></div>`;
     }
     const total = $("#estTotal");
-    if (total) total.innerHTML = `£—<small> incl. VAT</small>`;
+    if (total) total.innerHTML = `£,<small> incl. VAT</small>`;
   }
 
   /* ---------------- the steps ----------------
@@ -470,7 +470,7 @@ if (root) {
     if (foot && !foot.querySelector("#estBook")) {
       foot.innerHTML = `
         <a class="btn yellow" id="estBook" href="/book/" style="width:100%">Book a free measure</a>
-        <p class="hint" style="margin-top:10px;text-align:center">Free, no payment online — your estimate comes with the booking.</p>`;
+        <p class="hint" style="margin-top:10px;text-align:center">Free, no payment online , your estimate comes with the booking.</p>`;
       foot.querySelector("#estBook")?.addEventListener("click", book);
     }
     fitSummary();
@@ -508,7 +508,7 @@ if (root) {
         try {
           sessionStorage.setItem("qc.estimate", JSON.stringify({ code: data.code }));
         } catch {
-          /* private window, or storage blocked — the code is in the URL anyway */
+          /* private window, or storage blocked , the code is in the URL anyway */
         }
       }
     } catch {

@@ -49,7 +49,7 @@ export const clientIp = (request: Request) =>
   "unknown";
 
 /**
- * Work that must not hold up the response — the confirmation emails,
+ * Work that must not hold up the response , the confirmation emails,
  * the referral tally. On Vercel the platform keeps the function alive
  * for it; anywhere else (astro dev, the test run) there is nothing to
  * defer to, so the promise simply runs and its rejection is caught.
@@ -92,7 +92,7 @@ export async function rateLimit(
 const hourBucket = (key: string, now: Date) => `${key}|${now.toISOString().slice(0, 13)}`;
 
 /**
- * The address block a client sits in — IPv4 /24, IPv6 /64.
+ * The address block a client sits in , IPv4 /24, IPv6 /64.
  *
  * Counting the single address is not enough on its own. Mobile
  * networks and CGNAT hand a caller a different address every few

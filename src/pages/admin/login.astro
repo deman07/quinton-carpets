@@ -29,7 +29,7 @@ if (Astro.request.method === "POST") {
 
   // Twenty wrong passwords an hour from one address, forty from its
   // block. Only wrong ones count, so somebody guessing can never lock
-  // out staff who know the password — they are checked first.
+  // out staff who know the password , they are checked first.
   const form = await Astro.request.formData();
   username = String(form.get("username") ?? "").trim().toLowerCase().slice(0, 40);
   const password = String(form.get("password") ?? "").slice(0, 200);
@@ -53,7 +53,7 @@ if (Astro.request.method === "POST") {
 }
 ---
 
-<Base title="Log in — Quinton Carpets diary" description="Staff log in." noindex>
+<Base title="Log in , Quinton Carpets diary" description="Staff log in." noindex>
   <div class="section plain">
     <div class="wrap" style="max-width:420px">
       <p class="eyebrow">Staff</p>

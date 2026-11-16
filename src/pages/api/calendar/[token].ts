@@ -1,5 +1,5 @@
 /**
- * GET /api/calendar/<token>.ics — the diary as a calendar feed.
+ * GET /api/calendar/<token>.ics , the diary as a calendar feed.
  *
  * Calendar apps cannot log in, so the feed is unlocked by a long
  * random token that belongs to one member of staff (see the Staff
@@ -63,7 +63,7 @@ export const GET: APIRoute = async ({ params }) => {
     sequence: Math.max(0, Math.floor(Date.parse(b.updated_at ?? b.created_at) / 1000) - 1_700_000_000),
   }));
 
-  return new Response(calendar(events, { name: "Quinton Carpets — measures" }), {
+  return new Response(calendar(events, { name: "Quinton Carpets , measures" }), {
     headers: {
       "content-type": "text/calendar; charset=utf-8",
       "cache-control": "no-store",

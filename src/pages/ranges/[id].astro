@@ -22,7 +22,7 @@ const others = ranges
   .filter((x) => x.id !== r.id && x.material === r.material && (x.category === r.category || !r.category))
   .slice(0, 4);
 
-const title = `${r.name} — ${maker}${r.material.toLowerCase()} at Quinton Carpets, Birmingham`;
+const title = `${r.name} , ${maker}${r.material.toLowerCase()} at Quinton Carpets, Birmingham`;
 const description = `${r.name}${r.brand ? ` by ${r.brand}` : ""}: ${r.spec}, ${r.grade.toLowerCase()}. ${price}/m² supply only. See it in our Quinton shop, or get an instant estimate.`;
 
 const schema = {
@@ -60,7 +60,7 @@ const schema = {
           <h1>{r.name}</h1>
           {r.body && <p class="lede">{r.body}</p>}
           <p class="bigprice">{price}<small> /m², supply only</small></p>
-          <p class="hint">Fitting, underlay and gripper are priced separately — the estimator shows each part.</p>
+          <p class="hint">Fitting, underlay and gripper are priced separately , the estimator shows each part.</p>
 
           <div class="ctas">
             {r.sampleUrl && (
@@ -75,7 +75,7 @@ const schema = {
             <dt>Wear rating</dt><dd>{r.grade}</dd>
             <dt>Widths</dt><dd>{widthsText}</dd>
             <dt>Good for</dt><dd>{roomsText}</dd>
-            {r.colourNames.length > 0 && (<><dt>Shades</dt><dd>{r.colourNames.join(", ")} <span class="hint">— and more in the shop</span></dd></>)}
+            {r.colourNames.length > 0 && (<><dt>Shades</dt><dd>{r.colourNames.join(", ")} <span class="hint">, and more in the shop</span></dd></>)}
             {r.features.length > 0 && (
               <>
                 <dt>Features</dt>
@@ -85,7 +85,7 @@ const schema = {
           </dl>
 
           <p class="hint" style="margin-top:18px">
-            {r.brand ? `Photograph and product details from ${r.brand}. ` : ""}Colours vary on screen — see
+            {r.brand ? `Photograph and product details from ${r.brand}. ` : ""}Colours vary on screen , see
             the sample in the shop, or ring <a href={BUSINESS.phoneHref}>{BUSINESS.phone}</a>.
           </p>
         </div>

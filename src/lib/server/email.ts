@@ -98,7 +98,7 @@ function visitIcs(
     uid: `${b.ref}@quintoncarpets.co.uk`,
     date: b.date,
     slot: b.slot as SlotKey,
-    summary: "Free measure — Quinton Carpets",
+    summary: "Free measure , Quinton Carpets",
     description: `Reference ${b.ref}. We'll arrive within the window. To change it, ring ${BUSINESS.phone}.`,
     location: `${b.address}, ${b.postcode}`,
     url: `${cfg.siteUrl.replace(/\/$/, "")}/booking/${b.ref}/`,

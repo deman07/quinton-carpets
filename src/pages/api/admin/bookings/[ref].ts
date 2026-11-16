@@ -1,5 +1,5 @@
 /**
- * POST /api/admin/bookings/:ref — every change the diary makes to a
+ * POST /api/admin/bookings/:ref , every change the diary makes to a
  * booking. Staff only: src/middleware.ts has already checked the
  * session and the origin before this runs.
  *

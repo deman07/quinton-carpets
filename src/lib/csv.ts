@@ -2,7 +2,7 @@
 
 /**
  * Quotes a cell, and defuses anything a spreadsheet would run as a
- * formula — a customer can type "=HYPERLINK(...)" into the notes box.
+ * formula , a customer can type "=HYPERLINK(...)" into the notes box.
  */
 export function cell(v: unknown): string {
   let s = v === null || v === undefined ? "" : String(v);

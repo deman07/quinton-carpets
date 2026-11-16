@@ -1,11 +1,11 @@
 /**
- * POST /api/codes — what is this code worth?
+ * POST /api/codes , what is this code worth?
  *
  * The browser posts a code and gets back a verdict; it never holds
  * the rules and never decides a discount for itself. The rules
  * themselves are in src/lib/server/discounts.ts.
  *
- * Discounts apply to LABOUR ONLY — fitting and fitting extras.
+ * Discounts apply to LABOUR ONLY , fitting and fitting extras.
  * Materials are already at the shop's best price and never discount.
  */
 

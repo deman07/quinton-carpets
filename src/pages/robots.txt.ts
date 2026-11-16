@@ -15,7 +15,7 @@ const demo = process.env.DEMO_MODE === "1";
 export const GET: APIRoute = async () => {
   const { siteUrl } = await getSettings();
   const body = demo
-    ? ["# Demo deployment — not for indexing.", "User-agent: *", "Disallow: /", ""].join("\n")
+    ? ["# Demo deployment , not for indexing.", "User-agent: *", "Disallow: /", ""].join("\n")
     : [
         "User-agent: *",
         "Allow: /",

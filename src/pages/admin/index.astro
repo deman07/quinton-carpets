@@ -20,7 +20,7 @@ import type { Estimate, RoomInput } from "../../lib/pricing.ts";
 
 type EstimateInputRow = { floor?: { name: string }; rooms?: RoomInput[]; fit?: string };
 
-// Staff only — src/middleware.ts has checked the login. Rendered on
+// Staff only , src/middleware.ts has checked the login. Rendered on
 // demand and never cached: this is the diary, not a page.
 export const prerender = false;
 Astro.response.headers.set("cache-control", "no-store");
@@ -106,7 +106,7 @@ const mapHref = (r: DiaryRow) =>
   `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${r.address}, ${r.postcode}`)}`;
 ---
 
-<Base title="Diary — Quinton Carpets" description="Staff booking diary." noindex>
+<Base title="Diary , Quinton Carpets" description="Staff booking diary." noindex>
   <div class="section plain admin">
     <div class="wrap" style="max-width:880px">
       <AdminNav current="diary" />
@@ -231,7 +231,7 @@ const mapHref = (r: DiaryRow) =>
                     <summary>Manage booking</summary>
                     <div class="panes">
                       <form class="pane" data-action="notes">
-                        <label for={`n-${b.ref}`}>Shop notes <span class="hint">— never shown to the customer</span></label>
+                        <label for={`n-${b.ref}`}>Shop notes <span class="hint">, never shown to the customer</span></label>
                         <textarea id={`n-${b.ref}`} name="notes" rows="3" maxlength="2000">{b.staff_notes ?? ""}</textarea>
                         <button class="btn ghost sm" type="submit">Save notes</button>
                       </form>
@@ -280,7 +280,7 @@ const mapHref = (r: DiaryRow) =>
                         <form class="pane danger" data-action="cancel">
                           <p class="panetitle">Cancel</p>
                           <div class="field">
-                            <label for={`r-${b.ref}`}>Reason <span class="hint">— for the history, optional</span></label>
+                            <label for={`r-${b.ref}`}>Reason <span class="hint">, for the history, optional</span></label>
                             <input id={`r-${b.ref}`} name="reason" maxlength="300" />
                           </div>
                           <label class="checkrow"><input type="checkbox" name="notify" checked /> Email the customer</label>
@@ -308,7 +308,7 @@ const mapHref = (r: DiaryRow) =>
                         <ol>
                           <li><time>{when(b.created_at)}</time> Booked on the website</li>
                           {(events.get(b.ref) ?? []).map((e) => (
-                            <li><time>{when(e.at)}</time> {e.what} <span class="hint">— {e.actor}</span></li>
+                            <li><time>{when(e.at)}</time> {e.what} <span class="hint">, {e.actor}</span></li>
                           ))}
                         </ol>
                       </div>
@@ -362,7 +362,7 @@ const mapHref = (r: DiaryRow) =>
       location.reload();
     };
 
-    // Changing the status saves straight away — nobody at a counter
+    // Changing the status saves straight away , nobody at a counter
     // wants to find a Save button on a phone.
     document.querySelectorAll<HTMLSelectElement>("[data-status-for]").forEach((sel) => {
       let was = sel.value;

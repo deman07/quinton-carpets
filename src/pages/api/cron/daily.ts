@@ -1,5 +1,5 @@
 /**
- * GET /api/cron/daily — run once a day by Vercel Cron (vercel.json).
+ * GET /api/cron/daily , run once a day by Vercel Cron (vercel.json).
  *
  *  1. Emails tomorrow's customers a reminder. Each booking is claimed
  *     (reminded_at set) before its email goes, so a retry or a second

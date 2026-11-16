@@ -2,7 +2,7 @@
  * The estimator maths, as a pure module.
  *
  * This is the part that has to match what a fitter would work out
- * on the counter, so it takes no DOM, no fetch and no clock — give
+ * on the counter, so it takes no DOM, no fetch and no clock , give
  * it an input, get the same answer every time. Everything the shop
  * can change lives in PRICES.
  *
@@ -119,7 +119,7 @@ const round2 = (n: number) => Math.round(n * 1e2) / 1e2;
  * How much material a room actually eats off a roll of width R.
  *
  * A fitter does not buy your floor area, they buy a length off a
- * roll — so a 4.2m-wide room on a 4m roll needs two strips, and the
+ * roll , so a 4.2m-wide room on a 4m roll needs two strips, and the
  * off-cut is still paid for.
  */
 export function usageForWidth(
@@ -281,7 +281,7 @@ export function estimate(input: EstimateInput): Estimate {
   const labour = fitting + extras;
 
   // --- discount: labour only, always. Materials are already at the
-  //     shop's best price and never discount — and that goes for a
+  //     shop's best price and never discount , and that goes for a
   //     flat amount too, which can take the fitting to nothing but no
   //     further. ---
   let discount = 0;

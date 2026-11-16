@@ -1,7 +1,7 @@
 /* ============================================================
    The home banner. Three patterns adapted from the open 21st.dev
-   community library — container scroll and staggered text
-   reveal — rebuilt by hand in plain CSS. No animation
+   community library , container scroll and staggered text
+   reveal , rebuilt by hand in plain CSS. No animation
    library, and nothing here is parked at opacity:0 waiting on a
    scroll: everything meant to be read is in the first frame.
    ============================================================ */
@@ -57,7 +57,7 @@
 @keyframes sheen{0%{transform:translateX(-130%)}42%,100%{transform:translateX(130%)}}
 
 /* In dark mode the headline's ink is near-white, and the partial
-   highlight would leave near-white sitting on yellow — about 1.5:1,
+   highlight would leave near-white sitting on yellow , about 1.5:1,
    and against the rule that yellow never carries white text. The
    band goes full height and the text goes to ink, which is the same
    relationship the light theme already has. */

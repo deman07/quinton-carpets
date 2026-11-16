@@ -2,7 +2,7 @@
  * The hanging sample in the home banner: a piece of carpet under a
  * header card, pinned along its top edge and moving in a slow
  * draught. After Meng To's Woven Cloth (MIT), rebuilt without
- * three.js — a verlet cloth and one lit, textured mesh in plain WebGL.
+ * three.js , a verlet cloth and one lit, textured mesh in plain WebGL.
  *
  * It stops when the banner scrolls away or the tab is hidden, and
  * reduced motion gets one settled frame instead of the loop.

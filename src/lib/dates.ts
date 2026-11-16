@@ -2,7 +2,7 @@
  * Dates, in the shop's timezone.
  *
  * The site is served from edge machines running on UTC. The shop is
- * in Birmingham, which is an hour ahead for half the year — so
+ * in Birmingham, which is an hour ahead for half the year , so
  * "today" is worked out in Europe/London, not wherever the request
  * happened to land. Getting this wrong offers someone a slot in the
  * past at half eleven at night in July.
@@ -76,7 +76,7 @@ export function isBookableDate(iso: string, now: Date = new Date()): boolean {
 // (capacity_am, capacity_pm, capacity_eve), read on the server. The
 // browser is only ever told which windows are already full.
 
-/** "2026-09-08|am" — how a full window is named, on both sides of the wire. */
+/** "2026-09-08|am" , how a full window is named, on both sides of the wire. */
 export const slotKey = (iso: string, slot: string) => `${iso}|${slot}`;
 
 /** The windows that are already full, as slotKey()s. */
@@ -109,9 +109,9 @@ export const isDayFull = (iso: string, full: FullSlots = NONE): boolean =>
 /** The line under the time windows, once a day is chosen. */
 export function slotHint(iso: string, full: FullSlots = NONE): string {
   const slots = slotsFor(iso, full);
-  if (slots.some((s) => s.full)) return `${shortDate(iso)} — some windows are already booked.`;
-  if (dayOfWeek(iso) === 0) return `${shortDate(iso)} — Sunday, so we finish at 4pm.`;
-  return `${shortDate(iso)} — pick a window that suits you.`;
+  if (slots.some((s) => s.full)) return `${shortDate(iso)} , some windows are already booked.`;
+  if (dayOfWeek(iso) === 0) return `${shortDate(iso)} , Sunday, so we finish at 4pm.`;
+  return `${shortDate(iso)} , pick a window that suits you.`;
 }
 
 export function isBookableSlot(iso: string, slot: string, now: Date = new Date()): boolean {
@@ -162,7 +162,7 @@ export function longDate(iso: string): string {
   }).format(new Date(Date.UTC(p.y, p.m - 1, p.d)));
 }
 
-/** "Tuesday 8 September" — no year, for the picker hint. */
+/** "Tuesday 8 September" , no year, for the picker hint. */
 export function shortDate(iso: string): string {
   const p = parseISO(iso);
   if (!p) return iso;

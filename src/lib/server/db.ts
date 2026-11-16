@@ -1,7 +1,7 @@
 /**
  * The database: Postgres, on Supabase.
  *
- * This wrapper deliberately keeps the shape the site already used —
+ * This wrapper deliberately keeps the shape the site already used ,
  * prepare().bind().first()/all()/run(), and a batch() that is a real
  * transaction. That is not nostalgia for the old host: it means the
  * thirteen SQL statements in this codebase read exactly as they did
@@ -57,7 +57,7 @@ const QUERY_TIMEOUT_MS = 12_000;
 
 /**
  * A connection the pooler has silently dropped never answers, and
- * every request queued behind it would wait forever — the site just
+ * every request queued behind it would wait forever , the site just
  * stops loading. So a query that runs too long fails, the client is
  * thrown away, and the next request connects afresh.
  */
@@ -117,7 +117,7 @@ export const db = {
 
   /**
    * All of them or none of them. The booking insert and its referral
-   * code are written together — a booking without its code would be a
+   * code are written together , a booking without its code would be a
    * customer promised a discount the shop cannot find.
    *
    * Returns each statement's rows, in order, for the ones that use

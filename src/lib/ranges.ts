@@ -25,7 +25,7 @@ export interface Range {
   /**
    * The photograph, once it exists: a path under public/ or a full
    * URL, 1:1 crop. While it is absent the CSS texture in textures.ts
-   * stands in — that is the whole point of those, and they stay as
+   * stands in , that is the whole point of those, and they stay as
    * the fallback range by range.
    */
   photo: string | null;
@@ -62,7 +62,7 @@ export const gradeShort = (grade: string) => {
 export const isHard = (material: Range["material"], widths: readonly number[] | null) =>
   material === "Laminate" || (material === "Vinyl" && widths === null);
 
-/** Everything a customer can put on a floor — underlay is priced separately. */
+/** Everything a customer can put on a floor , underlay is priced separately. */
 export const floorRanges = (all: Range[]) => all.filter((r) => r.material !== "Underlay");
 export const underlayRanges = (all: Range[]) => all.filter((r) => r.material === "Underlay");
 

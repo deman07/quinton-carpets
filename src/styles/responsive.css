@@ -27,7 +27,7 @@
 }
 /* The full nav, the wordmark and the call button need about 1090px
    between them. Below that they used to push the whole page sideways,
-   so the hamburger takes over here rather than at 760px — the phone
+   so the hamburger takes over here rather than at 760px , the phone
    number stays visible all the way down to 760px, as specified. */
 @media (max-width:1080px){
   nav.main{
@@ -75,7 +75,7 @@
 }
 
 /* Older 360px phones need a little more again. Only the header's
-   own padding moves — the rest of the page keeps its 22px gutter. */
+   own padding moves , the rest of the page keeps its 22px gutter. */
 @media (max-width:380px){
   header.site .wrap{padding-inline:16px}
   .brand .logo{height:25px}

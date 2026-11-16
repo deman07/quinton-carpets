@@ -58,7 +58,7 @@ export function validateBooking(
   // And the timing check: three seconds is faster than anyone can
   // fill in eight fields and pick a date.
   if (started > 0 && now.getTime() - started < 3000) {
-    return { ok: false, error: "That was quick — give it a moment and try again." };
+    return { ok: false, error: "That was quick , give it a moment and try again." };
   }
 
   if (!name) return { ok: false, error: "Please tell us your name.", field: "bName" };
@@ -77,14 +77,14 @@ export function validateBooking(
   if (referral && !/^QC-REF-[A-Z0-9]{4}$/.test(referral)) {
     return {
       ok: false,
-      error: "That code isn't in the right shape — it should look like QC-REF-7T4M.",
+      error: "That code isn't in the right shape , it should look like QC-REF-7T4M.",
       field: "bRef",
     };
   }
   if (estimate && !/^QC-EST-[A-Z0-9]{5}$/.test(estimate)) {
     return {
       ok: false,
-      error: "That estimate code isn't in the right shape — it should look like QC-EST-4K7QW.",
+      error: "That estimate code isn't in the right shape , it should look like QC-EST-4K7QW.",
       field: "bEst",
     };
   }
@@ -151,7 +151,7 @@ export function validateEstimate(raw: unknown): { ok: true; value: EstimateReque
 
   if (!Array.isArray(r.rooms)) return { ok: false, error: "Add a room first." };
   if (r.rooms.length > MAX_ROOMS) {
-    return { ok: false, error: `That's more than ${MAX_ROOMS} rooms — ring the shop and we'll price it with you.` };
+    return { ok: false, error: `That's more than ${MAX_ROOMS} rooms , ring the shop and we'll price it with you.` };
   }
 
   const rooms: RoomInput[] = [];
@@ -169,7 +169,7 @@ export function validateEstimate(raw: unknown): { ok: true; value: EstimateReque
       const length = num(room.length);
       if (!(width > 0 && length > 0)) continue;
       if (width > MAX_METRES || length > MAX_METRES) {
-        return { ok: false, error: `${name || "That room"} is over ${MAX_METRES}m — is that in metres?` };
+        return { ok: false, error: `${name || "That room"} is over ${MAX_METRES}m , is that in metres?` };
       }
       rooms.push({ kind: "room", name: name || "Room", width, length });
     }

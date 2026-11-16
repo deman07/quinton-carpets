@@ -1,5 +1,5 @@
 /**
- * POST /admin/logout/ — ends this browser's session.
+ * POST /admin/logout/ , ends this browser's session.
  * A POST, so a link on another site cannot log somebody out.
  */
 

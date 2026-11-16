@@ -7,7 +7,7 @@
  * the same question again before it saves an estimate, for the same
  * reason.
  *
- * Discounts apply to LABOUR ONLY — fitting and fitting extras.
+ * Discounts apply to LABOUR ONLY , fitting and fitting extras.
  * Materials are already at the shop's best price and never discount.
  */
 
@@ -45,7 +45,7 @@ export async function verdictFor(code: string, ownerRef = ""): Promise<DiscountV
       return {
         valid: false,
         kind: "none",
-        message: "That's your own code — pass it to a friend and the 20% comes back to you.",
+        message: "That's your own code, pass it to a friend and the 20% comes back to you.",
       };
     }
 
@@ -57,16 +57,16 @@ export async function verdictFor(code: string, ownerRef = ""): Promise<DiscountV
         kind: "reward",
         percentOff: 20,
         code,
-        message: "Your referral reward — 20% off fitting",
+        message: "Your referral reward, 20% off fitting",
       };
     }
 
     return {
       valid: true,
       kind: "referral",
-      percentOff: 10,
+      percentOff: 5,
       code,
-      message: "Friend's referral code — 10% off fitting",
+      message: "Friend's referral code, 5% off fitting",
     };
   }
 

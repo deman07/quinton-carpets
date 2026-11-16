@@ -40,7 +40,7 @@ export function swatchStyle(r: Swatchable): string {
   }
 }
 
-/** Room-sized weave for the showcase floor — coarser, because it is seen at distance. */
+/** Room-sized weave for the showcase floor , coarser, because it is seen at distance. */
 export function floorStyle(r: Swatchable): string {
   const a = r.colours[0]!;
   const b = r.colours[1] ?? a;

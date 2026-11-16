@@ -8,7 +8,7 @@
  *
  * The look is the prototype's and is unchanged. What changed is the
  * cost of drawing it, which had made the site noticeably heavy on a
- * desktop while staying fine on a phone — the tuft count grows with
+ * desktop while staying fine on a phone , the tuft count grows with
  * the area of the banner, so a 1920-wide window drew about 11,800
  * tufts and a 2560-wide one about 15,700, against roughly 2,100 on a
  * phone. Three things fix that, none of which move a pixel:
@@ -145,7 +145,7 @@ if (canvas) {
   const start = () => {
     build();
     stop();
-    // Reduced motion gets one static frame — the texture, without the sway.
+    // Reduced motion gets one static frame , the texture, without the sway.
     if (RM) draw(0);
     else run();
   };

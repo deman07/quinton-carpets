@@ -1,6 +1,6 @@
 /**
  * Every email the site sends, as data in and { subject, html, text }
- * out. Nothing here sends anything — see lib/server/email.ts — so the
+ * out. Nothing here sends anything , see lib/server/email.ts , so the
  * templates can be tested, and previewed on /admin/emails/, without a
  * mail provider.
  *
@@ -11,8 +11,8 @@
  *
  * The HTML is the kind mail clients still understand: tables for
  * layout, every style inline, nothing that needs JavaScript or a
- * stylesheet. It looks like the site — the yellow, the ink border, the
- * hard shadow — and still reads properly in Outlook, which ignores
+ * stylesheet. It looks like the site , the yellow, the ink border, the
+ * hard shadow , and still reads properly in Outlook, which ignores
  * most of that.
  */
 
@@ -197,7 +197,7 @@ interface Frame {
   preheader: string;
   blocks: Block[];
   siteUrl: string;
-  /** Why they are getting it — the last line of the footer. */
+  /** Why they are getting it , the last line of the footer. */
   reason: string;
 }
 
@@ -302,14 +302,14 @@ const firstName = (name: string) => name.trim().split(/\s+/)[0] || name;
 const when = (b: Pick<BookingData, "date" | "slot">) => `${longDate(b.date)}`;
 const bookingUrl = (ctx: Ctx, ref: string) => `${ctx.siteUrl.replace(/\/$/, "")}/booking/${ref}/`;
 const REASON = "You're getting this because you booked a free measure with us.";
-const ringLine = `Need to change anything? Ring ${BUSINESS.phone} with your reference — we'll sort it.`;
+const ringLine = `Need to change anything? Ring ${BUSINESS.phone} with your reference , we'll sort it.`;
 
 const referralCallout = (code: string): Block => ({
   kind: "callout",
   tone: "yellow",
   title: "Your referral code",
   code,
-  body: "Give it to a friend. They get 10% off their fitting, and once their job is paid you get 20% off the fitting on your next order.",
+  body: "Give it to a friend. They get 5% off their fitting, and once their job is paid you get 20% off the fitting on your next order.",
 });
 
 /** To the customer, the moment they book. */
@@ -317,14 +317,14 @@ export function confirmationEmail(ctx: Ctx, b: BookingData): Rendered {
   return render({
     siteUrl: ctx.siteUrl,
     subject: `Booked: your free measure on ${longDate(b.date)} (${b.ref})`,
-    preheader: `${slotLabel(b.slot)} at ${b.address}. Nothing to pay — we'll ring to confirm within one working day.`,
+    preheader: `${slotLabel(b.slot)} at ${b.address}. Nothing to pay , we'll ring to confirm within one working day.`,
     reason: REASON,
     blocks: [
       { kind: "eyebrow", text: "Free measure · booked" },
       { kind: "h1", text: `You're booked in, ${firstName(b.name)}.` },
       {
         kind: "p",
-        text: "Thanks for choosing us. There's nothing to pay for the measure, and nothing to pay on the website at any point — you settle up in the shop once you've chosen.",
+        text: "Thanks for choosing us. There's nothing to pay for the measure, and nothing to pay on the website at any point , you settle up in the shop once you've chosen.",
       },
       { kind: "ticket", label: "Your reference", value: b.ref, sub: `${when(b)} · ${slotLabel(b.slot)}` },
       {
@@ -333,7 +333,7 @@ export function confirmationEmail(ctx: Ctx, b: BookingData): Rendered {
           ["Where", `${b.address}, ${b.postcode}`],
           ["We'll ring", b.phone],
           ...(b.estimate ? ([["Your estimate", b.estimate]] as Array<[string, string]>) : []),
-          ...(b.referral ? ([["Friend's code", `${b.referral} — 10% off your fitting`]] as Array<[string, string]>) : []),
+          ...(b.referral ? ([["Friend's code", `${b.referral} , 5% off your fitting`]] as Array<[string, string]>) : []),
         ],
       },
       { kind: "button", label: "View your booking", href: bookingUrl(ctx, b.ref) },
@@ -356,7 +356,7 @@ export function confirmationEmail(ctx: Ctx, b: BookingData): Rendered {
 export function shopNewBookingEmail(ctx: Ctx, b: BookingData): Rendered {
   return render({
     siteUrl: ctx.siteUrl,
-    subject: `${b.ref} — measure booked, ${longDate(b.date)}, ${slotLabel(b.slot)}`,
+    subject: `${b.ref} , measure booked, ${longDate(b.date)}, ${slotLabel(b.slot)}`,
     preheader: `${b.name}, ${b.postcode} · ring ${b.phone}`,
     reason: "Sent to the shop for every booking made on the website.",
     blocks: [
@@ -370,7 +370,7 @@ export function shopNewBookingEmail(ctx: Ctx, b: BookingData): Rendered {
           ["Email", b.email],
           ["Address", `${b.address}, ${b.postcode}`],
           ...(b.estimate ? ([["Estimate", b.estimate]] as Array<[string, string]>) : []),
-          ...(b.referral ? ([["Referred by", `${b.referral} — 10% off their fitting`]] as Array<[string, string]>) : []),
+          ...(b.referral ? ([["Referred by", `${b.referral} , 5% off their fitting`]] as Array<[string, string]>) : []),
           ...(b.referralCode ? ([["Their new code", b.referralCode]] as Array<[string, string]>) : []),
           ...(b.notes ? ([["Their notes", b.notes]] as Array<[string, string]>) : []),
         ],
@@ -397,14 +397,14 @@ export function reminderEmail(ctx: Ctx, b: BookingData): Rendered {
         kind: "list",
         title: "To make the most of it",
         items: [
-          "Clear a path along the walls if you can — we measure edge to edge.",
+          "Clear a path along the walls if you can , we measure edge to edge.",
           "Have a think about colours, or bring a cushion or paint chart to the shop later.",
           "Point out anything awkward: a door that catches, a step that's uneven, a radiator pipe.",
-          "Nobody has to take a day off — it takes about twenty minutes.",
+          "Nobody has to take a day off , it takes about twenty minutes.",
         ],
       },
       { kind: "button", label: "View your booking", href: bookingUrl(ctx, b.ref) },
-      { kind: "p", text: `Can't make it after all? Ring ${BUSINESS.phone} and we'll find another time — no problem at all.`, muted: true },
+      { kind: "p", text: `Can't make it after all? Ring ${BUSINESS.phone} and we'll find another time , no problem at all.`, muted: true },
     ],
   });
 }
@@ -444,7 +444,7 @@ export function cancelledEmail(ctx: Ctx, b: BookingData): Rendered {
   return render({
     siteUrl: ctx.siteUrl,
     subject: `Cancelled: your free measure on ${longDate(b.date)}`,
-    preheader: `Reference ${b.ref} is cancelled. Book again any time — it's still free.`,
+    preheader: `Reference ${b.ref} is cancelled. Book again any time , it's still free.`,
     reason: REASON,
     blocks: [
       { kind: "eyebrow", text: "Booking cancelled" },
@@ -462,7 +462,7 @@ export function cancelledEmail(ctx: Ctx, b: BookingData): Rendered {
               tone: "plain",
               title: "Your referral code still works",
               code: b.referralCode,
-              body: "Pass it on to a friend any time — they still get 10% off their fitting.",
+              body: "Pass it on to a friend any time , they still get 5% off their fitting.",
             } satisfies Block,
           ]
         : []),
@@ -482,7 +482,7 @@ export function thankYouEmail(ctx: Ctx, b: BookingData): Rendered {
       { kind: "h1", text: `Enjoy the new floor, ${firstName(b.name)}.` },
       {
         kind: "p",
-        text: "Thank you for choosing a local shop. If anything isn't quite right — a seam, a door that now catches, a bar that's moved — ring us and tell us.",
+        text: "Thank you for choosing a local shop. If anything isn't quite right , a seam, a door that now catches, a bar that's moved , ring us and tell us.",
       },
       {
         kind: "list",
@@ -495,7 +495,7 @@ export function thankYouEmail(ctx: Ctx, b: BookingData): Rendered {
         ],
       },
       ...(b.referralCode ? [referralCallout(b.referralCode)] : []),
-      { kind: "p", text: `Reference ${b.ref} — quote it if you ring about this job.`, muted: true },
+      { kind: "p", text: `Reference ${b.ref} , quote it if you ring about this job.`, muted: true },
     ],
   });
 }

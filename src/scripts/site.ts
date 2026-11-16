@@ -37,7 +37,7 @@ const $$ = <T extends Element = Element>(s: string, r: ParentNode = document) =>
 })();
 
 /* ---------------- headline: word-by-word reveal ----------------
-   The splitter walks text nodes so the inline <em> survives — the
+   The splitter walks text nodes so the inline <em> survives , the
    yellow highlight and its sheen are one element, not three. */
 (() => {
   const h = $<HTMLElement>("h1[data-words]");

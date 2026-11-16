@@ -39,7 +39,7 @@ export interface Staff {
   calendar_token: string;
 }
 
-// N=2^15 is OWASP's floor for scrypt and takes about 50ms — slow for
+// N=2^15 is OWASP's floor for scrypt and takes about 50ms , slow for
 // somebody guessing, unnoticeable for somebody logging in.
 const N = 32768;
 const R = 8;
@@ -80,7 +80,7 @@ export const newToken = (bytes = 32) => randomBytes(bytes).toString("base64url")
 /** What a password must be. Long beats clever. */
 export function passwordProblem(password: string): string | null {
   if (password.length < 10) return "Use at least 10 characters.";
-  if (password.length > 200) return "That's longer than it needs to be — 200 characters at most.";
+  if (password.length > 200) return "That's longer than it needs to be , 200 characters at most.";
   return null;
 }
 
@@ -180,7 +180,7 @@ export async function endSession(token: string | undefined): Promise<void> {
   await db.prepare(`DELETE FROM staff_sessions WHERE token_hash = ?1`).bind(sha256(token)).run();
 }
 
-/** Logs somebody out everywhere — after a password change, or when they leave. */
+/** Logs somebody out everywhere , after a password change, or when they leave. */
 export async function endAllSessions(staffId: number): Promise<void> {
   await db.prepare(`DELETE FROM staff_sessions WHERE staff_id = ?1`).bind(staffId).run();
 }

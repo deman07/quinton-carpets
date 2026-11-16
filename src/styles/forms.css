@@ -23,8 +23,8 @@ legend{padding:0}
 .codebox input{text-transform:uppercase; font-family:"DM Mono",monospace}
 
 /* The honeypot. Hidden from people, reachable by a bot that
-   ignores CSS. Never `display:none` on the field itself — some
-   bots skip those — and always off the tab order. */
+   ignores CSS. Never `display:none` on the field itself , some
+   bots skip those , and always off the tab order. */
 .hp{position:absolute; left:-9999px; top:auto; width:1px; height:1px; overflow:hidden}
 
 /* ============ calendar ============

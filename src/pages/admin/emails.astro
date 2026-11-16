@@ -6,7 +6,7 @@ import { sendTest, siteContext } from "../../lib/server/email.ts";
 import { getEnv } from "../../lib/server/env.ts";
 
 // Every email the site sends, drawn with made-up booking details, so
-// the shop can see exactly what customers get — and send one to
+// the shop can see exactly what customers get , and send one to
 // themselves to check it on a phone.
 //
 // One email at a time, picked from the list (?t=name, so it works
@@ -62,7 +62,7 @@ const WHEN: Record<TemplateName, string> = {
 };
 ---
 
-<Base title="Emails — Quinton Carpets diary" description="Email previews." noindex>
+<Base title="Emails , Quinton Carpets diary" description="Email previews." noindex>
   <div class="section plain admin">
     <div class="wrap" style="max-width:1180px">
       <AdminNav current="emails" />
@@ -71,7 +71,7 @@ const WHEN: Record<TemplateName, string> = {
 
       {!canSend && (
         <p class="notice warn" style="margin-bottom:18px">
-          No RESEND_API_KEY is set, so no email is actually sent yet — bookings still save. Add the key in
+          No RESEND_API_KEY is set, so no email is actually sent yet , bookings still save. Add the key in
           Vercel to switch them on.
         </p>
       )}

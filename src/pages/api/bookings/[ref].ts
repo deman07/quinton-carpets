@@ -1,5 +1,5 @@
 /**
- * GET /api/bookings/:ref — a customer reading their own booking.
+ * GET /api/bookings/:ref , a customer reading their own booking.
  *
  * Staff change bookings through /api/admin/bookings/:ref, behind the
  * diary's login.

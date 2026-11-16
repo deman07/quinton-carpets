@@ -3,7 +3,7 @@
  *
  * The alphabet drops the letter/digit pairs that get misheard at the
  * counter: no O/0 and no I/1. S and 5 are both kept, which is a real
- * trade-off — 32 characters means `byte % 32` is perfectly uniform,
+ * trade-off , 32 characters means `byte % 32` is perfectly uniform,
  * and dropping a pair would put a modulo bias into every code unless
  * randomChars were rewritten to reject out-of-range bytes.
  *
@@ -42,7 +42,7 @@ export function mintEstimateCode(): string {
  *
  * The day is the Europe/London one, not the server's. getDate() would
  * read UTC on a hosted runtime, which between midnight and 1am BST
- * stamps a booking with yesterday — the exact thing this reference
+ * stamps a booking with yesterday , the exact thing this reference
  * exists to make obvious.
  */
 export function mintBookingRef(now: Date = new Date()): string {

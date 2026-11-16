@@ -1,5 +1,5 @@
 /**
- * POST /api/bookings — the only endpoint that writes a booking.
+ * POST /api/bookings , the only endpoint that writes a booking.
  *
  * No payment is taken here or anywhere else on the site. This
  * stores a request for a free measure, tells the shop about it, and
@@ -140,7 +140,7 @@ export const POST: APIRoute = async ({ request }) => {
     );
   }
 
-  // The booking is saved. Email is best-effort from here — a mail
+  // The booking is saved. Email is best-effort from here , a mail
   // provider having a bad morning must never lose someone's slot.
   after(
     sendBookingEmails({ ...b, ref, referralCode }).then((rs) =>

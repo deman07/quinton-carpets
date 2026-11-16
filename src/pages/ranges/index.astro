@@ -45,14 +45,14 @@ const titleBits = [
 ].filter(Boolean);
 
 const title = titleBits.length
-  ? `${titleBits.join(" ")} — ranges at Quinton Carpets, Birmingham`
-  : "Carpet, vinyl and underlay ranges — Quinton Carpets, Birmingham";
+  ? `${titleBits.join(" ")} , ranges at Quinton Carpets, Birmingham`
+  : "Carpet, vinyl and underlay ranges , Quinton Carpets, Birmingham";
 
 const description =
-  "Carpet, vinyl and underlay from our shop on Hagley Road West, Quinton. Guide prices per square metre, supply only — fitting priced separately.";
+  "Carpet, vinyl and underlay from our shop on Hagley Road West, Quinton. Guide prices per square metre, supply only , fitting priced separately.";
 
 // Product + Offer for each range on the page. Availability is
-// "in stock at the shop", not an online purchase — there is no
+// "in stock at the shop", not an online purchase , there is no
 // checkout anywhere on this site.
 const schema = {
   "@context": "https://schema.org",
@@ -71,7 +71,7 @@ const schema = {
         "@type": "Offer",
         price: r.price.toFixed(2),
         priceCurrency: "GBP",
-        // Per m², supply only — fitting is priced separately.
+        // Per m², supply only , fitting is priced separately.
         unitText: "square metre",
         availability: "https://schema.org/InStoreOnly",
         seller: { "@id": `${settings.siteUrl}/#shop` },
@@ -101,7 +101,7 @@ const schema = {
     <div class="wrap">
       <p class="lede hero-sub">
         Hundreds of carpet samples to look at and feel, a large variety of vinyl for various
-        needs. Prices below are per square metre, supply only — fitting is priced separately so
+        needs. Prices below are per square metre, supply only , fitting is priced separately so
         you can see what you're paying for.
       </p>
     </div>
@@ -144,7 +144,7 @@ const schema = {
         {
           list.length === 0 ? (
             <p class="notice info" style="grid-column:1/-1">
-              Nothing matches that combination — try "Every room". We carry far more in the
+              Nothing matches that combination , try "Every room". We carry far more in the
               shop than we can show here.
             </p>
           ) : (
@@ -182,12 +182,12 @@ const schema = {
           material === "Underlay" ? (
             <>
               Underlay prices are per square metre, supply only. The right underlay depends on
-              the carpet, room and feel you want — call
+              the carpet, room and feel you want , call
             </>
           ) : (
             <>
               Carpet prices are Cormar's starting prices per square metre, supply only. Vinyl
-              prices are guide prices — call
+              prices are guide prices , call
             </>
           )
         }
