@@ -273,7 +273,7 @@ if (root) {
       <label class="opt${state.fit === "supply" ? " on" : ""}">
         <input type="radio" name="fit" value="supply"${state.fit === "supply" ? " checked" : ""}>
         <span><span class="t">Supply only</span>
-        <span class="d" style="display:block">You collect from the shop and fit it yourself.</span></span>
+        <span class="d" style="display:block">You fit it yourself. Free delivery up to 20 miles.</span></span>
         <span class="p">—</span>
       </label>`;
     $$<HTMLInputElement>("#fitOpts input").forEach((i) =>
@@ -298,7 +298,7 @@ if (root) {
       { k: "uplift", t: "Uplift & take the old floor away", d: "Lifted, rolled, loaded and disposed of properly.", p: `${money(cfg.rates.uplift)}/m²` },
       { k: "gripper", t: "New gripper rods", d: "Fresh gripper round the perimeter — worth it on anything over ten years old.", p: `${money(cfg.rates.gripper)}/lin m` },
       { k: "doorbars", t: "Door bars", d: "One per doorway, colour matched to the floor.", p: `${money(cfg.rates.doorbar)} each` },
-      { k: "furniture", t: "Move the furniture", d: "We shift it out and put it back. Beds and wardrobes included.", p: `${money(cfg.rates.furniture)} flat` },
+      { k: "furniture", t: "Move the furniture", d: "We shift it out and put it back. Beds and wardrobes included.", p: `${money(cfg.rates.furniture)} per room` },
     ] as const;
     box.innerHTML = E.map(
       (x) => `<label class="opt${state.extras[x.k] ? " on" : ""}">

@@ -113,7 +113,8 @@ UPDATE rates SET
   fit_carpet = 3.75,
   uplift = 2.2,
   gripper = 0.99,
-  doorbar = 7.0
+  doorbar = 7.0,
+  furniture = 35.0
 WHERE id = 1;
 
 -- The settings row, with every column at its default.

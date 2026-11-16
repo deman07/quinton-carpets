@@ -271,8 +271,9 @@ export function estimate(input: EstimateInput): Estimate {
       lines.push({ label: `Door bars × ${roomCount}`, amount: c });
     }
     if (input.extras.furniture) {
-      extras += rates.furniture;
-      lines.push({ label: "Moving the furniture", amount: rates.furniture });
+      const c = roomCount * rates.furniture;
+      extras += c;
+      lines.push({ label: `Moving furniture × ${roomCount} rooms`, amount: c });
     }
   }
 
