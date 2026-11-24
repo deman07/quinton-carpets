@@ -11,7 +11,8 @@ export interface Range {
   name: string;
   material: "Carpet" | "Laminate" | "Vinyl" | "Underlay";
   spec: string;
-  price: number;
+  /** Guide £/m², supply only. null while the shop has not priced it yet. */
+  price: number | null;
   grade: string;
   /** "Heavy domestic · Class 23" → "Class 23", for the tight showcase card. */
   gradeShort: string;
@@ -39,15 +40,24 @@ export interface Range {
   features: string[];
   /** The shades, by name. */
   colourNames: string[];
+  /** A swatch photo for each shade, in the same order as colourNames; empty when there are none. */
+  colourPhotos: string[];
   /** The maker's free-sample page. */
   sampleUrl: string | null;
   /** The price is a starting price: "from £20.00/m²". */
   priceFrom: boolean;
 }
 
-/** "£20.00/m²", or "From £20.00/m²" for a starting price. */
+/** A range with a price, which is the only kind the estimator can quote. */
+export type PricedRange = Range & { price: number };
+export const isPriced = (r: Range): r is PricedRange => r.price !== null;
+
+/** Shown in place of the price while a range has none yet. */
+export const PRICE_TBC = "£ —";
+
+/** "£20.00/m²", "From £20.00/m²" for a starting price, or "£ — price coming soon". */
 export const priceLabel = (r: Pick<Range, "price" | "priceFrom">, money: (n: number) => string) =>
-  `${r.priceFrom ? "From " : ""}${money(r.price)}/m²`;
+  r.price === null ? `${PRICE_TBC} price coming soon` : `${r.priceFrom ? "From " : ""}${money(r.price)}/m²`;
 
 export const MATERIALS = ["Carpet", "Vinyl", "Underlay"] as const;
 export const ROOMS = ["Living", "Bedroom", "Stairs", "Hall", "Kitchen", "Bathroom"] as const;
@@ -62,12 +72,16 @@ export const gradeShort = (grade: string) => {
 export const isHard = (material: Range["material"], widths: readonly number[] | null) =>
   material === "Laminate" || (material === "Vinyl" && widths === null);
 
-/** Everything a customer can put on a floor , underlay is priced separately. */
-export const floorRanges = (all: Range[]) => all.filter((r) => r.material !== "Underlay");
-export const underlayRanges = (all: Range[]) => all.filter((r) => r.material === "Underlay");
+/**
+ * Everything a customer can put on a floor , underlay is priced separately.
+ * A range with no price yet is left out: it cannot be estimated.
+ */
+export const floorRanges = (all: Range[]) => all.filter(isPriced).filter((r) => r.material !== "Underlay");
+export const underlayRanges = (all: Range[]) => all.filter(isPriced).filter((r) => r.material === "Underlay");
 
 export const showcaseRanges = (all: Range[]) =>
   all
+    .filter(isPriced)
     .filter((r) => typeof r.showcase === "number")
     .sort((a, b) => (a.showcase ?? 0) - (b.showcase ?? 0));
 

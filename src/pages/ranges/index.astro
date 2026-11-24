@@ -1,6 +1,6 @@
 ---
 import Base from "../../layouts/Base.astro";
-import { filterRanges, showcaseRanges, MATERIALS, ROOMS } from "../../lib/ranges.ts";
+import { filterRanges, showcaseRanges, MATERIALS, ROOMS, PRICE_TBC } from "../../lib/ranges.ts";
 import { getRanges, getSettings } from "../../lib/server/catalogue.ts";
 import Swatch from "../../components/Swatch.astro";
 import Showcase from "../../components/Showcase.astro";
@@ -67,15 +67,19 @@ const schema = {
       ...(r.brand ? { brand: { "@type": "Brand", name: r.brand } } : {}),
       description: `${r.spec}. ${r.grade}.`,
       category: r.material,
-      offers: {
-        "@type": "Offer",
-        price: r.price.toFixed(2),
-        priceCurrency: "GBP",
-        // Per m², supply only , fitting is priced separately.
-        unitText: "square metre",
-        availability: "https://schema.org/InStoreOnly",
-        seller: { "@id": `${settings.siteUrl}/#shop` },
-      },
+      ...(r.price !== null
+        ? {
+            offers: {
+              "@type": "Offer",
+              price: r.price.toFixed(2),
+              priceCurrency: "GBP",
+              // Per m², supply only , fitting is priced separately.
+              unitText: "square metre",
+              availability: "https://schema.org/InStoreOnly",
+              seller: { "@id": `${settings.siteUrl}/#shop` },
+            },
+          }
+        : {}),
     },
   })),
 };
@@ -160,14 +164,14 @@ const schema = {
                   <h2 class="rangename"><a class="rangelink" href={`/ranges/${r.id}/`}>{r.name}</a></h2>
                   <p class="meta">{r.spec}</p>
                   <div class="cardfoot">
-                    <p class="price">{r.priceFrom && <small>From </small>}<b>{money(r.price)}</b> /m²</p>
+                    <p class="price">{r.price === null ? <><b>{PRICE_TBC}</b> <small>price coming soon</small></> : <>{r.priceFrom && <small>From </small>}<b>{money(r.price)}</b> /m²</>}</p>
                     <div class="cardbtns">
                       <a class="btn ghost sm" href={`/ranges/${r.id}/`}>View range</a>
                       {r.sampleUrl ? (
                         <a class="btn sm" href={r.sampleUrl} target="_blank" rel="noopener noreferrer">Free sample</a>
-                      ) : (
+                      ) : r.price !== null ? (
                         <a class="btn sm" href={`/estimate/?range=${r.id}`}>Estimate</a>
-                      )}
+                      ) : null}
                     </div>
                   </div>
                 </div>

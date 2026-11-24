@@ -1,11 +1,11 @@
 ---
 import { floorStyle } from "../lib/textures.ts";
 import { getImage } from "astro:assets";
-import type { Range } from "../lib/ranges.ts";
+import type { PricedRange } from "../lib/ranges.ts";
 import { money } from "../lib/pricing.ts";
 
 interface Props {
-  showcase: Range[];
+  showcase: PricedRange[];
 }
 const { showcase } = Astro.props;
 const first = showcase[0]!;

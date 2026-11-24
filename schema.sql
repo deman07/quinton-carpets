@@ -142,6 +142,11 @@ ALTER TABLE ranges ADD COLUMN IF NOT EXISTS colour_names TEXT[] NOT NULL DEFAULT
 ALTER TABLE ranges ADD COLUMN IF NOT EXISTS sample_url   TEXT                          -- where to order a free sample from the maker
   CHECK (sample_url IS NULL OR sample_url ~ '^https://');
 ALTER TABLE ranges ADD COLUMN IF NOT EXISTS price_from   BOOLEAN NOT NULL DEFAULT false; -- show the price as "from £x"
+-- A range can go on before the shop has priced it: NULL shows "£ — price
+-- coming soon" and keeps it out of the estimator. CHECK (price > 0) still
+-- applies to any price that is filled in.
+ALTER TABLE ranges ALTER COLUMN price DROP NOT NULL;
+ALTER TABLE ranges ADD COLUMN IF NOT EXISTS colour_photos TEXT[] NOT NULL DEFAULT '{}'; -- a swatch photo per shade, same order as colour_names
 
 -- The fitting rates. Exactly one row: id is always 1.
 CREATE TABLE IF NOT EXISTS rates (

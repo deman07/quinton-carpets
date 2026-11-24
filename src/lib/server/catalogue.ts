@@ -46,7 +46,7 @@ type RangeRow = {
   name: string;
   material: Range["material"];
   spec: string;
-  price: number;
+  price: number | null;
   grade: string;
   rooms: string[];
   widths: number[] | null;
@@ -60,6 +60,7 @@ type RangeRow = {
   category: string | null;
   features: string[] | null;
   colour_names: string[] | null;
+  colour_photos: string[] | null;
   sample_url: string | null;
   price_from: boolean | null;
 };
@@ -69,7 +70,7 @@ const toRange = (r: RangeRow): Range => ({
   name: r.name,
   material: r.material,
   spec: r.spec,
-  price: Number(r.price),
+  price: r.price === null ? null : Number(r.price),
   grade: r.grade,
   gradeShort: gradeShort(r.grade),
   rooms: [...r.rooms],
@@ -85,6 +86,7 @@ const toRange = (r: RangeRow): Range => ({
   category: r.category?.trim() || null,
   features: [...(r.features ?? [])],
   colourNames: [...(r.colour_names ?? [])],
+  colourPhotos: [...(r.colour_photos ?? [])],
   sampleUrl: r.sample_url?.trim() || null,
   priceFrom: Boolean(r.price_from),
 });
@@ -94,10 +96,10 @@ export const getRanges = (): Promise<Range[]> =>
   cached("ranges", async () => {
     const { results } = await db
       .prepare(
-        `SELECT id, name, material, spec, price, grade, rooms, widths, pile, colours,
-                photo_url, sort_order, showcase, description,
-                brand, category, features, colour_names, sample_url, price_from
-           FROM ranges WHERE active ORDER BY sort_order, name`,
+        // SELECT * rather than a column list, so a database that has not
+        // had the latest schema.sql yet (no colour_photos) still serves
+        // the site instead of failing every range page.
+        `SELECT * FROM ranges WHERE active ORDER BY sort_order, name`,
       )
       .all<RangeRow>();
     return results.map(toRange);

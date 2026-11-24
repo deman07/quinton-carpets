@@ -230,6 +230,12 @@ footer.site .fine{
 .rangedetail .ctas .btn{justify-content:center; text-align:center}
 .rangedetail .ctas .btn.yellow{border-color:var(--yellow); box-shadow:none}
 .rangedetail .ctas .solo{grid-column:1 / -1}
+.shades{margin-top:clamp(36px,5vw,60px)}
+.shades h2{margin-bottom:16px}
+.shades .count{font-size:.9rem; font-weight:600; color:var(--muted); margin-left:6px}
+.shadegrid{list-style:none; margin:0; padding:0; display:grid; grid-template-columns:repeat(auto-fill,minmax(120px,1fr)); gap:14px 12px}
+.shadegrid li{display:flex; flex-direction:column; gap:7px; font-size:.85rem; font-weight:600; color:var(--ink-2); line-height:1.25}
+.shadegrid img{width:100%; height:auto; aspect-ratio:1; object-fit:cover; display:block; border:1px solid var(--line); border-radius:var(--r-s); background:var(--surface)}
 /* A plain link-style action: no border, no fill, centred under the pair. */
 .textbtn{grid-column:1 / -1; justify-self:center; background:none; border:0; padding:6px 10px; font-weight:700; color:var(--ink); text-decoration:underline; text-decoration-thickness:2px; text-decoration-color:var(--yellow); text-underline-offset:5px}
 .textbtn:hover{text-decoration-color:var(--ink)}

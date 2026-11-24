@@ -3,6 +3,7 @@ import Base from "../../layouts/Base.astro";
 import Swatch from "../../components/Swatch.astro";
 import { getRanges, getSettings } from "../../lib/server/catalogue.ts";
 import { money } from "../../lib/pricing.ts";
+import { PRICE_TBC } from "../../lib/ranges.ts";
 import { BUSINESS } from "../../data/business.ts";
 
 // One page per range, straight from the ranges table, so a range the
@@ -14,7 +15,8 @@ const [ranges, settings] = await Promise.all([getRanges(), getSettings()]);
 const r = ranges.find((x) => x.id === Astro.params.id);
 if (!r) return Astro.rewrite("/404");
 
-const price = `${r.priceFrom ? "From " : ""}${money(r.price)}`;
+const priced = r.price !== null;
+const price = r.price === null ? PRICE_TBC : `${r.priceFrom ? "From " : ""}${money(r.price)}`;
 const maker = r.brand ? `${r.brand} ` : "";
 const roomsText = r.rooms.length ? r.rooms.join(", ") : "Ask in the shop";
 const widthsText = r.widths ? `${r.widths.join("m and ")}m rolls` : "Sold by the square metre";
@@ -22,8 +24,14 @@ const others = ranges
   .filter((x) => x.id !== r.id && x.material === r.material && (x.category === r.category || !r.category))
   .slice(0, 4);
 
+// A colour tile for every shade that has a swatch photo.
+const swatches = r.colourNames
+  .map((name, i) => ({ name, photo: r.colourPhotos[i]?.trim() }))
+  .filter((s): s is { name: string; photo: string } => Boolean(s.photo));
+const hasSwatches = swatches.length > 0;
+
 const title = `${r.name} , ${maker}${r.material.toLowerCase()} at Quinton Carpets, Birmingham`;
-const description = `${r.name}${r.brand ? ` by ${r.brand}` : ""}: ${r.spec}, ${r.grade.toLowerCase()}. ${price}/m² supply only. See it in our Quinton shop, or get an instant estimate.`;
+const description = `${r.name}${r.brand ? ` by ${r.brand}` : ""}: ${r.spec}, ${r.grade.toLowerCase()}.${priced ? ` ${price}/m² supply only.` : ""} See it in our Quinton shop, or get an instant estimate.`;
 
 const schema = {
   "@context": "https://schema.org",
@@ -34,14 +42,18 @@ const schema = {
   ...(r.brand ? { brand: { "@type": "Brand", name: r.brand } } : {}),
   description: r.body || `${r.spec}. ${r.grade}.`,
   category: r.material,
-  offers: {
-    "@type": "Offer",
-    price: r.price.toFixed(2),
-    priceCurrency: "GBP",
-    unitText: "square metre",
-    availability: "https://schema.org/InStoreOnly",
-    seller: { "@id": `${settings.siteUrl}/#shop` },
-  },
+  ...(r.price !== null
+    ? {
+        offers: {
+          "@type": "Offer",
+          price: r.price.toFixed(2),
+          priceCurrency: "GBP",
+          unitText: "square metre",
+          availability: "https://schema.org/InStoreOnly",
+          seller: { "@id": `${settings.siteUrl}/#shop` },
+        },
+      }
+    : {}),
 };
 ---
 
@@ -59,14 +71,25 @@ const schema = {
           <p class="eyebrow">{r.brand ? `${r.brand} · ` : ""}{r.category ?? r.material}</p>
           <h1>{r.name}</h1>
           {r.body && <p class="lede">{r.body}</p>}
-          <p class="bigprice">{price}<small> /m², supply only</small></p>
-          <p class="hint">Fitting, underlay and gripper are priced separately , the estimator shows each part.</p>
+          {priced ? (
+            <>
+              <p class="bigprice">{price}<small> /m², supply only</small></p>
+              <p class="hint">Fitting, underlay and gripper are priced separately , the estimator shows each part.</p>
+            </>
+          ) : (
+            <>
+              <p class="bigprice">{price}<small> price coming soon</small></p>
+              <p class="hint">Ring or call into the shop for a price on this range.</p>
+            </>
+          )}
 
           <div class="ctas">
             {r.sampleUrl && (
-              <a class="btn" href={r.sampleUrl} target="_blank" rel="noopener noreferrer">Order a free sample</a>
+              <a class={`btn${priced ? "" : " solo"}`} href={r.sampleUrl} target="_blank" rel="noopener noreferrer">Order a free sample</a>
             )}
-            <a class={`btn yellow${r.sampleUrl ? "" : " solo"}`} href={`/estimate/?range=${r.id}`}>Estimate my room</a>
+            {priced && (
+              <a class={`btn yellow${r.sampleUrl ? "" : " solo"}`} href={`/estimate/?range=${r.id}`}>Estimate my room</a>
+            )}
             <a class="textbtn" href="/book/">Book a free measure →</a>
           </div>
 
@@ -75,7 +98,7 @@ const schema = {
             <dt>Wear rating</dt><dd>{r.grade}</dd>
             <dt>Widths</dt><dd>{widthsText}</dd>
             <dt>Good for</dt><dd>{roomsText}</dd>
-            {r.colourNames.length > 0 && (<><dt>Shades</dt><dd>{r.colourNames.join(", ")} <span class="hint">, and more in the shop</span></dd></>)}
+            {r.colourNames.length > 0 && !hasSwatches && (<><dt>Shades</dt><dd>{r.colourNames.join(", ")} <span class="hint">, and more in the shop</span></dd></>)}
             {r.features.length > 0 && (
               <>
                 <dt>Features</dt>
@@ -91,6 +114,20 @@ const schema = {
         </div>
       </div>
 
+      {hasSwatches && (
+        <section class="shades" aria-labelledby="shades-h">
+          <h2 id="shades-h">Colours <span class="count">{swatches.length}</span></h2>
+          <ul class="shadegrid">
+            {swatches.map((s) => (
+              <li>
+                <img src={s.photo} alt={`${r.name} in ${s.name}`} width="300" height="300" loading="lazy" decoding="async" />
+                <span>{s.name}</span>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+
       {others.length > 0 && (
         <section style="margin-top:clamp(40px,6vw,72px)">
           <h2 style="margin-bottom:18px">More like this</h2>
@@ -101,7 +138,7 @@ const schema = {
                 <div class="body">
                   <h3 style="font-size:1rem"><a class="rangelink" href={`/ranges/${o.id}/`}>{o.name}</a></h3>
                   <p class="meta">{o.spec}</p>
-                  <span class="price">{o.priceFrom && <small>From </small>}<b>{money(o.price)}</b> /m²</span>
+                  <span class="price">{o.price === null ? <b>{PRICE_TBC}</b> : <>{o.priceFrom && <small>From </small>}<b>{money(o.price)}</b> /m²</>}</span>
                 </div>
               </article>
             ))}
