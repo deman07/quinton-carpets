@@ -25,7 +25,7 @@ VALUES
   ('lapal-vinyl', 'Lapal Cushioned Vinyl', 'Vinyl', 'Cushioned sheet vinyl', 12.99, 'General domestic', ARRAY['Kitchen', 'Bathroom']::text[], ARRAY[3, 4]::double precision[], 'sheet', ARRAY['#DCD6CB', '#B6AEA0']::text[], '/ranges/lapal-vinyl.jpg', 10, NULL, 'Sheet vinyl comes off 3m and 4m rolls, so a bathroom usually goes down in one piece with no seam. Warm underfoot because of the cushioned backing.'),
   ('californian-herringbone', 'Californian Herringbone', 'Vinyl', 'Luxury vinyl tile, click', 34.99, 'Commercial · Class 33', ARRAY['Kitchen', 'Hall', 'Living']::text[], NULL, 'herring', ARRAY['#B78A55', '#8C6435']::text[], '/ranges/californian-herringbone.jpg', 11, 4, 'The best-looking floor in the shop, and the one that takes longest to lay — a herringbone is set out from the centre line, not from a wall.'),
   ('pu-comfort', 'Standard 10mm', 'Underlay', '10mm cushioned PU foam', 4.99, 'For carpet', ARRAY['Living', 'Bedroom', 'Stairs']::text[], NULL, 'foam', ARRAY['#B9B0A1', '#8E877B']::text[], NULL, 12, NULL, 'A practical 10mm foam underlay that adds cushioning, warmth and everyday noise reduction beneath carpet.'),
-  ('pu-luxury', 'Dreamwalk 11mm', 'Underlay', '11mm premium PU foam · 2.6 tog', 6.99, 'For carpet', ARRAY['Living', 'Bedroom']::text[], NULL, 'foam', ARRAY['#8EAD9C', '#5D806F']::text[], NULL, 13, NULL, 'A thick, dense premium underlay for a noticeably softer feel. Its insulation helps keep warmth in and household noise down.'),
+  ('pu-luxury', 'Dreamwalk 11mm', 'Underlay', '11mm PU foam · 3.13 tog', 6.99, 'For carpet', ARRAY['Living', 'Bedroom']::text[], NULL, 'foam', ARRAY['#A9B4C2', '#7D8898']::text[], '/site/underlay-dreamwalk.jpg', 13, NULL, 'Part of Tredaire''s Premier range and one of the thickest carpet underlays made. Dense 11mm PU foam gives a soft, long-lasting cushion, and its high tog rating keeps heat in and noise out. Ideal for bedrooms, living rooms and lounges.'),
   ('dreamwalk-9', 'Dreamwalk 9mm', 'Underlay', '9mm premium PU foam', 5.99, 'For carpet', ARRAY['Living', 'Bedroom', 'Stairs']::text[], NULL, 'foam', ARRAY['#8EAD9C', '#5D806F']::text[], NULL, 14, NULL, 'The slightly slimmer Dreamwalk option, giving carpet a comfortable, durable base while helping with warmth and sound.'),
   ('cumulus-11', 'Cumulus Cloud 9 11mm', 'Underlay', '11mm Cloud 9 PU foam', 7.99, 'For carpet', ARRAY['Living', 'Bedroom']::text[], NULL, 'foam', ARRAY['#C7B79E', '#927C61']::text[], '/site/underlay-cumulus.jpg', 15, NULL, 'A luxury Cloud 9 underlay with a deep, resilient foam cushion for comfort, insulation and a quieter room.'),
   ('cumulus-9', 'Cumulus Cloud 9 9mm', 'Underlay', '9mm Cloud 9 PU foam', 6.99, 'For carpet', ARRAY['Living', 'Bedroom', 'Stairs']::text[], NULL, 'foam', ARRAY['#B8A58E', '#806B54']::text[], '/site/underlay-cirrus.jpg', 16, NULL, 'A 9mm Cloud 9 foam underlay that balances a softer step with reliable support beneath everyday carpet.'),
@@ -46,9 +46,20 @@ WHERE id = 'pu-comfort';
 
 UPDATE ranges SET
   name = 'Dreamwalk 11mm',
-  spec = '11mm premium PU foam · 2.6 tog',
+  spec = '11mm PU foam · 3.13 tog',
   price = 6.99,
-  description = 'A thick, dense premium underlay for a noticeably softer feel. Its insulation helps keep warmth in and household noise down.'
+  brand = 'Tredaire',
+  category = 'Premier Range',
+  colours = ARRAY['#A9B4C2', '#7D8898']::text[],
+  photo_url = '/site/underlay-dreamwalk.jpg',
+  features = ARRAY[
+    '3.13 tog, highly insulating',
+    '44dB impact sound reduction',
+    '110kg/m³ density PU foam',
+    'Stretch fit (not for double-stick)',
+    'Guaranteed for the life of the carpet'
+  ]::text[],
+  description = 'Part of Tredaire''s Premier range and one of the thickest carpet underlays made. Dense 11mm PU foam gives a soft, long-lasting cushion, and its high tog rating keeps heat in and noise out. Ideal for bedrooms, living rooms and lounges.'
 WHERE id = 'pu-luxury';
 
 -- The shop's real carpet ranges, from Cormar, with Cormar's own "from"
