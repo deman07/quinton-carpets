@@ -35,11 +35,16 @@ test("estimate, then book, and come away with a reference", async ({ page }) => 
   const total = page.locator("#estTotal");
   await expect(total).toContainText("£—");
 
-  // A floor and a room's sizes, and the number appears.
-  // Steps open one at a time: a floor, then Continue, then the rooms.
+  // The floor is chosen on the ranges page, not here: with none chosen,
+  // the estimator sends them there and the later steps stay locked.
   await expect(page.locator('.panel[data-step="2"]')).toHaveClass(/locked/);
-  await page.locator("#estRanges [data-floor]").first().click();
-  await page.locator('[data-next="2"]').click();
+  await expect(page.locator("#estRanges")).toBeHidden();
+  await page.getByRole("link", { name: "Browse carpets" }).click();
+  await page.getByRole("link", { name: "View range" }).first().click();
+  await page.getByRole("link", { name: "Estimate my room" }).click();
+
+  // Back with it chosen: step 1 shows that floor, and the rooms are open.
+  await expect(page.locator("#estChosen")).toContainText("Change floor");
   await expect(page.locator('.panel[data-step="2"]')).not.toHaveClass(/locked/);
   await page.locator("#rn0").fill("Living room");
   await page.locator("#rw0").fill("4.2");
@@ -231,17 +236,20 @@ test("booking a measure is free, and says so in three places", async ({ page }) 
   await expect(page.getByText("Free of charge · no card details · no obligation")).toBeVisible();
 });
 
-test("the ranges filter lives in the URL and works server-side", async ({ page }) => {
+test("the ranges page shows one material at a time, carpet by default", async ({ page }) => {
+  const current = page.locator('.chip[aria-current="true"]');
+
+  // Carpet, vinyl and underlay are the only buttons; no "all" or room filters.
+  await page.goto("/ranges/");
+  await expect(page.locator(".chip")).toHaveText(["Carpet", "Vinyl", "Underlay"]);
+  await expect(current).toHaveText("Carpet");
+  await expect(page.getByText("Every room")).toHaveCount(0);
+
   await page.goto("/ranges/?material=Underlay");
-  const cards = page.locator(".rangecard");
-  await expect(cards).toHaveCount(5);
-  await expect(page.locator(".swatch .tag").first()).toHaveText("Underlay");
+  await expect(current).toHaveText("Underlay");
+  await expect(page.locator(".rangecard").first()).toBeVisible();
 
   // Case-insensitive, because people type it themselves.
-  await page.goto("/ranges/?material=carpet&room=stairs");
-  await expect(page.locator(".rangecard")).toHaveCount(22);
-
-  // A combination with nothing in it says so, in the shop's voice.
-  await page.goto("/ranges/?material=Underlay&room=Bathroom");
-  await expect(page.getByText("Nothing matches that combination")).toBeVisible();
+  await page.goto("/ranges/?material=vinyl");
+  await expect(current).toHaveText("Vinyl");
 });

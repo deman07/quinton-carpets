@@ -363,3 +363,46 @@ footer.site .fine{
   .floorgrid .rangecard .swatch{height:84px}
   .panel > .head .lockmsg{font-size:.7rem}
 }
+
+/* Estimate page: one note about guide prices and roll widths. */
+.est-note{
+  display:flex; gap:16px; align-items:flex-start; max-width:760px; margin:0 0 30px;
+  padding:18px 20px; background:var(--surface); border:1.5px solid var(--line);
+  border-left:5px solid var(--yellow); border-radius:var(--r-m);
+}
+.est-note-icon{
+  flex:none; display:grid; place-items:center; width:42px; height:42px; border-radius:50%;
+  background:var(--yellow-soft); color:var(--yellow-ink);
+}
+.est-note p{margin:0; color:var(--ink-2); line-height:1.55}
+.est-note .est-note-title{margin-bottom:4px; color:var(--ink); font-weight:700; font-size:1.05rem}
+.est-note b{color:var(--ink)}
+@media (max-width:520px){ .est-note{padding:16px; gap:12px} .est-note-icon{width:36px; height:36px} }
+
+/* Estimate step 1 when the floor came from a range page: just that floor. */
+#estimator [hidden]{display:none !important}
+.chosenfloor{
+  display:flex; align-items:center; gap:14px; padding:10px; border:2px solid var(--yellow);
+  border-radius:var(--r-m); background:var(--ground);
+}
+.chosenfloor .swatch{flex:none; display:block; width:76px; height:76px; border-radius:var(--r-s); border:0}
+.chosenfloor .txt{display:flex; flex-direction:column; gap:3px; min-width:0; flex:1}
+.chosenfloor .txt b{font-size:1.02rem}
+.chosenfloor .meta{font-size:.85rem; color:var(--muted)}
+.chosenfloor .textbtn{flex:none; grid-column:auto; font-size:.88rem}
+
+/* A review posted with photos: link through to them on Google. */
+.quote-photos{ white-space:nowrap;
+  display:inline-flex; align-items:center; gap:8px; margin-top:14px; padding:8px 14px;
+  border:1.5px solid var(--line); border-radius:999px; background:var(--surface);
+  font-size:.86rem; font-weight:700; color:var(--ink); text-decoration:none;
+  transition:border-color .15s, background .15s;
+}
+.quote-photos:hover, .quote-photos:focus-visible{border-color:var(--ink); background:var(--yellow-soft)}
+.quote-photos svg{color:var(--yellow-ink); flex:none}
+/* No floor chosen yet: send them to the ranges page. */
+.chosenfloor.ask{flex-wrap:wrap; padding:16px 18px; border-style:dashed; background:var(--surface)}
+.chosenfloor.ask .txt{flex:1 1 280px}
+.chosenfloor.ask .meta{font-size:.9rem; line-height:1.5}
+.chosenfloor.ask .meta b{color:var(--ink); font-size:inherit}
+.chosenfloor .askbtns{display:flex; gap:8px; flex-wrap:wrap}

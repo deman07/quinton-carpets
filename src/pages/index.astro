@@ -5,6 +5,11 @@ import Ticker from "../components/Ticker.astro";
 import WorkGallery from "../components/WorkGallery.astro";
 import { getSettings } from "../lib/server/catalogue.ts";
 import { QUOTES } from "../data/quotes.ts";
+
+// Reviews that came with photos are the ones to show. Until any are
+// added, the section falls back to the full list rather than going empty.
+const photoReviews = QUOTES.filter((q) => q.photos);
+const shownReviews = photoReviews.length > 0 ? photoReviews : QUOTES;
 import { BUSINESS, SUPPLIERS } from "../data/business.ts";
 
 // Rendered on demand: the photos come from the database.
@@ -147,14 +152,26 @@ const STEPS = [
   <div class="section" id="reviews">
     <div class="wrap">
       <p class="eyebrow rv">What Birmingham says</p>
-      <h2 class="rv" style="margin-bottom:10px">Reviews from Google, Yell, Facebook and Yelp.</h2>
-      <p class="lede rv" style="margin-bottom:32px">
-        Every word below was written by a real customer on a public review site. Nothing has
-        been edited.
-      </p>
+      {photoReviews.length > 0 ? (
+        <>
+          <h2 class="rv" style="margin-bottom:10px">Real rooms, photographed by our customers.</h2>
+          <p class="lede rv" style="margin-bottom:32px">
+            Every review below was posted on Google with photos of the finished job. Nothing has
+            been edited , tap through to see their pictures.
+          </p>
+        </>
+      ) : (
+        <>
+          <h2 class="rv" style="margin-bottom:10px">Reviews from Google, Yell, Facebook and Yelp.</h2>
+          <p class="lede rv" style="margin-bottom:32px">
+            Every word below was written by a real customer on a public review site. Nothing has
+            been edited.
+          </p>
+        </>
+      )}
       <div class="cols rv">
         {
-          QUOTES.map((q) => (
+          shownReviews.map((q) => (
             <figure class="quote">
               <div class="stars" role="img" aria-label="5 out of 5">
                 {
@@ -167,6 +184,14 @@ const STEPS = [
               </div>
               <p style="margin-top:10px">“{q.t}”</p>
               <figcaption class="who"><b>{q.n}</b> · {q.s}</figcaption>
+              {q.photos && (
+                <a class="quote-photos" href={q.photos.url} target="_blank" rel="noopener noreferrer">
+                  <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="9" cy="10" r="1.6"/><path d="m21 16-5-5-8 8"/></svg>
+                  See {q.n.includes(" ") && q.n.split(" ")[0].length > 1 ? `${q.n.split(" ")[0]}'s` : "their"} {q.photos.count} photo{q.photos.count === 1 ? "" : "s"}
+                  <span class="visually-hidden"> on Google</span>
+                  <span aria-hidden="true">→</span>
+                </a>
+              )}
             </figure>
           ))
         }

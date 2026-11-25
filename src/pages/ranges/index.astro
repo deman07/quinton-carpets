@@ -1,6 +1,6 @@
 ---
 import Base from "../../layouts/Base.astro";
-import { filterRanges, showcaseRanges, MATERIALS, ROOMS, PRICE_TBC } from "../../lib/ranges.ts";
+import { filterRanges, showcaseRanges, MATERIALS, PRICE_TBC } from "../../lib/ranges.ts";
 import { getRanges, getSettings } from "../../lib/server/catalogue.ts";
 import Swatch from "../../components/Swatch.astro";
 import Showcase from "../../components/Showcase.astro";
@@ -12,41 +12,21 @@ import { BUSINESS } from "../../data/business.ts";
 // and the URL is shareable.
 export const prerender = false;
 
-const params = Astro.url.searchParams;
-const rawMaterial = params.get("material") ?? "All";
-const rawRoom = params.get("room") ?? "All";
-
-// Accept ?material=carpet as well as ?material=Carpet.
-const norm = (v: string, allowed: readonly string[]) =>
-  allowed.find((a) => a.toLowerCase() === v.toLowerCase()) ?? "All";
-
-const material = norm(rawMaterial, MATERIALS);
-const room = norm(rawRoom, ROOMS);
-const filtered = material !== "All" || room !== "All";
+// One material at a time: Carpet (the default), Vinyl or Underlay.
+// Accept ?material=carpet as well as ?material=Carpet; anything else
+// falls back to carpet.
+const rawMaterial = Astro.url.searchParams.get("material") ?? "";
+const material = MATERIALS.find((m) => m.toLowerCase() === rawMaterial.toLowerCase()) ?? "Carpet";
+const filtered = material !== "Carpet";
 
 const [ranges, settings] = await Promise.all([getRanges(), getSettings()]);
-const list = filterRanges(ranges, material, room);
+const list = filterRanges(ranges, material, "All");
 const showcase = showcaseRanges(ranges);
 
-const hrefFor = (key: "material" | "room", value: string) => {
-  const q = new URLSearchParams();
-  const m = key === "material" ? value : material;
-  const r = key === "room" ? value : room;
-  if (m !== "All") q.set("material", m);
-  if (r !== "All") q.set("room", r);
-  const s = q.toString();
-  // Straight to the list, past the banner.
-  return s ? `/ranges/?${s}#list` : "/ranges/#list";
-};
+// Straight to the list, past the banner.
+const hrefFor = (value: string) => (value === "Carpet" ? "/ranges/#list" : `/ranges/?material=${value}#list`);
 
-const titleBits = [
-  material !== "All" ? material : null,
-  room !== "All" ? `for ${room.toLowerCase()}` : null,
-].filter(Boolean);
-
-const title = titleBits.length
-  ? `${titleBits.join(" ")} , ranges at Quinton Carpets, Birmingham`
-  : "Carpet, vinyl and underlay ranges , Quinton Carpets, Birmingham";
+const title = `${material === "Carpet" ? "Carpet" : material} ranges , Quinton Carpets, Birmingham`;
 
 const description =
   "Carpet, vinyl and underlay from our shop on Hagley Road West, Quinton. Guide prices per square metre, supply only , fitting priced separately.";
@@ -95,19 +75,21 @@ const schema = {
   <div class="hero ranges-hero">
     <div class="aurora" aria-hidden="true"><i></i><i></i><i></i></div>
     <canvas id="pile" aria-hidden="true"></canvas>
-    <div class="wrap hero-inner">
-      <p class="eyebrow">The ranges</p>
-      <h1 style="font-size:clamp(1.9rem,1.25rem + 2.5vw,3rem); margin-bottom:14px">
-        Come and have a look at our extensive ranges.
-      </h1>
-    </div>
+    <!-- No visible heading here; the page still needs one for screen readers and search. -->
+    <h1 class="visually-hidden">{material} ranges at Quinton Carpets</h1>
     {showcase.length > 0 && <Showcase showcase={showcase} />}
     <div class="wrap">
-      <p class="lede hero-sub">
-        Hundreds of carpet samples to look at and feel, a large variety of vinyl for various
-        needs. Prices below are per square metre, supply only , fitting is priced separately so
-        you can see what you're paying for.
-      </p>
+      <div class="ranges-intro">
+        <p class="lead">
+          Hundreds of carpet samples to see and feel in the shop, and vinyl for every room in the house.
+        </p>
+        <ul class="facts" aria-label="How our prices work">
+          <li>Prices per m²</li>
+          <li>Supply only</li>
+          <li>Fitting priced separately</li>
+        </ul>
+        <p class="note">So you always know exactly what you're paying for.</p>
+      </div>
     </div>
   </div>
 
@@ -116,29 +98,13 @@ const schema = {
 
       <div class="chips" role="group" aria-label="Filter by material">
         {
-          ["All", ...MATERIALS].map((v) => (
+          MATERIALS.map((v) => (
             <a
               class="chip"
-              href={hrefFor("material", v)}
+              href={hrefFor(v)}
               aria-current={material === v ? "true" : undefined}
-              rel="nofollow"
             >
-              {v === "All" ? "All materials" : v}
-            </a>
-          ))
-        }
-      </div>
-
-      <div class="chips" role="group" aria-label="Filter by room">
-        {
-          ["All", ...ROOMS].map((v) => (
-            <a
-              class="chip"
-              href={hrefFor("room", v)}
-              aria-current={room === v ? "true" : undefined}
-              rel="nofollow"
-            >
-              {v === "All" ? "Every room" : v}
+              {v}
             </a>
           ))
         }
@@ -148,8 +114,8 @@ const schema = {
         {
           list.length === 0 ? (
             <p class="notice info" style="grid-column:1/-1">
-              Nothing matches that combination , try "Every room". We carry far more in the
-              shop than we can show here.
+              Nothing to show here yet. We carry far more in the shop than we can show
+              online , call or pop in.
             </p>
           ) : (
             list.map((r) => (

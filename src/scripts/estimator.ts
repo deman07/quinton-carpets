@@ -50,8 +50,10 @@ if (root) {
   // link from /ranges/, which pre-selects that floor.
   const wanted = new URLSearchParams(location.search).get("range");
   const defaultFloor = wanted && byId.has(wanted) ? wanted : "";
+  // A pre-selected hard floor gets board underlay, like picking it by hand would.
+  const presetHard = defaultFloor ? (byId.get(defaultFloor)?.hard ?? false) : false;
   const defaultUnderlay =
-    cfg.underlays.find((u) => !u.forHard)?.id ?? cfg.underlays[0]?.id ?? "none";
+    cfg.underlays.find((u) => u.forHard === presetHard)?.id ?? cfg.underlays[0]?.id ?? "none";
 
   const state = {
     floor: defaultFloor,
@@ -63,6 +65,8 @@ if (root) {
     discount: null as DiscountVerdict | null,
     /** Set once the customer picks an underlay; until then it follows the floor. */
     underlayPicked: false,
+    /** Set once the customer touches fitting or an extra. */
+    fitPicked: false,
     /** The furthest step unlocked. Steps open one at a time. */
     reached: defaultFloor ? 2 : 1,
     /** Which kind of floor the picker shows, and which page of it. */
@@ -81,6 +85,46 @@ if (root) {
   const num = (v: number) => (v > 0 ? String(v) : "");
 
   /* ---------------- step 1: the floor ---------------- */
+
+  // Arriving from a range's "Estimate" button, the floor is already
+  // chosen: step 1 shows just that floor, and the customer goes straight
+  // to their measurements. "Change floor" goes back to the ranges page
+  // (on that floor's material) to pick another and press Estimate again.
+  const preset = Boolean(defaultFloor);
+  const pickerParts = ["#estTabs", "#estRanges", "#estPager", '[data-step="1"] .stepnext'];
+
+  function drawChosen() {
+    const box = $<HTMLElement>("#estChosen");
+    const f = currentFloor();
+    if (!box) return;
+    // The floor is chosen on the ranges page, never here: the picker
+    // stays hidden either way.
+    box.hidden = false;
+    pickerParts.forEach((sel) => $<HTMLElement>(sel)?.setAttribute("hidden", ""));
+    const title = $<HTMLElement>('[data-step="1"] .head h2');
+    if (title) title.textContent = preset && f ? "Your floor" : "Choose your floor";
+    box.classList.toggle("ask", !(preset && f));
+    if (!preset || !f) {
+      box.innerHTML = `
+        <span class="txt">
+          <b>Pick your carpet or vinyl first</b>
+          <span class="meta">Find one you like in our ranges and press <b>Estimate</b> on it , it brings you straight back here with it chosen.</span>
+        </span>
+        <span class="askbtns">
+          <a class="btn sm" href="/ranges/#list">Browse carpets</a>
+          <a class="btn ghost sm" href="/ranges/?material=Vinyl#list">Browse vinyl</a>
+        </span>`;
+      return;
+    }
+    box.innerHTML = `
+      <span class="swatch" style="${f.swatch}"></span>
+      <span class="txt">
+        <b>${esc(f.name)}</b>
+        <span class="meta">${esc(f.material)} · ${f.priceFrom ? "From " : ""}${money(f.price)}/m²</span>
+      </span>
+      <a class="textbtn" id="estChange" href="${f.material === "Carpet" ? "/ranges/#list" : `/ranges/?material=${encodeURIComponent(f.material)}#list`}">Change floor</a>`;
+  }
+
   function drawFloors() {
     const box = $("#estRanges");
     if (!box) return;
@@ -279,6 +323,7 @@ if (root) {
     $$<HTMLInputElement>("#fitOpts input").forEach((i) =>
       i.addEventListener("change", () => {
         state.fit = i.value as "fitted" | "supply";
+        state.fitPicked = true;
         drawFit();
         drawExtras();
         calc();
@@ -309,6 +354,7 @@ if (root) {
     $$<HTMLInputElement>("#extraOpts input").forEach((i) =>
       i.addEventListener("change", () => {
         state.extras[i.dataset.e as keyof typeof state.extras] = i.checked;
+        state.fitPicked = true;
         drawExtras();
         calc();
       }),
@@ -398,7 +444,7 @@ if (root) {
     b.addEventListener("click", () => {
       const n = Number(b.dataset.next);
       state.reached = Math.max(state.reached, n);
-      steps();
+      calc(); // re-locks the steps, and adds the step just finished to the summary
       const panel = $<HTMLElement>(`#estimator .panel[data-step="${n}"]`);
       panel?.scrollIntoView({ behavior: RM ? "auto" : "smooth", block: "start" });
       panel?.querySelector<HTMLElement>(".bd input, .bd button")?.focus({ preventScroll: true });
@@ -413,7 +459,11 @@ if (root) {
       drawFoot();
       return;
     }
-    const underlay = state.underlay === "none" ? null : ulById.get(state.underlay) ?? null;
+    // The summary builds up one step at a time: a part is priced once the
+    // customer has chosen it, or moved past its step.
+    const underlayCounted = state.underlayPicked || state.reached >= 4;
+    const fitCounted = state.fitPicked || state.reached >= 5;
+    const underlay = !underlayCounted || state.underlay === "none" ? null : ulById.get(state.underlay) ?? null;
 
     const input: EstimateInput = {
       floor: {
@@ -424,13 +474,16 @@ if (root) {
       },
       underlay: underlay ? { name: underlay.name, pricePerSqm: underlay.price } : null,
       rooms: state.rooms,
-      fit: state.fit,
+      fit: fitCounted ? state.fit : "supply",
       extras: state.extras,
       discount: state.discount,
       rates: cfg.rates,
     };
 
     const out = estimate(input);
+    const complete = underlayCounted && fitCounted;
+    const todo = (label: string, hint: string) =>
+      `<div class="l todo"><span>${label}</span><span>${esc(hint)}</span></div>`;
 
     let html = out.lines
       .map((l) =>
@@ -440,11 +493,14 @@ if (root) {
       )
       .join("");
 
+    if (!underlayCounted) html += todo("Underlay", "Step 3");
+    if (!fitCounted) html += todo("Fitting &amp; extras", "Step 4");
+
     if (out.discount > 0) {
       html += `<hr><div class="l disc"><span>${esc(out.discountLabel)}</span><span>−${money(out.discount)}</span></div>`;
     }
-    html += `<hr><div class="l" style="font-weight:800"><span>Estimate incl. VAT</span><span>${money(out.total)}</span></div>`;
-    if (out.total > 0) {
+    html += `<hr><div class="l" style="font-weight:800"><span>${complete ? "Estimate incl. VAT" : "So far, incl. VAT"}</span><span>${money(out.total)}</span></div>`;
+    if (complete && out.total > 0) {
       html += `<div class="l sub"><span>Typical range once measured</span><span>£${Math.round(out.rangeLow).toLocaleString("en-GB")} – £${Math.round(out.rangeHigh).toLocaleString("en-GB")}</span></div>`;
     }
 
@@ -452,7 +508,7 @@ if (root) {
     if (lines) lines.innerHTML = html || '<p class="muted">Add a room to see your estimate.</p>';
 
     const total = $("#estTotal");
-    if (total) total.innerHTML = `${out.total > 0 ? money(out.total) : "£0"}<small> incl. VAT</small>`;
+    if (total) total.innerHTML = `${out.total > 0 ? money(out.total) : "£0"}<small> incl. VAT${complete ? "" : " · so far"}</small>`;
 
     drawFoot();
   }
@@ -550,6 +606,7 @@ if (root) {
   void RM; // reduced motion is handled in CSS here; nothing to animate
 
   drawFloors();
+  drawChosen();
   drawRooms();
   drawUnderlay();
   drawFit();

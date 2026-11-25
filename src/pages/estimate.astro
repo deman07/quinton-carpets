@@ -62,17 +62,19 @@ const bandPhoto = await getImage({ src: "/site/shop-floor.jpg", width: 1200, hei
       <h1 style="font-size:clamp(1.9rem,1.25rem + 2.5vw,3rem); margin-bottom:14px">
         Price your rooms in two minutes.
       </h1>
-      <p class="lede" style="margin-bottom:30px">
-        Guide prices only. We'll confirm the exact figure on the free measure , carpet is cut
-        from 4m and 5m wide rolls, so the true amount depends on how your rooms fall against
-        the roll.
-      </p>
-      <p class="notice info" style="margin-bottom:26px">
-        Carpet comes in fixed 4m or 5m roll widths. You cannot choose an arbitrary width because
-        carpet is cut from the roll, and the correct roll width helps reduce costly waste. We
-        choose the best width automatically from your room measurements, then confirm it during
-        the free measure.
-      </p>
+      <aside class="est-note" aria-label="About these prices">
+        <span class="est-note-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.3 15.3a2.4 2.4 0 0 1 0 3.4l-2.6 2.6a2.4 2.4 0 0 1-3.4 0L2.7 8.7a2.41 2.41 0 0 1 0-3.4l2.6-2.6a2.41 2.41 0 0 1 3.4 0Z"/><path d="m14.5 12.5 2-2"/><path d="m11.5 9.5 2-2"/><path d="m8.5 6.5 2-2"/><path d="m17.5 15.5 2-2"/></svg>
+        </span>
+        <div>
+          <p class="est-note-title">Guide prices, confirmed at your free measure</p>
+          <p>
+            Carpet is cut from <b>4m or 5m wide rolls</b>, so the exact amount depends on how your
+            rooms fit the roll. We pick the width that wastes least from your measurements, and
+            confirm it when we measure up.
+          </p>
+        </div>
+      </aside>
 
       <noscript>
         <p class="notice warn" style="margin-bottom:26px">
@@ -87,6 +89,7 @@ const bandPhoto = await getImage({ src: "/site/shop-floor.jpg", width: 1200, hei
           <div class="panel" data-step="1">
             <div class="head"><span class="n">1</span><h2 style="font-size:1.02rem;font-stretch:112%;font-weight:700">Choose your floor</h2><span class="lockmsg"></span></div>
             <div class="bd">
+              <div class="chosenfloor" id="estChosen" hidden></div>
               <div class="chips floortabs" id="estTabs" role="group" aria-label="Show floors of one kind"></div>
               <div class="floorgrid" id="estRanges"></div>
               <div class="floorpager" id="estPager"></div>
